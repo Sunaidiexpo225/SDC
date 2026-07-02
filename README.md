@@ -18,10 +18,18 @@ Design. The original design bundle is preserved under [`project/`](project/)
   cookie session (jose); role-gated actions; "acting as" switcher
 - REST API under `src/app/api/*`; the client is a single authenticated SPA
 
-## Getting started
+> **Just want it online?** Skip to
+> [Deploy to a live URL](#deploy-to-a-live-url-vercel--neon-postgres) — no
+> terminal needed.
+
+## Getting started (local)
+
+Requires a **Postgres** database. The easiest is a free one from
+[neon.tech](https://neon.tech) — create a project and copy its connection
+string into `DATABASE_URL`.
 
 ```bash
-cp .env.example .env  # DATABASE_URL, AUTH_SECRET, demo 2FA bypass
+cp .env.example .env  # set DATABASE_URL (Postgres), AUTH_SECRET, demo 2FA bypass
 npm install
 npm run db:reset      # create schema + seed demo data (events, users, posts…)
 npm run dev           # http://localhost:3000
@@ -39,6 +47,25 @@ The **SSO** button signs in directly. Other seeded users (Maya — Manager,
 Omar — Editor, Lina — Viewer, …) all use password `password`; switch between
 them in the app via the **avatar menu** ("Acting as") to see the role-gated
 approval flow.
+
+## Deploy to a live URL (Vercel + Neon Postgres)
+
+No terminal required — the app **creates its own tables and seeds demo data on
+first load**, so there are no database commands to run.
+
+1. **Create a database** at https://neon.tech (free): New Project → copy the
+   **direct** connection string (the one *without* `-pooler` in the host).
+2. **Import to Vercel**: https://vercel.com → Log in with GitHub → **Add New →
+   Project** → import `Sunaidiexpo225/SDC`.
+3. **Set environment variables** (Project → Settings → Environment Variables):
+   - `DATABASE_URL` = the Neon direct connection string from step 1
+   - `AUTH_SECRET` = any long random string
+   - `AUTH_DEMO_BYPASS` = `1` (keeps the `123456` demo code working; set `0` later for real TOTP)
+4. **Deploy.** Open the resulting `https://…vercel.app` URL and sign in with
+   `sara@sunaidiexpo.com` / `password` / `123456`.
+
+The first build runs `prisma db push` to create the tables; the first page load
+seeds the demo events, users and posts automatically.
 
 ### Scripts
 

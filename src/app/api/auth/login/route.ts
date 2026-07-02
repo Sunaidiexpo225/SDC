@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { checkPassword, signPending, PENDING_COOKIE } from "@/lib/auth";
 import { json, error } from "@/lib/api";
+import { ensureSeeded } from "@/lib/seedData";
 
 const Body = z.object({
   email: z.string().email(),
@@ -10,6 +11,7 @@ const Body = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  await ensureSeeded();
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return error("Invalid email or password", 400);
   const { email, password } = parsed.data;

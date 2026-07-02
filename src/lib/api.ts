@@ -25,6 +25,8 @@ export async function getSetting() {
 
 // Full application snapshot for the authenticated client.
 export async function loadAppData(): Promise<AppData> {
+  const { ensureSeeded } = await import("./seedData");
+  await ensureSeeded();
   const { session, actingUser } = await currentUsers();
   const [events, posts, approvals, users, setting] = await Promise.all([
     prisma.event.findMany({
