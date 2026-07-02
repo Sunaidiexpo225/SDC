@@ -1,0 +1,92 @@
+// Sunaidi Design Central — data model
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  id        String          @id @default(cuid())
+  slug      String          @unique
+  nameEn    String
+  nameAr    String
+  color     String
+  barIx     Int             @default(0)
+  order     Int             @default(0)
+  accounts  SocialAccount[]
+  posts     Post[]
+  approvals Approval[]
+  createdAt DateTime        @default(now())
+}
+
+model SocialAccount {
+  id        String  @id @default(cuid())
+  eventId   String
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  platform  String // instagram | tiktok | x | facebook | linkedin
+  handle    String
+  followers Int     @default(0)
+  connected Boolean @default(false)
+  apiKey    String?
+
+  @@unique([eventId, platform])
+}
+
+model Post {
+  id           String   @id @default(cuid())
+  eventId      String
+  event        Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  date         String // YYYY-MM-DD
+  time         String // HH:mm
+  titleEn      String
+  titleAr      String
+  captionEn    String
+  captionAr    String
+  platformsCsv String // comma-separated platform keys
+  status       String   @default("scheduled") // scheduled | posted
+  createdAt    DateTime @default(now())
+}
+
+model Approval {
+  id            String  @id @default(cuid())
+  eventId       String
+  event         Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  whoEn         String
+  whoAr         String
+  init          String
+  avColor       String
+  titleEn       String
+  titleAr       String
+  captionEn     String
+  captionAr     String
+  platformsCsv  String
+  whenLabel     String // today | yesterday
+  status        String  @default("pending") // pending | approved | declined
+  editedCaption String?
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  init         String
+  avColor      String
+  role         String // Admin | Manager | Editor | Viewer
+  status       String   @default("active") // active | invited
+  mfaEnabled   Boolean  @default(false)
+  totpSecret   String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Setting {
+  id               Int     @id @default(1)
+  requireMfa       Boolean @default(false)
+  autoPublish      Boolean @default(true)
+  weekStartsMonday Boolean @default(false)
+  tone             String  @default("punchy")
+  lang             String  @default("en")
+}

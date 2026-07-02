@@ -1,0 +1,219 @@
+"use client";
+
+import { useApp } from "../AppProvider";
+import { useLang } from "../../LangProvider";
+import { Hov } from "../../ui";
+import { s } from "@/lib/style";
+import { fmt, fmt12 } from "@/lib/format";
+import { computeAnalytics, barLabels } from "@/lib/analytics";
+import { SUFFIX } from "@/lib/content";
+
+export default function Analytics() {
+  const app = useApp();
+  const { t, lang } = useLang();
+  const { ui, patch, activeEvent } = app;
+
+  const activeName = lang === "ar" ? activeEvent.nameAr : activeEvent.nameEn;
+  const model = computeAnalytics(activeEvent.accounts, activeEvent.barIx, ui.range);
+  const { stat } = model;
+  const dtxt = t[model.deltaKey] as string;
+  const subTxt = t[model.subKey] as string;
+  const labels = barLabels(model.range, t);
+
+  const kpi = [
+    { label: t.stViewsLabel, value: fmt(Math.round(stat.v)), delta: "+" + stat.dv + dtxt, deltaColor: "#17a99b" },
+    { label: t.stEngLabel, value: fmt(Math.round(stat.e)), delta: "+" + stat.de + dtxt, deltaColor: "#17a99b" },
+    { label: t.stFollowersLabel, value: fmt(Math.round(stat.f)), delta: "+" + stat.df + dtxt, deltaColor: "#17a99b" },
+    { label: t.stPostsLabel, value: String(stat.p), delta: subTxt, deltaColor: "#8b93a1" },
+  ];
+
+  const bars = model.bars.map((h, i) => ({
+    label: labels[i],
+    h,
+    color: h === 100 ? activeEvent.color : "#c7d7f8",
+  }));
+  const platSplit = model.platSplit.map((ps) => ({
+    name: app.pname(ps.platform),
+    color: app.pcolor(ps.platform),
+    pct: ps.pct,
+    w: ps.pct + "%",
+  }));
+  const accountPerf = model.accountPerf.map((a) => ({
+    name: app.pname(a.platform),
+    handle: a.handle,
+    color: app.pcolor(a.platform),
+    followers: fmt(a.followers),
+    views: fmt(a.viewsN),
+    eng: fmt(a.engN),
+    growth: a.growth,
+  }));
+  const topPosts = model.topPosts.map((tp) => ({
+    rank: tp.rank,
+    ix: tp.rank - 1,
+    title: activeName + " · " + SUFFIX[tp.suffixKey][lang],
+    platName: app.pname(tp.platformKey),
+    color: app.pcolor(tp.platformKey),
+    views: fmt(tp.viewsN),
+    rate: tp.rate,
+  }));
+  const fmtSplit = model.fmtSplit.map((f) => ({
+    name: t[f.typeKey],
+    color: f.color,
+    pct: f.pct,
+    w: f.pct + "%",
+  }));
+  const bestTime = fmt12(model.bestTimeRaw, lang);
+
+  const rangeDefs: [typeof ui.range, string][] = [
+    ["1d", t.rToday],
+    ["7d", t.r7],
+    ["30d", t.r30],
+    ["90d", t.r90],
+    ["365d", t.r365],
+  ];
+  const rangeLabel = (rangeDefs.find((r) => r[0] === model.range) || rangeDefs[1])[1];
+
+  const th = "font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em";
+  const grid5 = "display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr 0.8fr;gap:8px";
+
+  return (
+    <div style={s("padding:28px 32px;max-width:1060px")}>
+      <div style={s("display:flex;align-items:center;justify-content:space-between;margin-bottom:20px")}>
+        <div>
+          <h2 style={s("font-family:var(--grotesk);font-weight:700;font-size:28px;letter-spacing:-1px;margin:0 0 4px")}>{t.analyticsH2}</h2>
+          <p style={s("font-size:14px;color:#5c6675;margin:0")}><span style={s(`color:${activeEvent.color};font-weight:700`)}>{activeName}</span> · {t.analyticsSub}</p>
+        </div>
+        <div style={s("position:relative")}>
+          <Hov tag="button" onClick={() => patch({ rangeMenuOpen: !ui.rangeMenuOpen })} css="display:flex;align-items:center;gap:10px;border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:9px 16px;border-radius:999px;font-family:inherit;font-weight:700;font-size:13px;color:#0f172a" hover="border-color:#c8d0dc">
+            <span>{rangeLabel}</span>
+            <span style={s("font-size:9px;color:#8b93a1")}>▼</span>
+          </Hov>
+          {ui.rangeMenuOpen && (
+            <div style={s("position:absolute;top:calc(100% + 6px);inset-inline-end:0;width:180px;background:#fff;border:1px solid #e3e8ef;border-radius:14px;box-shadow:0 16px 40px rgba(15,23,42,.18);padding:6px;z-index:40")}>
+              {rangeDefs.map(([k, l]) => (
+                <Hov key={k} tag="button" onClick={() => patch({ range: k, rangeMenuOpen: false })} css={`width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;border:none;cursor:pointer;background:${k === model.range ? "#f4f6f9" : "transparent"};padding:9px 12px;border-radius:10px;font-family:inherit;text-align:start;font-size:13px;font-weight:600;color:#0f172a`} hover="background:#f4f6f9">{l}</Hov>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* KPI cards */}
+      <div style={s("display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:20px")}>
+        {kpi.map((k, i) => (
+          <div key={i} style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:20px")}>
+            <div style={s(th + ";margin-bottom:8px")}>{k.label}</div>
+            <div style={s("font-family:var(--grotesk);font-weight:700;font-size:28px")}>{k.value}</div>
+            <div style={s(`font-size:12px;font-weight:700;color:${k.deltaColor};margin-top:4px`)}>{k.delta}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* views chart + by account */}
+      <div style={s("display:grid;grid-template-columns:1.4fr 1fr;gap:16px")}>
+        <div style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px")}>
+          <div style={s("font-size:13px;font-weight:700;margin-bottom:18px")}>{t.viewsOverTime}</div>
+          <div style={s("display:flex;align-items:flex-end;gap:10px;height:170px")}>
+            {bars.map((b, i) => (
+              <div key={i} style={s("flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end")}>
+                <div style={s(`width:100%;border-radius:8px 8px 4px 4px;background:${b.color};height:${b.h}%`)} />
+                <span style={s("font-size:11px;font-weight:600;color:#8b93a1")}>{b.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px")}>
+          <div style={s("font-size:13px;font-weight:700;margin-bottom:18px")}>{t.byPlatform}</div>
+          <div style={s("display:flex;flex-direction:column;gap:16px")}>
+            {platSplit.map((ps, i) => (
+              <div key={i}>
+                <div style={s("display:flex;justify-content:space-between;margin-bottom:6px")}>
+                  <span style={s("display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600")}><span style={s(`width:8px;height:8px;border-radius:50%;background:${ps.color}`)} />{ps.name}</span>
+                  <span style={s("font-size:13px;font-weight:700")}>{ps.pct}%</span>
+                </div>
+                <div style={s("height:8px;border-radius:4px;background:#f0f3f7")}><div style={s(`height:8px;border-radius:4px;background:${ps.color};width:${ps.w}`)} /></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* account performance */}
+      <div style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px;margin-top:16px")}>
+        <div style={s("font-size:13px;font-weight:700;margin-bottom:8px")}>{t.secAccountPerf}</div>
+        <div style={s(grid5 + ";padding:8px 0")}>
+          <div style={s(th)}>{t.colAccount}</div>
+          <div style={s(th + ";text-align:end")}>{t.colFollowers}</div>
+          <div style={s(th + ";text-align:end")}>{t.colViews}</div>
+          <div style={s(th + ";text-align:end")}>{t.colEng}</div>
+          <div style={s(th + ";text-align:end")}>{t.colGrowth}</div>
+        </div>
+        {accountPerf.map((a, i) => (
+          <div key={i} style={s(grid5 + ";align-items:center;padding:12px 0;border-top:1px solid #f0f3f7")}>
+            <div style={s("display:flex;align-items:center;gap:9px;min-width:0")}>
+              <span style={s(`width:9px;height:9px;border-radius:50%;background:${a.color};flex:none`)} />
+              <div style={s("min-width:0")}>
+                <div style={s("font-size:13px;font-weight:700")}>{a.name}</div>
+                <div dir="ltr" style={s("font-size:11px;color:#8b93a1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:start")}>{a.handle}</div>
+              </div>
+            </div>
+            <div style={s("font-size:13px;font-weight:700;text-align:end")}>{a.followers}</div>
+            <div style={s("font-size:13px;text-align:end")}>{a.views}</div>
+            <div style={s("font-size:13px;text-align:end")}>{a.eng}</div>
+            <div style={s("font-size:13px;font-weight:700;color:#17a99b;text-align:end")}>{a.growth}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* top posts + format/eng */}
+      <div style={s("display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-top:16px")}>
+        <div style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px")}>
+          <div style={s("font-size:13px;font-weight:700;margin-bottom:6px")}>{t.topPostsLabel}</div>
+          {topPosts.map((tp) => (
+            <Hov key={tp.ix} onClick={() => patch({ stat: { kind: "top", ix: tp.ix } })} css="display:flex;align-items:center;gap:12px;padding:11px 8px;border-top:1px solid #f0f3f7;cursor:pointer;border-radius:8px" hover="background:#f8fafc">
+              <span style={s("font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:700;color:#c0c7d2;flex:none;width:16px")}>{tp.rank}</span>
+              <div style={s("flex:1;min-width:0")}>
+                <div style={s("font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{tp.title}</div>
+                <div style={s("display:flex;align-items:center;gap:6px;margin-top:3px")}><span style={s(`width:7px;height:7px;border-radius:50%;background:${tp.color}`)} /><span style={s("font-size:11px;color:#8b93a1")}>{tp.platName}</span></div>
+              </div>
+              <div style={s("text-align:end;flex:none")}>
+                <div style={s("font-size:13px;font-weight:700")}>{tp.views}</div>
+                <div style={s("font-size:10px;color:#8b93a1;text-transform:uppercase;letter-spacing:.04em")}>{t.colViews}</div>
+              </div>
+              <div style={s("text-align:end;flex:none;min-width:52px")}>
+                <div style={s("font-size:13px;font-weight:700;color:#17a99b")}>{tp.rate}</div>
+                <div style={s("font-size:10px;color:#8b93a1;text-transform:uppercase;letter-spacing:.04em")}>{t.colEng}</div>
+              </div>
+            </Hov>
+          ))}
+        </div>
+        <div style={s("display:flex;flex-direction:column;gap:16px")}>
+          <div style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px")}>
+            <div style={s("font-size:13px;font-weight:700;margin-bottom:16px")}>{t.contentFormat}</div>
+            <div style={s("display:flex;flex-direction:column;gap:14px")}>
+              {fmtSplit.map((f, i) => (
+                <div key={i}>
+                  <div style={s("display:flex;justify-content:space-between;margin-bottom:6px")}>
+                    <span style={s("display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600")}><span style={s(`width:8px;height:8px;border-radius:50%;background:${f.color}`)} />{f.name}</span>
+                    <span style={s("font-size:13px;font-weight:700")}>{f.pct}%</span>
+                  </div>
+                  <div style={s("height:8px;border-radius:4px;background:#f0f3f7")}><div style={s(`height:8px;border-radius:4px;background:${f.color};width:${f.w}`)} /></div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={s("display:flex;gap:16px")}>
+            <div style={s("flex:1;background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px")}>
+              <div style={s(th + ";margin-bottom:8px")}>{t.engRateLabel}</div>
+              <div style={s("font-family:var(--grotesk);font-weight:700;font-size:24px")}>{model.engRateOverall}</div>
+            </div>
+            <div style={s("flex:1;background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px")}>
+              <div style={s(th + ";margin-bottom:8px")}>{t.bestTimeLabel}</div>
+              <div style={s("font-family:var(--grotesk);font-weight:700;font-size:24px")}>{bestTime}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

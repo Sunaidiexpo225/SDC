@@ -1,25 +1,96 @@
-# CODING AGENTS: READ THIS FIRST
+# Sunaidi Design Central
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+A bilingual (English / العربية, full RTL) social-media marketing platform for
+running the social calendars of **multiple events** from one dashboard —
+scheduling, cross-posting, AI captions, analytics, approvals, and an admin
+console with per-event API integrations and MFA.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+This is a production implementation (Next.js + TypeScript + Prisma + a real
+API/auth backend) of the design prototype that was handed off from Claude
+Design. The original design bundle is preserved under [`project/`](project/)
+(HTML prototype) and [`chats/`](chats/) (the design conversation).
 
-## What you should do — IMPORTANT
+## Stack
 
-**Read the chat transcripts first.** There are 1 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+- **Next.js 14** (App Router) + **React 18** + **TypeScript**
+- **Prisma** ORM over **SQLite** (`prisma/dev.db`)
+- **Auth**: credential login → real **TOTP** two-factor (otplib) → signed
+  cookie session (jose); role-gated actions; "acting as" switcher
+- REST API under `src/app/api/*`; the client is a single authenticated SPA
 
-**Read `project/Design Central.dc.html` in full.** The user had this file open when they triggered the handoff, so it's almost certainly the primary design they want built. Read it top to bottom — don't skim. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+## Getting started
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+```bash
+cp .env.example .env  # DATABASE_URL, AUTH_SECRET, demo 2FA bypass
+npm install
+npm run db:reset      # create schema + seed demo data (events, users, posts…)
+npm run dev           # http://localhost:3000
+```
 
-## About the design files
+Then open the site, click **Open the app**, and sign in with the demo account:
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+| Field | Value |
+| ----- | ----- |
+| Email | `sara@sunaidiexpo.com` |
+| Password | `password` |
+| 2FA code | `123456` (demo bypass) |
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+The **SSO** button signs in directly. Other seeded users (Maya — Manager,
+Omar — Editor, Lina — Viewer, …) all use password `password`; switch between
+them in the app via the **avatar menu** ("Acting as") to see the role-gated
+approval flow.
 
-## Bundle contents
+### Scripts
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `Design Central Marketing Platform` project files (HTML prototypes, assets, components)
+| Script | Purpose |
+| ------ | ------- |
+| `npm run dev` | Dev server |
+| `npm run build` / `npm run start` | Production build / serve |
+| `npm run db:push` | Sync schema to the DB |
+| `npm run db:seed` | Seed demo data |
+| `npm run db:reset` | Reset + reseed |
+
+## Features
+
+- **Landing page** — hero, features, how-it-works, CTA; EN/عربي toggle.
+- **Login** — two-panel sign-in with a real TOTP 2FA step + SSO.
+- **Dashboard** — KPIs with sparklines, reach chart, audience-by-event bars,
+  auto-sliding upcoming-posts strip, per-event cards.
+- **Compose** — reuse library assets, AI caption/hashtag generation (per tone
+  & language), per-account platform toggles, day + time picker, scheduling.
+- **Calendar** — month grid scoped to the active event, post detail panel,
+  delete, per-post analytics.
+- **Library** — filterable assets, "use in a post".
+- **Analytics** — KPIs, views chart, per-account performance table, top posts,
+  content-format split, best-time, range dropdown, per-post analytics modal.
+- **Approvals** — role-gated review modal (Managers/Admins approve or decline;
+  Editors discard; Viewers read-only), with inline caption editing.
+- **Admin console** — Team & access (roles + MFA setup with QR), Events
+  (rename/recolour/add), per-event **Integrations** (add/remove accounts,
+  connect API keys), and Settings (language, week start, AI tone, require-MFA,
+  auto-publish) that drive the whole product live.
+
+Everything is scoped to the selected event; events, accounts, and users are
+fully dynamic. All follower counts and analytics are modelled from real
+stored data so they scale when live platform data is plugged in.
+
+## Architecture notes
+
+- **Data model** (`prisma/schema.prisma`): `Event` → `SocialAccount` (holds
+  connection state + API key), `Post`, `Approval`, `User`, `Setting`.
+- **API** (`src/app/api/*`): REST route handlers with zod validation. Mutations
+  are role-aware; approval approve/decline require Manager/Admin.
+- **Client** (`src/components/app`): `AppProvider` loads `/api/app`, holds UI
+  state, and exposes actions that call the API and refetch. Screens/modals are
+  pixel-faithful ports of the design.
+- **i18n** (`src/lib/i18n.ts`): full EN/AR dictionary; `LangProvider` manages
+  language + direction.
+
+### Production checklist
+
+- Set a strong `AUTH_SECRET` and `AUTH_DEMO_BYPASS=0` (the `123456` bypass is
+  for the demo only — real TOTP is enforced when it's off).
+- Swap SQLite for a hosted database (update `datasource` + `DATABASE_URL`).
+- Wire the **Integrations** "Connect" flow to each platform's real OAuth, and
+  the **Generate with AI** route (`/api/ai/caption`) to an LLM (server-side,
+  key kept off the client). Both are stubbed with deterministic mock data today.
