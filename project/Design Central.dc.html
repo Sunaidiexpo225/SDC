@@ -1,0 +1,1981 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Tajawal:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f4f6f9;font-family:system-ui,-apple-system,'Segoe UI','Tajawal',sans-serif;color:#0f172a;-webkit-font-smoothing:antialiased}
+[dir="rtl"] *{letter-spacing:0!important}
+@keyframes toastIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+textarea:focus{outline:2px solid #2563eb;outline-offset:-1px}
+#dc-upcoming{scrollbar-width:none;-ms-overflow-style:none}
+#dc-upcoming::-webkit-scrollbar{display:none}
+</style>
+</helmet>
+
+<sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Landing page" dir="{{ dir }}" style="min-height:100vh;background:#f4f6f9">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 48px;max-width:1200px;margin:0 auto">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:34px;height:34px;border-radius:10px;background:#2563eb;display:grid;place-items:center;color:#fff;font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:18px">✦</div>
+      <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.3px">{{ tr.brand }}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:22px">
+      <a href="#features" style="font-size:14px;font-weight:600;color:#0f172a;text-decoration:none">{{ tr.navFeatures }}</a>
+      <a href="#how" style="font-size:14px;font-weight:600;color:#0f172a;text-decoration:none">{{ tr.navHow }}</a>
+      <div style="display:flex;gap:2px;background:#fff;border:1px solid #e3e8ef;border-radius:999px;padding:3px">
+        <sc-for list="{{ langOpts }}" as="l" hint-placeholder-count="2">
+          <button onClick="{{ l.pick }}" style="border:none;cursor:pointer;background:{{ l.bg }};color:{{ l.color }};font-weight:700;font-size:12px;padding:6px 12px;border-radius:999px;font-family:inherit">{{ l.label }}</button>
+        </sc-for>
+      </div>
+      <button onClick="{{ goApp }}" style="border:none;cursor:pointer;background:#0f172a;color:#fff;font-weight:700;font-size:14px;padding:11px 22px;border-radius:999px;font-family:inherit" style-hover="background:#2563eb">{{ tr.openApp }}</button>
+    </div>
+  </div>
+
+  <div style="max-width:1200px;margin:0 auto;padding:60px 48px 36px;display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:center">
+    <div>
+      <div style="display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e3e8ef;border-radius:999px;padding:7px 14px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2563eb;margin-bottom:22px">
+        <span style="width:7px;height:7px;border-radius:50%;background:#e0457b"></span>{{ tr.badge }}
+      </div>
+      <h1 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:60px;line-height:1.08;letter-spacing:-2.5px;margin:0 0 20px">{{ tr.h1a }}<br>{{ tr.h1b }} <span style="color:#2563eb">{{ tr.h1c }}</span></h1>
+      <p style="font-size:18px;line-height:1.6;color:#5c6675;margin:0 0 30px;max-width:490px;text-wrap:pretty">{{ tr.heroSub }}</p>
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:36px">
+        <button onClick="{{ goApp }}" style="border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:16px;padding:15px 28px;border-radius:999px;font-family:inherit;box-shadow:0 8px 20px rgba(37,99,235,.28)" style-hover="background:#1d4ed8">{{ tr.launchApp }}</button>
+        <a href="#features" style="font-weight:700;font-size:15px;color:#0f172a;text-decoration:none;padding:15px 20px">{{ tr.seeFeatures }}</a>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:12px;font-weight:600;color:#8b93a1;text-transform:uppercase;letter-spacing:.06em">{{ tr.eventsRun }}</span>
+        <sc-for list="{{ eventChips }}" as="e" hint-placeholder-count="5">
+          <span style="display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid #e3e8ef;border-radius:999px;padding:7px 13px;font-size:12px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:{{ e.color }}"></span>{{ e.name }}</span>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="position:relative;height:460px">
+      <div style="position:absolute;top:30px;inset-inline-end:6px;width:320px;background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(15,23,42,.10);transform:rotate(2deg)">
+        <div style="font-size:12px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">{{ heroMonth }}</div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+          <div style="height:34px;border-radius:8px;background:#f4f6f9"></div><div style="height:34px;border-radius:8px;background:#f4f6f9"></div><div style="height:34px;border-radius:8px;background:#e0457b"></div><div style="height:34px;border-radius:8px;background:#f4f6f9"></div><div style="height:34px;border-radius:8px;background:#17a99b"></div><div style="height:34px;border-radius:8px;background:#f4f6f9"></div><div style="height:34px;border-radius:8px;background:#f4f6f9"></div>
+          <div style="height:34px;border-radius:8px;background:#f59e0b"></div><div style="height:34px;border-radius:8px;background:#f4f6f9"></div><div style="height:34px;border-radius:8px;background:#f4f6f9"></div><div style="height:34px;border-radius:8px;background:#7c5cf0"></div><div style="height:34px;border-radius:8px;background:#f4f6f9"></div><div style="height:34px;border-radius:8px;background:#f4f6f9"></div><div style="height:34px;border-radius:8px;background:#2563eb"></div>
+        </div>
+      </div>
+      <div style="position:absolute;bottom:24px;inset-inline-start:0;width:300px;background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(15,23,42,.12);transform:rotate(-2deg)">
+        <div style="height:110px;border-radius:12px;background:repeating-linear-gradient(45deg,#eef1f5 0 10px,#e5e9f0 10px 20px);display:grid;place-items:center;margin-bottom:14px"><span style="font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#8b93a1">{{ tr.reelHint }}</span></div>
+        <div style="height:10px;border-radius:5px;background:#eef1f5;margin-bottom:8px;width:90%"></div>
+        <div style="height:10px;border-radius:5px;background:#eef1f5;margin-bottom:14px;width:65%"></div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="width:22px;height:22px;border-radius:50%;background:#e0457b"></span>
+          <span style="width:22px;height:22px;border-radius:50%;background:#17a99b"></span>
+          <span style="width:22px;height:22px;border-radius:50%;background:#2563eb"></span>
+          <span style="margin-inline-start:auto;background:#0f172a;color:#fff;font-size:11px;font-weight:700;padding:6px 12px;border-radius:999px">{{ tr.scheduleWord }}</span>
+        </div>
+      </div>
+      <div style="position:absolute;top:6px;inset-inline-start:44px;background:#a3e04f;color:#0f172a;font-weight:700;font-size:13px;padding:9px 16px;border-radius:999px;transform:rotate(-4deg);box-shadow:0 8px 18px rgba(15,23,42,.10)">{{ tr.chipAi }}</div>
+      <div style="position:absolute;bottom:150px;inset-inline-end:20px;background:#0f172a;color:#fff;font-weight:700;font-size:13px;padding:9px 16px;border-radius:999px;transform:rotate(3deg)">{{ tr.chipEvents }}</div>
+    </div>
+  </div>
+
+  <div id="features" style="max-width:1200px;margin:0 auto;padding:56px 48px">
+    <h2 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:40px;letter-spacing:-1.5px;margin:0 0 8px">{{ tr.featH2 }}</h2>
+    <p style="font-size:16px;color:#5c6675;margin:0 0 36px">{{ tr.featSub }}</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px">
+      <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:26px">
+        <div style="width:40px;height:40px;border-radius:12px;background:#2563eb;display:grid;place-items:center;color:#fff;font-size:18px;margin-bottom:16px">⧉</div>
+        <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:19px;margin-bottom:6px">{{ tr.f1t }}</div>
+        <p style="font-size:14px;line-height:1.6;color:#5c6675;margin:0">{{ tr.f1d }}</p>
+      </div>
+      <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:26px">
+        <div style="width:40px;height:40px;border-radius:12px;background:#e0457b;display:grid;place-items:center;color:#fff;font-size:18px;margin-bottom:16px">✦</div>
+        <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:19px;margin-bottom:6px">{{ tr.f2t }}</div>
+        <p style="font-size:14px;line-height:1.6;color:#5c6675;margin:0">{{ tr.f2d }}</p>
+      </div>
+      <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:26px">
+        <div style="width:40px;height:40px;border-radius:12px;background:#17a99b;display:grid;place-items:center;color:#fff;font-size:18px;margin-bottom:16px">⇄</div>
+        <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:19px;margin-bottom:6px">{{ tr.f3t }}</div>
+        <p style="font-size:14px;line-height:1.6;color:#5c6675;margin:0">{{ tr.f3d }}</p>
+      </div>
+      <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:26px">
+        <div style="width:40px;height:40px;border-radius:12px;background:#7c5cf0;display:grid;place-items:center;color:#fff;font-size:14px;margin-bottom:16px">▁▄▇</div>
+        <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:19px;margin-bottom:6px">{{ tr.f4t }}</div>
+        <p style="font-size:14px;line-height:1.6;color:#5c6675;margin:0">{{ tr.f4d }}</p>
+      </div>
+      <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:26px">
+        <div style="width:40px;height:40px;border-radius:12px;background:#f59e0b;display:grid;place-items:center;color:#fff;font-size:18px;margin-bottom:16px">▤</div>
+        <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:19px;margin-bottom:6px">{{ tr.f5t }}</div>
+        <p style="font-size:14px;line-height:1.6;color:#5c6675;margin:0">{{ tr.f5d }}</p>
+      </div>
+      <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:26px">
+        <div style="width:40px;height:40px;border-radius:12px;background:#0f172a;display:grid;place-items:center;color:#fff;font-size:18px;margin-bottom:16px">✓</div>
+        <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:19px;margin-bottom:6px">{{ tr.f6t }}</div>
+        <p style="font-size:14px;line-height:1.6;color:#5c6675;margin:0">{{ tr.f6d }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="how" style="max-width:1200px;margin:0 auto;padding:24px 48px 64px">
+    <h2 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:40px;letter-spacing:-1.5px;margin:0 0 36px">{{ tr.howH2 }}</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px">
+      <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:26px">
+        <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:15px;color:#2563eb;margin-bottom:10px">01</div>
+        <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:20px;margin-bottom:6px">{{ tr.s1t }}</div>
+        <p style="font-size:14px;line-height:1.6;color:#5c6675;margin:0">{{ tr.s1d }}</p>
+      </div>
+      <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:26px">
+        <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:15px;color:#e0457b;margin-bottom:10px">02</div>
+        <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:20px;margin-bottom:6px">{{ tr.s2t }}</div>
+        <p style="font-size:14px;line-height:1.6;color:#5c6675;margin:0">{{ tr.s2d }}</p>
+      </div>
+      <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:26px">
+        <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:15px;color:#17a99b;margin-bottom:10px">03</div>
+        <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:20px;margin-bottom:6px">{{ tr.s3t }}</div>
+        <p style="font-size:14px;line-height:1.6;color:#5c6675;margin:0">{{ tr.s3d }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="max-width:1200px;margin:0 auto;padding:0 48px 72px">
+    <div style="background:#0f172a;border-radius:24px;padding:56px;display:flex;align-items:center;justify-content:space-between;gap:32px">
+      <div>
+        <h2 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:38px;letter-spacing:-1.5px;color:#fff;margin:0 0 8px">{{ tr.ctaH2 }}</h2>
+        <p style="font-size:16px;color:#9aa5b5;margin:0">{{ tr.ctaSub }}</p>
+      </div>
+      <button onClick="{{ goApp }}" style="border:none;cursor:pointer;background:#a3e04f;color:#0f172a;font-weight:700;font-size:16px;padding:16px 30px;border-radius:999px;font-family:inherit;white-space:nowrap" style-hover="background:#b6ec66">{{ tr.launchApp }}</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:28px 4px 0;font-size:13px;color:#8b93a1">
+      <span>{{ tr.footer1 }}</span>
+      <span>{{ tr.footer2 }}</span>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Login" dir="{{ dir }}" style="min-height:100vh;display:flex;background:#f4f6f9">
+  <div style="flex:1;background:#0f172a;color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:space-between;min-width:0">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:34px;height:34px;border-radius:10px;background:#2563eb;display:grid;place-items:center;color:#fff;font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:18px">✦</div>
+      <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:18px">{{ tr.brand }}</div>
+    </div>
+    <div>
+      <h1 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:40px;line-height:1.1;letter-spacing:-1.5px;margin:0 0 16px;max-width:420px">{{ tr.loginBrandH }}</h1>
+      <p style="font-size:16px;line-height:1.6;color:#9aa5b5;margin:0 0 26px;max-width:400px">{{ tr.loginBrandSub }}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;max-width:420px">
+        <sc-for list="{{ eventChips }}" as="e" hint-placeholder-count="5">
+          <span style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:7px 13px;font-size:12px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:{{ e.color }}"></span>{{ e.name }}</span>
+        </sc-for>
+      </div>
+    </div>
+    <div style="font-size:13px;color:#8b93a1">{{ tr.footer2 }}</div>
+  </div>
+
+  <div style="width:480px;max-width:46%;flex:none;background:#fff;display:flex;flex-direction:column;padding:32px 48px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <a onClick="{{ goLanding }}" style="cursor:pointer;font-size:13px;font-weight:600;color:#5c6675;text-decoration:none">{{ tr.backToSite }}</a>
+      <div style="display:flex;gap:2px;background:#f4f6f9;border:1px solid #e3e8ef;border-radius:999px;padding:3px">
+        <sc-for list="{{ langOpts }}" as="l" hint-placeholder-count="2">
+          <button onClick="{{ l.pick }}" style="border:none;cursor:pointer;background:{{ l.bg }};color:{{ l.color }};font-weight:700;font-size:12px;padding:6px 12px;border-radius:999px;font-family:inherit">{{ l.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:340px;width:100%;margin:0 auto">
+      <sc-if value="{{ loginStepCreds }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <h2 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:26px;letter-spacing:-.5px;margin:0 0 6px">{{ tr.loginWelcome }}</h2>
+          <p style="font-size:14px;color:#5c6675;margin:0 0 26px">{{ tr.loginSub }}</p>
+          <label style="font-size:13px;font-weight:700;display:block;margin-bottom:8px">{{ tr.emailLabel }}</label>
+          <input dir="ltr" value="{{ loginEmail }}" onInput="{{ onLoginEmail }}" style="width:100%;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;color:#0f172a;background:#fbfcfe;margin-bottom:16px;text-align:start" />
+          <label style="font-size:13px;font-weight:700;display:block;margin-bottom:8px">{{ tr.passwordLabel }}</label>
+          <input dir="ltr" type="password" value="{{ loginPass }}" onInput="{{ onLoginPass }}" style="width:100%;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;color:#0f172a;background:#fbfcfe;margin-bottom:22px;text-align:start" />
+          <button onClick="{{ signIn }}" style="width:100%;border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:15px;padding:14px;border-radius:999px;font-family:inherit" style-hover="background:#1d4ed8">{{ tr.signInBtn }}</button>
+          <div style="display:flex;align-items:center;gap:12px;margin:20px 0">
+            <div style="flex:1;height:1px;background:#eef1f5"></div>
+            <span style="font-size:12px;color:#a3abb8">{{ tr.orWord }}</span>
+            <div style="flex:1;height:1px;background:#eef1f5"></div>
+          </div>
+          <button onClick="{{ ssoLogin }}" style="width:100%;border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#0f172a;font-weight:700;font-size:14px;padding:13px;border-radius:999px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px" style-hover="border-color:#2563eb;color:#2563eb"><span style="width:8px;height:8px;border-radius:2px;background:#2563eb"></span>{{ tr.ssoBtn }}</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ loginStepMfa }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <a onClick="{{ backToCreds }}" style="cursor:pointer;font-size:13px;font-weight:600;color:#5c6675;text-decoration:none;display:inline-block;margin-bottom:20px">{{ tr.backToLogin }}</a>
+          <div style="width:52px;height:52px;border-radius:14px;background:#eef2f8;display:grid;place-items:center;color:#2563eb;font-size:22px;margin-bottom:16px">🔒</div>
+          <h2 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:24px;letter-spacing:-.5px;margin:0 0 6px">{{ tr.mfaStepTitle }}</h2>
+          <p style="font-size:14px;color:#5c6675;margin:0 0 22px">{{ tr.mfaStepSub }}</p>
+          <input dir="ltr" value="{{ loginCode }}" onInput="{{ onLoginCode }}" placeholder="••••••" style="width:100%;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:12px;padding:14px;font-family:ui-monospace,Menlo,monospace;font-size:22px;letter-spacing:.4em;text-align:center;color:#0f172a;background:#fbfcfe;margin-bottom:20px" />
+          <button onClick="{{ verifyLogin }}" style="width:100%;border:none;cursor:pointer;background:#17a99b;color:#fff;font-weight:700;font-size:15px;padding:14px;border-radius:999px;font-family:inherit" style-hover="background:#128d81">{{ tr.verifyBtn }}</button>
+          <div style="text-align:center;margin-top:16px"><a onClick="{{ verifyLogin }}" style="cursor:pointer;font-size:13px;font-weight:600;color:#2563eb;text-decoration:none">{{ tr.backupCode }}</a></div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:center;gap:7px;font-size:12px;color:#a3abb8">
+      <span style="width:6px;height:6px;border-radius:50%;background:#17a99b"></span>{{ tr.secureNote }}
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ false }}">
+<div dir="{{ dir }}" style="height:100vh;display:flex;flex-direction:column;background:#f4f6f9;overflow:hidden">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px;background:#fff;border-bottom:1px solid #e3e8ef;flex:none">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:28px;height:28px;border-radius:8px;background:#2563eb;display:grid;place-items:center;color:#fff;font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:15px">✦</div>
+      <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:16px;letter-spacing:-.2px">{{ tr.brand }}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="display:flex;gap:2px;background:#f4f6f9;border:1px solid #e3e8ef;border-radius:999px;padding:3px">
+        <sc-for list="{{ langOpts }}" as="l" hint-placeholder-count="2">
+          <button onClick="{{ l.pick }}" style="border:none;cursor:pointer;background:{{ l.bg }};color:{{ l.color }};font-weight:700;font-size:12px;padding:6px 12px;border-radius:999px;font-family:inherit">{{ l.label }}</button>
+        </sc-for>
+      </div>
+      <button onClick="{{ goLanding }}" style="border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#5c6675;font-weight:600;font-size:13px;padding:8px 16px;border-radius:999px;font-family:inherit" style-hover="border-color:#2563eb;color:#2563eb">{{ tr.backToSite }}</button>
+      <div style="position:relative">
+        <button onClick="{{ toggleActingMenu }}" style="display:flex;align-items:center;gap:8px;border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:4px 12px 4px 4px;border-radius:999px;font-family:inherit" style-hover="border-color:#c8d0dc">
+          <span style="width:30px;height:30px;border-radius:50%;background:{{ currentColor }};display:grid;place-items:center;color:#fff;font-weight:700;font-size:12px">{{ currentInit }}</span>
+          <span style="font-size:12px;font-weight:700;color:#0f172a">{{ currentRoleLabel }}</span>
+          <span style="font-size:9px;color:#8b93a1">▼</span>
+        </button>
+        <sc-if value="{{ actingMenuOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:calc(100% + 6px);inset-inline-end:0;width:230px;background:#fff;border:1px solid #e3e8ef;border-radius:14px;box-shadow:0 16px 40px rgba(15,23,42,.18);padding:6px;z-index:40">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#a3abb8;padding:6px 8px">{{ tr.actingAs }}</div>
+            <sc-for list="{{ actingMenu }}" as="m" hint-placeholder-count="5">
+              <button onClick="{{ m.pick }}" style="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:9px;border:none;cursor:pointer;background:{{ m.bg }};padding:8px;border-radius:10px;font-family:inherit;text-align:start" style-hover="background:#f4f6f9">
+                <span style="width:28px;height:28px;border-radius:50%;background:{{ m.avColor }};display:grid;place-items:center;color:#fff;font-weight:700;font-size:11px;flex:none">{{ m.init }}</span>
+                <span style="flex:1;min-width:0">
+                  <span style="display:block;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.name }}</span>
+                  <span style="display:block;font-size:11px;color:#8b93a1">{{ m.roleLabel }}</span>
+                </span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;min-height:0">
+    <div style="width:224px;flex:none;background:#fff;border-inline-end:1px solid #e3e8ef;padding:16px 12px;display:flex;flex-direction:column;gap:4px">
+
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#a3abb8;padding:0 6px 8px">{{ tr.managing }}</div>
+      <div style="position:relative;margin-bottom:12px">
+        <button onClick="{{ toggleEventMenu }}" style="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:9px;border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:10px 12px;border-radius:12px;font-family:inherit" style-hover="border-color:#c8d0dc">
+          <span style="width:11px;height:11px;border-radius:50%;background:{{ activeEventColor }};flex:none"></span>
+          <span style="flex:1;text-align:start;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:700">{{ activeEventName }}</span>
+          <span style="color:#8b93a1;font-size:10px;flex:none">▼</span>
+        </button>
+        <sc-if value="{{ eventMenuOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position:absolute;top:calc(100% + 6px);inset-inline-start:0;width:100%;box-sizing:border-box;background:#fff;border:1px solid #e3e8ef;border-radius:14px;box-shadow:0 16px 40px rgba(15,23,42,.18);padding:6px;z-index:40">
+            <sc-for list="{{ eventMenu }}" as="e" hint-placeholder-count="5">
+              <button onClick="{{ e.pick }}" style="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:9px;border:none;cursor:pointer;background:{{ e.bg }};padding:9px 10px;border-radius:10px;font-family:inherit;text-align:start" style-hover="background:#f4f6f9">
+                <span style="width:9px;height:9px;border-radius:50%;background:{{ e.color }};flex:none"></span>
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:600">{{ e.name }}</span>
+                <span style="font-size:11px;color:#8b93a1;flex:none">{{ e.followers }}</span>
+              </button>
+            </sc-for>
+            <div style="height:1px;background:#eef1f5;margin:6px 4px"></div>
+            <button onClick="{{ openAddEvent }}" style="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:9px;border:none;cursor:pointer;background:transparent;padding:9px 10px;border-radius:10px;font-family:inherit;text-align:start;color:#2563eb;font-size:13px;font-weight:700" style-hover="background:#eef2f8">{{ tr.addEvent }}</button>
+          </div>
+        </sc-if>
+      </div>
+
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
+        <button onClick="{{ t.go }}" style="display:flex;align-items:center;gap:10px;border:none;cursor:pointer;text-align:start;background:{{ t.bg }};color:{{ t.color }};font-weight:{{ t.weight }};font-size:14px;padding:11px 14px;border-radius:12px;font-family:inherit" style-hover="background:#eef2f8">
+          <span style="width:8px;height:8px;border-radius:50%;background:{{ t.dot }};flex:none"></span>
+          <span style="flex:1">{{ t.label }}</span>
+          <sc-if value="{{ t.hasBadge }}" hint-placeholder-val="{{ false }}">
+            <span style="background:#e0457b;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 5px;border-radius:999px;display:grid;place-items:center;flex:none">{{ t.badge }}</span>
+          </sc-if>
+        </button>
+      </sc-for>
+
+      <div style="height:1px;background:#eef1f5;margin:10px 6px 8px"></div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#a3abb8;padding:0 6px 6px">{{ tr.workspace }}</div>
+      <button onClick="{{ goAdmin }}" style="display:flex;align-items:center;gap:10px;border:none;cursor:pointer;text-align:start;background:{{ adminTabBg }};color:{{ adminTabColor }};font-weight:600;font-size:14px;padding:11px 14px;border-radius:12px;font-family:inherit" style-hover="background:#eef2f8">
+        <span style="width:8px;height:8px;border-radius:50%;background:{{ adminTabDot }};flex:none"></span>
+        <span style="flex:1">{{ tr.tabAdmin }}</span>
+      </button>
+
+      <div style="margin-top:auto;background:#f4f6f9;border-radius:14px;padding:14px">
+        <div style="font-size:12px;font-weight:700;margin-bottom:8px">{{ tr.connected }}</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <sc-for list="{{ activeSocials }}" as="s" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="width:8px;height:8px;border-radius:50%;background:{{ s.color }};flex:none"></span>
+              <span dir="ltr" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;font-weight:600;color:#5c6675;text-align:start">{{ s.handle }}</span>
+              <span style="font-size:11px;font-weight:700;color:#8b93a1;flex:none">{{ s.followers }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1;min-width:0;overflow:auto">
+
+      <sc-if value="{{ tabDashboard }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="App — Dashboard" style="padding:28px 32px;max-width:1120px">
+        <h2 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:28px;letter-spacing:-1px;margin:0 0 4px">{{ tr.dashH2 }}</h2>
+        <p style="font-size:14px;color:#5c6675;margin:0 0 24px">{{ tr.dashSub }}</p>
+
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:16px">
+          <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px 20px;overflow:hidden">
+              <div style="font-size:12px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">{{ k.label }}</div>
+              <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:32px;line-height:1">{{ k.value }}</div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:12px">
+                <div style="font-size:12px;font-weight:700;color:{{ k.subColor }};max-width:96px">{{ k.sub }}</div>
+                <div style="display:flex;align-items:flex-end;gap:3px;height:30px">
+                  <sc-for list="{{ k.spark }}" as="s" hint-placeholder-count="7">
+                    <div style="width:5px;border-radius:3px;background:{{ s.accent }};height:{{ s.h }}%;opacity:.85"></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-bottom:24px">
+          <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px">
+              <div style="font-size:13px;font-weight:700">{{ tr.reachAllEvents }}</div>
+              <div style="font-size:12px;color:#8b93a1">{{ tr.reachMonthSub }}</div>
+            </div>
+            <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:30px;margin-bottom:18px">{{ totalReachMonth }}</div>
+            <div style="display:flex;align-items:flex-end;gap:7px;height:120px">
+              <sc-for list="{{ reachBars }}" as="b" hint-placeholder-count="12">
+                <div style="flex:1;border-radius:6px 6px 3px 3px;background:{{ b.color }};height:{{ b.h }}%"></div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:18px">{{ tr.audienceByEventLabel }}</div>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <sc-for list="{{ audienceByEvent }}" as="a" hint-placeholder-count="5">
+                <div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                    <span style="display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;min-width:0"><span style="width:8px;height:8px;border-radius:50%;background:{{ a.color }};flex:none"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.name }}</span></span>
+                    <span style="font-size:12px;font-weight:700;flex:none">{{ a.value }}</span>
+                  </div>
+                  <div style="height:8px;border-radius:4px;background:#f0f3f7"><div style="height:8px;border-radius:4px;background:{{ a.color }};width:{{ a.w }}"></div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <sc-if value="{{ hasUpcoming }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:20px 22px;margin-bottom:24px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:14px">{{ tr.upcomingLabel }}</div>
+            <div id="dc-upcoming" onMouseEnter="{{ pauseSlide }}" onMouseLeave="{{ resumeSlide }}" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px">
+              <sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="4">
+                <button onClick="{{ u.open }}" style="flex:none;width:200px;text-align:start;border:1px solid #eef1f5;border-inline-start:3px solid {{ u.color }};cursor:pointer;background:#fbfcfe;border-radius:12px;padding:12px 14px;font-family:inherit" style-hover="background:#f4f6f9">
+                  <div style="font-size:11px;font-weight:700;color:{{ u.color }};margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.eventName }}</div>
+                  <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.title }}</div>
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <span style="font-size:11px;color:#8b93a1">{{ u.dateLabel }}</span>
+                    <span style="display:flex;gap:4px">
+                      <sc-for list="{{ u.plats }}" as="pp" hint-placeholder-count="2">
+                        <span style="width:8px;height:8px;border-radius:50%;background:{{ pp.color }}"></span>
+                      </sc-for>
+                    </span>
+                  </div>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:17px">{{ tr.yourEvents }}</div>
+          <div style="font-size:13px;color:#8b93a1">{{ eventCountLabel }}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
+          <sc-for list="{{ eventCards }}" as="e" hint-placeholder-count="5">
+            <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;overflow:hidden">
+              <div style="height:6px;background:{{ e.color }}"></div>
+              <div style="padding:20px 22px">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px">
+                  <div style="min-width:0">
+                    <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ e.name }}</div>
+                    <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px">
+                      <span style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:22px;color:{{ e.color }}">{{ e.audienceBig }}</span>
+                      <span style="font-size:11px;color:#8b93a1">{{ e.audienceSub }}</span>
+                    </div>
+                  </div>
+                  <span style="background:{{ e.statusBg }};color:{{ e.statusColor }};font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;white-space:nowrap;flex:none">{{ e.statusLabel }}</span>
+                </div>
+                <div style="display:flex;align-items:flex-end;gap:4px;height:44px;margin-bottom:16px">
+                  <sc-for list="{{ e.spark }}" as="s" hint-placeholder-count="7">
+                    <div style="flex:1;border-radius:4px 4px 2px 2px;background:{{ s.color }};height:{{ s.h }}%;opacity:.28"></div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #f0f3f7;padding-top:16px">
+                  <div style="display:flex;gap:20px">
+                    <div>
+                      <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:18px">{{ e.scheduled }}</div>
+                      <div style="font-size:11px;color:#8b93a1">{{ tr.cardScheduled }}</div>
+                    </div>
+                    <div>
+                      <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:18px">{{ e.nextLabel }}</div>
+                      <div style="font-size:11px;color:#8b93a1">{{ tr.cardNext }}</div>
+                    </div>
+                    <div>
+                      <div style="display:flex;gap:3px;align-items:center;height:22px">
+                        <sc-for list="{{ e.socials }}" as="s" hint-placeholder-count="3">
+                          <span style="width:9px;height:9px;border-radius:50%;background:{{ s.color }}"></span>
+                        </sc-for>
+                      </div>
+                      <div style="font-size:11px;color:#8b93a1;margin-top:4px">{{ e.accountsCount }} {{ tr.accountsWord }}</div>
+                    </div>
+                  </div>
+                  <button onClick="{{ e.open }}" style="border:none;cursor:pointer;background:#0f172a;color:#fff;font-weight:700;font-size:13px;padding:9px 16px;border-radius:999px;font-family:inherit;flex:none" style-hover="background:#2563eb">{{ tr.cardOpen }}</button>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ tabCompose }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="App — Compose" style="padding:28px 32px;max-width:1060px">
+        <h2 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:28px;letter-spacing:-1px;margin:0 0 4px">{{ tr.composeH2 }}</h2>
+        <p style="font-size:14px;color:#5c6675;margin:0 0 24px">{{ composeSubL }} <span style="color:{{ activeEventColor }};font-weight:700">{{ activeEventName }}</span></p>
+        <div style="display:grid;grid-template-columns:1fr 350px;gap:20px;align-items:start">
+
+          <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:22px">
+            <sc-if value="{{ composeHasAsset }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:14px;border:1px solid #e3e8ef;border-radius:14px;padding:14px;margin-bottom:18px;background:#fbfcfe">
+                <div style="width:64px;height:64px;border-radius:10px;background:repeating-linear-gradient(45deg,#eef1f5 0 8px,#e5e9f0 8px 16px);flex:none;display:grid;place-items:center"><span style="font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#8b93a1">{{ composeAssetDur }}</span></div>
+                <div style="flex:1;min-width:0">
+                  <div dir="ltr" style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:start">{{ composeAssetName }}</div>
+                  <div style="font-size:12px;color:#8b93a1;margin-top:2px">{{ composeAssetMeta }}</div>
+                </div>
+                <button onClick="{{ removeAsset }}" style="border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#5c6675;font-weight:700;font-size:12px;padding:8px 14px;border-radius:999px;font-family:inherit;flex:none" style-hover="border-color:#d64545;color:#d64545">{{ tr.removeAsset }}</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{ composeNoAsset }}" hint-placeholder-val="{{ true }}">
+              <div style="height:180px;border-radius:14px;background:repeating-linear-gradient(45deg,#eef1f5 0 10px,#e5e9f0 10px 20px);display:grid;place-items:center;margin-bottom:18px;border:1px dashed #c8d0dc">
+                <span style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8b93a1">{{ tr.dropHint }}</span>
+              </div>
+            </sc-if>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <label style="font-size:13px;font-weight:700">{{ tr.captionLabel }}</label>
+              <button onClick="{{ generate }}" style="border:none;cursor:pointer;background:#0f172a;color:#a3e04f;font-weight:700;font-size:13px;padding:8px 16px;border-radius:999px;font-family:inherit;animation:{{ genAnim }}" style-hover="background:#1e293b">✦ {{ genLabel }}</button>
+            </div>
+            <textarea value="{{ caption }}" onChange="{{ onCaption }}" placeholder="{{ tr.captionPh }}" style="width:100%;box-sizing:border-box;height:110px;resize:none;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;line-height:1.5;color:#0f172a;background:#fbfcfe"></textarea>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <sc-for list="{{ hashtags }}" as="h" hint-placeholder-count="0">
+                  <span style="background:#eef2f8;color:#2563eb;font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px">{{ h }}</span>
+                </sc-for>
+              </div>
+              <span style="font-size:12px;color:#8b93a1;flex:none">{{ capLen }}/2200</span>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:20px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:12px">{{ tr.publishTo }}</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ platformList }}" as="p" hint-placeholder-count="4">
+                  <button onClick="{{ p.toggle }}" style="display:flex;align-items:center;gap:10px;border:2px solid {{ p.bd }};cursor:pointer;background:{{ p.bg }};padding:10px 14px;border-radius:12px;font-family:inherit;font-size:14px;font-weight:600;color:#0f172a;text-align:start">
+                    <span style="width:10px;height:10px;border-radius:50%;background:{{ p.color }};flex:none"></span>
+                    <span style="flex:1">{{ p.name }}</span>
+                    <span dir="ltr" style="font-size:11px;font-weight:600;color:#a3abb8">{{ p.handle }}</span>
+                    <span style="font-size:12px;font-weight:700;color:{{ p.stateColor }}">{{ p.stateLabel }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:20px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:12px">{{ tr.scheduleFor }}</div>
+              <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px">
+                <sc-for list="{{ schedDays }}" as="d" hint-placeholder-count="7">
+                  <button onClick="{{ d.pick }}" style="flex:none;border:2px solid {{ d.bd }};cursor:pointer;background:{{ d.bg }};color:{{ d.color }};border-radius:12px;padding:8px 0;width:54px;font-family:inherit;text-align:center">
+                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em">{{ d.dow }}</div>
+                    <div style="font-size:17px;font-weight:700">{{ d.num }}</div>
+                  </button>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <input type="time" value="{{ schedTime }}" onChange="{{ onSchedTime }}" style="border:1px solid #e3e8ef;border-radius:12px;padding:10px 12px;font-family:inherit;font-size:15px;font-weight:700;color:#0f172a;background:#fbfcfe" />
+                <span style="font-size:13px;font-weight:700;color:#5c6675">{{ schedTimeLabel }}</span>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+                <sc-for list="{{ timeOpts }}" as="t" hint-placeholder-count="5">
+                  <button onClick="{{ t.pick }}" style="border:2px solid {{ t.bd }};cursor:pointer;background:{{ t.bg }};color:{{ t.color }};font-weight:700;font-size:13px;padding:7px 13px;border-radius:999px;font-family:inherit">{{ t.label }}</button>
+                </sc-for>
+              </div>
+              <button onClick="{{ schedule }}" disabled="{{ schedDisabled }}" style="width:100%;border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:15px;padding:14px;border-radius:999px;font-family:inherit;opacity:{{ schedOpacity }}" style-hover="background:#1d4ed8">{{ tr.schedulePost }}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ tabCalendar }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="App — Calendar" style="padding:28px 32px;position:relative">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <div>
+            <h2 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:28px;letter-spacing:-1px;margin:0 0 4px">{{ tr.calendarH2 }}</h2>
+            <p style="font-size:14px;color:#5c6675;margin:0"><span style="color:{{ activeEventColor }};font-weight:700">{{ activeEventName }}</span> · {{ schedLine }}</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <button onClick="{{ prevMonth }}" style="border:1px solid #e3e8ef;cursor:pointer;background:#fff;width:36px;height:36px;border-radius:50%;font-family:inherit;font-size:15px;color:#0f172a" style-hover="border-color:#2563eb">{{ tr.arrPrev }}</button>
+            <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:17px;min-width:150px;text-align:center">{{ monthLabel }}</div>
+            <button onClick="{{ nextMonth }}" style="border:1px solid #e3e8ef;cursor:pointer;background:#fff;width:36px;height:36px;border-radius:50%;font-family:inherit;font-size:15px;color:#0f172a" style-hover="border-color:#2563eb">{{ tr.arrNext }}</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:6px">
+          <sc-for list="{{ dowLabels }}" as="w" hint-placeholder-count="7">
+            <div style="font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;padding:4px 8px">{{ w }}</div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px">
+          <sc-for list="{{ days }}" as="d" hint-placeholder-count="35">
+            <div style="min-width:0;min-height:92px;background:{{ d.bg }};border:1px solid {{ d.bd }};border-radius:12px;padding:8px;opacity:{{ d.opacity }}">
+              <div style="font-size:12px;font-weight:700;color:{{ d.numColor }};width:22px;height:22px;border-radius:50%;background:{{ d.numBg }};display:grid;place-items:center;margin-bottom:6px">{{ d.num }}</div>
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                <sc-for list="{{ d.posts }}" as="p" hint-placeholder-count="0">
+                  <button onClick="{{ p.click }}" style="display:flex;align-items:center;gap:6px;border:none;cursor:pointer;background:#fff;border-radius:8px;padding:5px 8px;font-family:inherit;text-align:start;box-shadow:0 1px 2px rgba(15,23,42,.08);max-width:100%;min-width:0" style-hover="box-shadow:0 2px 6px rgba(15,23,42,.16)">
+                    <span style="width:7px;height:7px;border-radius:50%;background:{{ p.color }};flex:none"></span>
+                    <span style="font-size:11px;font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.title }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+          <div style="position:fixed;inset-inline-end:24px;top:82px;width:320px;background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:22px;box-shadow:0 24px 60px rgba(15,23,42,.18);z-index:20">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:{{ selStatusColor }}">{{ selStatus }}</span>
+              <button onClick="{{ closeSel }}" style="border:none;cursor:pointer;background:#f4f6f9;width:28px;height:28px;border-radius:50%;font-family:inherit;color:#5c6675">✕</button>
+            </div>
+            <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:18px;margin-bottom:6px">{{ selTitle }}</div>
+            <p style="font-size:13px;line-height:1.5;color:#5c6675;margin:0 0 14px">{{ selCaption }}</p>
+            <div style="font-size:12px;font-weight:700;color:#8b93a1;margin-bottom:8px">{{ selWhen }}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
+              <sc-for list="{{ selPlats }}" as="sp" hint-placeholder-count="2">
+                <span style="display:inline-flex;align-items:center;gap:6px;background:#f4f6f9;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:{{ sp.color }}"></span>{{ sp.name }}</span>
+              </sc-for>
+            </div>
+            <sc-if value="{{ selCanStat }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ openSelStat }}" style="width:100%;border:none;cursor:pointer;background:#0f172a;color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:999px;font-family:inherit;margin-bottom:8px" style-hover="background:#2563eb">{{ tr.viewAnalytics }}</button>
+            </sc-if>
+            <button onClick="{{ delSel }}" style="width:100%;border:1px solid #f3c1c1;cursor:pointer;background:#fff;color:#d64545;font-weight:700;font-size:13px;padding:10px;border-radius:999px;font-family:inherit" style-hover="background:#fdf2f2">{{ tr.deletePost }}</button>
+          </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ tabLibrary }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="App — Library" style="padding:28px 32px;max-width:1060px">
+        <h2 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:28px;letter-spacing:-1px;margin:0 0 4px">{{ tr.libraryH2 }}</h2>
+        <p style="font-size:14px;color:#5c6675;margin:0 0 18px"><span style="color:{{ activeEventColor }};font-weight:700">{{ activeEventName }}</span> · {{ tr.librarySub }}</p>
+        <div style="display:flex;gap:8px;margin-bottom:20px">
+          <sc-for list="{{ libFilters }}" as="f" hint-placeholder-count="4">
+            <button onClick="{{ f.pick }}" style="border:2px solid {{ f.bd }};cursor:pointer;background:{{ f.bg }};color:{{ f.color }};font-weight:700;font-size:13px;padding:8px 16px;border-radius:999px;font-family:inherit">{{ f.label }}</button>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+          <sc-for list="{{ libItems }}" as="a" hint-placeholder-count="8">
+            <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;overflow:hidden" style-hover="box-shadow:0 8px 24px rgba(15,23,42,.10)">
+              <div style="height:120px;background:repeating-linear-gradient(45deg,#eef1f5 0 10px,#e5e9f0 10px 20px);display:grid;place-items:center;position:relative">
+                <span style="font-family:ui-monospace,Menlo,monospace;font-size:11px;color:#8b93a1">{{ a.hint }}</span>
+                <span style="position:absolute;bottom:8px;inset-inline-end:8px;background:rgba(15,23,42,.85);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px">{{ a.dur }}</span>
+              </div>
+              <div style="padding:12px 14px">
+                <div dir="ltr" style="font-size:13px;font-weight:600;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:start">{{ a.name }}</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                  <span style="background:{{ a.tagBg }};color:{{ a.tagColor }};font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px">{{ a.typeLabel }}</span>
+                  <button onClick="{{ a.reuse }}" style="border:none;cursor:pointer;background:#eef2f8;color:#2563eb;font-weight:700;font-size:12px;padding:6px 12px;border-radius:999px;font-family:inherit;white-space:nowrap" style-hover="background:#2563eb;color:#fff">{{ tr.reuseBtn }}</button>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ tabAnalytics }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="App — Analytics" style="padding:28px 32px;max-width:1060px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+          <div>
+            <h2 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:28px;letter-spacing:-1px;margin:0 0 4px">{{ tr.analyticsH2 }}</h2>
+            <p style="font-size:14px;color:#5c6675;margin:0"><span style="color:{{ activeEventColor }};font-weight:700">{{ activeEventName }}</span> · {{ tr.analyticsSub }}</p>
+          </div>
+          <div style="position:relative">
+            <button onClick="{{ toggleRangeMenu }}" style="display:flex;align-items:center;gap:10px;border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:9px 16px;border-radius:999px;font-family:inherit;font-weight:700;font-size:13px;color:#0f172a" style-hover="border-color:#c8d0dc">
+              <span>{{ rangeLabel }}</span>
+              <span style="font-size:9px;color:#8b93a1">▼</span>
+            </button>
+            <sc-if value="{{ rangeMenuOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;top:calc(100% + 6px);inset-inline-end:0;width:180px;background:#fff;border:1px solid #e3e8ef;border-radius:14px;box-shadow:0 16px 40px rgba(15,23,42,.18);padding:6px;z-index:40">
+                <sc-for list="{{ rangeMenu }}" as="r" hint-placeholder-count="5">
+                  <button onClick="{{ r.pick }}" style="width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;border:none;cursor:pointer;background:{{ r.bg }};padding:9px 12px;border-radius:10px;font-family:inherit;text-align:start;font-size:13px;font-weight:600;color:#0f172a" style-hover="background:#f4f6f9">{{ r.label }}</button>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:20px">
+          <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:20px">
+            <div style="font-size:12px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">{{ tr.stViewsLabel }}</div>
+            <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:28px">{{ stViews }}</div>
+            <div style="font-size:12px;font-weight:700;color:#17a99b;margin-top:4px">{{ stViewsDelta }}</div>
+          </div>
+          <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:20px">
+            <div style="font-size:12px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">{{ tr.stEngLabel }}</div>
+            <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:28px">{{ stEng }}</div>
+            <div style="font-size:12px;font-weight:700;color:#17a99b;margin-top:4px">{{ stEngDelta }}</div>
+          </div>
+          <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:20px">
+            <div style="font-size:12px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">{{ tr.stFollowersLabel }}</div>
+            <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:28px">{{ stFollowers }}</div>
+            <div style="font-size:12px;font-weight:700;color:#17a99b;margin-top:4px">{{ stFollowersDelta }}</div>
+          </div>
+          <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:20px">
+            <div style="font-size:12px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">{{ tr.stPostsLabel }}</div>
+            <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:28px">{{ stPosts }}</div>
+            <div style="font-size:12px;font-weight:700;color:#8b93a1;margin-top:4px">{{ stPostsDelta }}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px">
+          <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:18px">{{ tr.viewsOverTime }}</div>
+            <div style="display:flex;align-items:flex-end;gap:10px;height:170px">
+              <sc-for list="{{ bars }}" as="b" hint-placeholder-count="7">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end">
+                  <div style="width:100%;border-radius:8px 8px 4px 4px;background:{{ b.color }};height:{{ b.h }}%"></div>
+                  <span style="font-size:11px;font-weight:600;color:#8b93a1">{{ b.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:18px">{{ tr.byPlatform }}</div>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <sc-for list="{{ platSplit }}" as="ps" hint-placeholder-count="4">
+                <div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                    <span style="display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:{{ ps.color }}"></span>{{ ps.name }}</span>
+                    <span style="font-size:13px;font-weight:700">{{ ps.pct }}%</span>
+                  </div>
+                  <div style="height:8px;border-radius:4px;background:#f0f3f7"><div style="height:8px;border-radius:4px;background:{{ ps.color }};width:{{ ps.w }}"></div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px;margin-top:16px">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">{{ tr.secAccountPerf }}</div>
+          <div style="display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr 0.8fr;gap:8px;padding:8px 0">
+            <div style="font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em">{{ tr.colAccount }}</div>
+            <div style="font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;text-align:end">{{ tr.colFollowers }}</div>
+            <div style="font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;text-align:end">{{ tr.colViews }}</div>
+            <div style="font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;text-align:end">{{ tr.colEng }}</div>
+            <div style="font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;text-align:end">{{ tr.colGrowth }}</div>
+          </div>
+          <sc-for list="{{ accountPerf }}" as="a" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:1.8fr 1fr 1fr 1fr 0.8fr;gap:8px;align-items:center;padding:12px 0;border-top:1px solid #f0f3f7">
+              <div style="display:flex;align-items:center;gap:9px;min-width:0">
+                <span style="width:9px;height:9px;border-radius:50%;background:{{ a.color }};flex:none"></span>
+                <div style="min-width:0">
+                  <div style="font-size:13px;font-weight:700">{{ a.name }}</div>
+                  <div dir="ltr" style="font-size:11px;color:#8b93a1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:start">{{ a.handle }}</div>
+                </div>
+              </div>
+              <div style="font-size:13px;font-weight:700;text-align:end">{{ a.followers }}</div>
+              <div style="font-size:13px;text-align:end">{{ a.views }}</div>
+              <div style="font-size:13px;text-align:end">{{ a.eng }}</div>
+              <div style="font-size:13px;font-weight:700;color:#17a99b;text-align:end">{{ a.growth }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-top:16px">
+          <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px">{{ tr.topPostsLabel }}</div>
+            <sc-for list="{{ topPosts }}" as="t" hint-placeholder-count="5">
+              <div onClick="{{ t.open }}" style="display:flex;align-items:center;gap:12px;padding:11px 8px;border-top:1px solid #f0f3f7;cursor:pointer;border-radius:8px" style-hover="background:#f8fafc">
+                <span style="font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:700;color:#c0c7d2;flex:none;width:16px">{{ t.rank }}</span>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ t.title }}</div>
+                  <div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="width:7px;height:7px;border-radius:50%;background:{{ t.color }}"></span><span style="font-size:11px;color:#8b93a1">{{ t.platName }}</span></div>
+                </div>
+                <div style="text-align:end;flex:none">
+                  <div style="font-size:13px;font-weight:700">{{ t.views }}</div>
+                  <div style="font-size:10px;color:#8b93a1;text-transform:uppercase;letter-spacing:.04em">{{ tr.colViews }}</div>
+                </div>
+                <div style="text-align:end;flex:none;min-width:52px">
+                  <div style="font-size:13px;font-weight:700;color:#17a99b">{{ t.rate }}</div>
+                  <div style="font-size:10px;color:#8b93a1;text-transform:uppercase;letter-spacing:.04em">{{ tr.colEng }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:16px">{{ tr.contentFormat }}</div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <sc-for list="{{ fmtSplit }}" as="f" hint-placeholder-count="3">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                      <span style="display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:{{ f.color }}"></span>{{ f.name }}</span>
+                      <span style="font-size:13px;font-weight:700">{{ f.pct }}%</span>
+                    </div>
+                    <div style="height:8px;border-radius:4px;background:#f0f3f7"><div style="height:8px;border-radius:4px;background:{{ f.color }};width:{{ f.w }}"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;gap:16px">
+              <div style="flex:1;background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px">
+                <div style="font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">{{ tr.engRateLabel }}</div>
+                <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:24px">{{ engRateOverall }}</div>
+              </div>
+              <div style="flex:1;background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px">
+                <div style="font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">{{ tr.bestTimeLabel }}</div>
+                <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:24px">{{ bestTime }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ tabTeam }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="App — Approvals" style="padding:28px 32px;max-width:820px">
+        <h2 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:28px;letter-spacing:-1px;margin:0 0 4px">{{ tr.approvalsH2 }}</h2>
+        <p style="font-size:14px;color:#5c6675;margin:0 0 8px"><span style="color:{{ activeEventColor }};font-weight:700">{{ activeEventName }}</span> · {{ pendingLine }}</p>
+        <p style="font-size:13px;color:#8b93a1;margin:0 0 22px">{{ approvalsFlowNote }}</p>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ approvals }}" as="ap" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:16px">
+              <div style="width:40px;height:40px;border-radius:50%;background:{{ ap.avColor }};display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;flex:none">{{ ap.init }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14px;font-weight:700;margin-bottom:3px">{{ ap.titleL }}</div>
+                <div style="font-size:12px;color:#8b93a1">{{ ap.metaL }}</div>
+              </div>
+              <div style="display:flex;gap:8px;flex:none;align-items:center">
+                <sc-if value="{{ ap.isDone }}" hint-placeholder-val="{{ false }}">
+                  <span style="background:{{ ap.badgeBg }};color:{{ ap.badgeColor }};font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px">{{ ap.statusLabel }}</span>
+                </sc-if>
+                <button onClick="{{ ap.open }}" style="border:1px solid #dbe1ea;cursor:pointer;background:#fff;color:#0f172a;font-weight:700;font-size:13px;padding:9px 16px;border-radius:999px;font-family:inherit;white-space:nowrap" style-hover="border-color:#2563eb;color:#2563eb">{{ ap.openLabel }}</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ tabAdmin }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="App — Admin" style="padding:28px 32px;max-width:1000px">
+        <div style="margin-bottom:20px">
+          <h2 style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:28px;letter-spacing:-1px;margin:0 0 4px">{{ tr.adminH2 }}</h2>
+          <p style="font-size:14px;color:#5c6675;margin:0">{{ tr.adminSub }}</p>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:24px">
+          <sc-for list="{{ adminSections }}" as="s" hint-placeholder-count="3">
+            <button onClick="{{ s.pick }}" style="border:2px solid {{ s.bd }};cursor:pointer;background:{{ s.bg }};color:{{ s.color }};font-weight:700;font-size:13px;padding:8px 16px;border-radius:999px;font-family:inherit">{{ s.label }}</button>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ adminUsers }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div style="font-size:13px;color:#8b93a1;font-weight:600">{{ userCount }}</div>
+            <button onClick="{{ openInvite }}" style="border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;font-family:inherit" style-hover="background:#1d4ed8">{{ tr.inviteUser }}</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ users }}" as="u" hint-placeholder-count="6">
+              <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:16px 18px">
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+                  <div style="width:40px;height:40px;border-radius:50%;background:{{ u.avColor }};display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;flex:none">{{ u.init }}</div>
+                  <div style="flex:1;min-width:0">
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <span style="font-size:14px;font-weight:700">{{ u.name }}</span>
+                      <sc-if value="{{ u.canApprove }}" hint-placeholder-val="{{ false }}">
+                        <span style="background:#eef2f8;color:#2563eb;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px">{{ tr.approverTag }}</span>
+                      </sc-if>
+                    </div>
+                    <div dir="ltr" style="font-size:12px;color:#8b93a1;text-align:start">{{ u.email }}</div>
+                  </div>
+                  <span style="background:{{ u.statusBg }};color:{{ u.statusColor }};font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px;flex:none">{{ u.statusLabel }}</span>
+                  <button onClick="{{ u.remove }}" style="border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#8b93a1;font-weight:700;font-size:12px;padding:7px 12px;border-radius:999px;font-family:inherit;flex:none" style-hover="border-color:#d64545;color:#d64545">{{ tr.removeUser }}</button>
+                </div>
+                <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;border-top:1px solid #f0f3f7;padding-top:14px">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em">{{ tr.roleColLabel }}</span>
+                    <div style="display:flex;gap:4px">
+                      <sc-for list="{{ u.roleButtons }}" as="rb" hint-placeholder-count="3">
+                        <button onClick="{{ rb.set }}" style="border:1px solid {{ rb.bd }};cursor:pointer;background:{{ rb.bg }};color:{{ rb.color }};font-weight:700;font-size:12px;padding:6px 12px;border-radius:8px;font-family:inherit">{{ rb.label }}</button>
+                      </sc-for>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-inline-start:auto">
+                    <span style="background:{{ u.mfaBg }};color:{{ u.mfaColor }};font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px">{{ u.mfaLabel }}</span>
+                    <button onClick="{{ u.mfaAction }}" style="border:1px solid #dbe1ea;cursor:pointer;background:#fff;color:#0f172a;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;font-family:inherit" style-hover="border-color:#2563eb;color:#2563eb">{{ u.mfaActionLabel }}</button>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ adminEventsSec }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div style="font-size:13px;color:#8b93a1;font-weight:600">{{ tr.eventsManageSub }}</div>
+            <button onClick="{{ openAddEvent2 }}" style="border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;font-family:inherit" style-hover="background:#1d4ed8">{{ tr.addEvent }}</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ adminEvents }}" as="e" hint-placeholder-count="5">
+              <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+                <span style="width:14px;height:14px;border-radius:50%;background:{{ e.color }};flex:none"></span>
+                <input value="{{ e.nameVal }}" onInput="{{ e.onName }}" style="flex:1;min-width:160px;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px;font-weight:600;color:#0f172a;background:#fbfcfe" />
+                <span style="font-size:12px;color:#8b93a1;flex:none">{{ e.accounts }}</span>
+                <div style="display:flex;gap:7px;flex:none">
+                  <sc-for list="{{ e.swatches }}" as="c" hint-placeholder-count="6">
+                    <button onClick="{{ c.pick }}" style="width:26px;height:26px;border-radius:50%;background:{{ c.color }};border:2px solid #fff;box-shadow:0 0 0 2px {{ c.ring }};cursor:pointer;flex:none"></button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ adminIntegrations }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:13px;color:#8b93a1;font-weight:600;margin-bottom:16px">{{ tr.integrationsSub }}</div>
+          <div style="display:flex;flex-direction:column;gap:22px">
+            <sc-for list="{{ integrationsByEvent }}" as="ev" hint-placeholder-count="5">
+              <div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                  <span style="width:12px;height:12px;border-radius:50%;background:{{ ev.color }};flex:none"></span>
+                  <span style="font-family:'Space Grotesk','Tajawal',sans-serif;font-size:16px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ ev.name }}</span>
+                  <span style="font-size:12px;font-weight:700;color:#8b93a1;flex:none">{{ ev.connLabel }}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <sc-for list="{{ ev.accounts }}" as="a" hint-placeholder-count="4">
+                    <div style="background:#fff;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                      <span style="width:10px;height:10px;border-radius:50%;background:{{ a.platColor }};flex:none"></span>
+                      <div style="min-width:120px">
+                        <div style="font-size:13px;font-weight:700">{{ a.platName }}</div>
+                        <div dir="ltr" style="font-size:12px;color:#8b93a1;text-align:start">{{ a.handle }}</div>
+                      </div>
+                      <span style="background:{{ a.statusBg }};color:{{ a.statusColor }};font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;flex:none">{{ a.statusLabel }}</span>
+                      <sc-if value="{{ a.connected }}" hint-placeholder-val="{{ false }}">
+                        <div dir="ltr" style="flex:1;min-width:120px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#5c6675;background:#f4f6f9;border-radius:8px;padding:9px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:start">{{ a.masked }}</div>
+                        <button onClick="{{ a.disconnect }}" style="border:1px solid #f3c1c1;cursor:pointer;background:#fff;color:#d64545;font-weight:700;font-size:12px;padding:9px 16px;border-radius:999px;font-family:inherit;flex:none" style-hover="background:#fdf2f2">{{ tr.disconnect }}</button>
+                      </sc-if>
+                      <sc-if value="{{ a.notConnected }}" hint-placeholder-val="{{ true }}">
+                        <input dir="ltr" value="{{ a.keyVal }}" onInput="{{ a.onKey }}" placeholder="{{ tr.apiKeyPh }}" style="flex:1;min-width:150px;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:8px;padding:9px 12px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#0f172a;background:#fbfcfe;text-align:start" />
+                        <button onClick="{{ a.connect }}" style="border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:12px;padding:9px 18px;border-radius:999px;font-family:inherit;flex:none" style-hover="background:#1d4ed8">{{ tr.connect }}</button>
+                      </sc-if>
+                      <button onClick="{{ a.remove }}" title="{{ tr.removeAccountTitle }}" style="border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#a3abb8;font-weight:700;font-size:13px;width:32px;height:32px;border-radius:50%;font-family:inherit;flex:none" style-hover="border-color:#d64545;color:#d64545">✕</button>
+                    </div>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ ev.hasAddable }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px">
+                    <span style="font-size:12px;font-weight:700;color:#8b93a1">{{ tr.addAccountLabel }}:</span>
+                    <sc-for list="{{ ev.addable }}" as="ad" hint-placeholder-count="2">
+                      <button onClick="{{ ad.add }}" style="border:1px dashed #c8d0dc;cursor:pointer;background:#fff;color:#5c6675;font-weight:700;font-size:12px;padding:6px 12px;border-radius:999px;font-family:inherit;display:inline-flex;align-items:center;gap:6px" style-hover="border-color:#2563eb;color:#2563eb"><span style="width:8px;height:8px;border-radius:50%;background:{{ ad.color }}"></span>+ {{ ad.name }}</button>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ adminSettings }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:20px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:12px">{{ tr.setLangLabel }}</div>
+              <div style="display:flex;gap:6px">
+                <sc-for list="{{ langSet }}" as="o" hint-placeholder-count="2">
+                  <button onClick="{{ o.pick }}" style="border:2px solid {{ o.bd }};cursor:pointer;background:{{ o.bg }};color:{{ o.color }};font-weight:700;font-size:13px;padding:8px 18px;border-radius:999px;font-family:inherit">{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:20px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:12px">{{ tr.setWeekLabel }}</div>
+              <div style="display:flex;gap:6px">
+                <sc-for list="{{ weekSet }}" as="o" hint-placeholder-count="2">
+                  <button onClick="{{ o.pick }}" style="border:2px solid {{ o.bd }};cursor:pointer;background:{{ o.bg }};color:{{ o.color }};font-weight:700;font-size:13px;padding:8px 18px;border-radius:999px;font-family:inherit">{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:20px">
+              <div style="font-size:13px;font-weight:700;margin-bottom:12px">{{ tr.setToneLabel }}</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <sc-for list="{{ toneSet }}" as="o" hint-placeholder-count="3">
+                  <button onClick="{{ o.pick }}" style="border:2px solid {{ o.bd }};cursor:pointer;background:{{ o.bg }};color:{{ o.color }};font-weight:700;font-size:13px;padding:8px 18px;border-radius:999px;font-family:inherit">{{ o.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14px;font-weight:700;margin-bottom:3px">{{ tr.setMfaLabel }}</div>
+                <div style="font-size:12px;color:#8b93a1">{{ tr.setMfaDesc }}</div>
+              </div>
+              <button onClick="{{ requireMfaT.toggle }}" style="width:46px;height:26px;border-radius:999px;background:{{ requireMfaT.bg }};border:none;cursor:pointer;position:relative;flex:none">
+                <span style="position:absolute;top:3px;inset-inline-start:{{ requireMfaT.knob }};width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></span>
+              </button>
+            </div>
+            <div style="background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14px;font-weight:700;margin-bottom:3px">{{ tr.setAutoLabel }}</div>
+                <div style="font-size:12px;color:#8b93a1">{{ tr.setAutoDesc }}</div>
+              </div>
+              <button onClick="{{ autoPublishT.toggle }}" style="width:46px;height:26px;border-radius:999px;background:{{ autoPublishT.bg }};border:none;cursor:pointer;position:relative;flex:none">
+                <span style="position:absolute;top:3px;inset-inline-start:{{ autoPublishT.knob }};width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)"></span>
+              </button>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <sc-if value="{{ hasInvite }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeInvite }}" style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center;z-index:60;padding:24px">
+      <div dir="{{ dir }}" onClick="{{ stopProp }}" style="width:440px;max-width:100%;background:#fff;border-radius:20px;box-shadow:0 30px 80px rgba(15,23,42,.35)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #eef1f5">
+          <span style="font-family:'Space Grotesk','Tajawal',sans-serif;font-size:17px;font-weight:700">{{ tr.inviteTitle }}</span>
+          <button onClick="{{ closeInvite }}" style="border:none;cursor:pointer;background:#f4f6f9;width:30px;height:30px;border-radius:50%;font-family:inherit;color:#5c6675">✕</button>
+        </div>
+        <div style="padding:22px">
+          <label style="font-size:13px;font-weight:700;display:block;margin-bottom:8px">{{ tr.nameLabel }}</label>
+          <input value="{{ invName }}" onInput="{{ onInvName }}" style="width:100%;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;color:#0f172a;background:#fbfcfe;margin-bottom:16px" />
+          <label style="font-size:13px;font-weight:700;display:block;margin-bottom:8px">{{ tr.emailLabel }}</label>
+          <input dir="ltr" value="{{ invEmail }}" onInput="{{ onInvEmail }}" placeholder="name@sunaidiexpo.com" style="width:100%;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;color:#0f172a;background:#fbfcfe;margin-bottom:16px;text-align:start" />
+          <label style="font-size:13px;font-weight:700;display:block;margin-bottom:8px">{{ tr.roleLabel }}</label>
+          <div style="display:flex;gap:6px">
+            <sc-for list="{{ invRoleBtns }}" as="rb" hint-placeholder-count="3">
+              <button onClick="{{ rb.set }}" style="border:2px solid {{ rb.bd }};cursor:pointer;background:{{ rb.bg }};color:{{ rb.color }};font-weight:700;font-size:13px;padding:8px 16px;border-radius:999px;font-family:inherit">{{ rb.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;padding:16px 22px;border-top:1px solid #eef1f5;justify-content:flex-end">
+          <button onClick="{{ closeInvite }}" style="border:1px solid #dbe1ea;cursor:pointer;background:#fff;color:#5c6675;font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;font-family:inherit">{{ tr.decline }}</button>
+          <button onClick="{{ sendInvite }}" style="border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:13px;padding:10px 20px;border-radius:999px;font-family:inherit" style-hover="background:#1d4ed8">{{ tr.sendInvite }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasMfa }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeMfa }}" style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center;z-index:60;padding:24px">
+      <div dir="{{ dir }}" onClick="{{ stopProp }}" style="width:400px;max-width:100%;background:#fff;border-radius:20px;box-shadow:0 30px 80px rgba(15,23,42,.35)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #eef1f5">
+          <span style="font-family:'Space Grotesk','Tajawal',sans-serif;font-size:16px;font-weight:700">{{ tr.mfaTitle }}</span>
+          <button onClick="{{ closeMfa }}" style="border:none;cursor:pointer;background:#f4f6f9;width:30px;height:30px;border-radius:50%;font-family:inherit;color:#5c6675">✕</button>
+        </div>
+        <div style="padding:22px;text-align:center">
+          <div style="font-size:13px;font-weight:700;margin-bottom:14px">{{ mfaUserName }}</div>
+          <div style="width:150px;height:150px;margin:0 auto 16px;border-radius:14px;background:repeating-conic-gradient(#0f172a 0 25%, #fff 0 50%) 0 0/24px 24px;border:1px solid #e3e8ef"></div>
+          <p style="font-size:13px;line-height:1.5;color:#5c6675;margin:0 0 16px">{{ tr.mfaScan }}</p>
+          <input dir="ltr" value="{{ mfaCode }}" onInput="{{ onMfaCode }}" placeholder="{{ tr.mfaCodePh }}" style="width:100%;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;font-family:ui-monospace,Menlo,monospace;font-size:18px;letter-spacing:.3em;text-align:center;color:#0f172a;background:#fbfcfe" />
+        </div>
+        <div style="display:flex;gap:10px;padding:16px 22px;border-top:1px solid #eef1f5;justify-content:flex-end">
+          <button onClick="{{ closeMfa }}" style="border:1px solid #dbe1ea;cursor:pointer;background:#fff;color:#5c6675;font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;font-family:inherit">{{ tr.decline }}</button>
+          <button onClick="{{ verifyMfa }}" style="border:none;cursor:pointer;background:#17a99b;color:#fff;font-weight:700;font-size:13px;padding:10px 20px;border-radius:999px;font-family:inherit" style-hover="background:#128d81">{{ tr.verify }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasAdd }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeAdd }}" style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center;z-index:60;padding:24px">
+      <div dir="{{ dir }}" onClick="{{ stopProp }}" style="width:440px;max-width:100%;background:#fff;border-radius:20px;box-shadow:0 30px 80px rgba(15,23,42,.35)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #eef1f5">
+          <span style="font-family:'Space Grotesk','Tajawal',sans-serif;font-size:17px;font-weight:700">{{ tr.newEventTitle }}</span>
+          <button onClick="{{ closeAdd }}" style="border:none;cursor:pointer;background:#f4f6f9;width:30px;height:30px;border-radius:50%;font-family:inherit;color:#5c6675">✕</button>
+        </div>
+        <div style="padding:22px">
+          <label style="font-size:13px;font-weight:700;display:block;margin-bottom:8px">{{ tr.eventNameLabel }}</label>
+          <input value="{{ newName }}" onInput="{{ onNewName }}" placeholder="{{ tr.namePh }}" style="width:100%;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;color:#0f172a;background:#fbfcfe;margin-bottom:20px" />
+          <label style="font-size:13px;font-weight:700;display:block;margin-bottom:10px">{{ tr.colorLabel }}</label>
+          <div style="display:flex;gap:10px;margin-bottom:18px">
+            <sc-for list="{{ colorSwatches }}" as="c" hint-placeholder-count="6">
+              <button onClick="{{ c.pick }}" style="width:32px;height:32px;border-radius:50%;background:{{ c.color }};border:2px solid #fff;box-shadow:0 0 0 2px {{ c.ring }};cursor:pointer;flex:none"></button>
+            </sc-for>
+          </div>
+          <p style="font-size:12px;color:#8b93a1;margin:0">{{ tr.newEventNote }}</p>
+        </div>
+        <div style="display:flex;gap:10px;padding:16px 22px;border-top:1px solid #eef1f5;justify-content:flex-end">
+          <button onClick="{{ closeAdd }}" style="border:1px solid #dbe1ea;cursor:pointer;background:#fff;color:#5c6675;font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;font-family:inherit">{{ tr.decline }}</button>
+          <button onClick="{{ createEvent }}" style="border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:13px;padding:10px 20px;border-radius:999px;font-family:inherit" style-hover="background:#1d4ed8">{{ tr.createEvent }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasReview }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeReview }}" style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center;z-index:60;padding:24px">
+      <div dir="{{ dir }}" onClick="{{ stopProp }}" style="width:560px;max-width:100%;max-height:88vh;overflow:auto;background:#fff;border-radius:20px;box-shadow:0 30px 80px rgba(15,23,42,.35)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #eef1f5">
+          <div style="display:flex;align-items:center;gap:9px;min-width:0">
+            <span style="width:11px;height:11px;border-radius:50%;background:{{ reviewColor }};flex:none"></span>
+            <span style="font-size:14px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ reviewEventName }}</span>
+          </div>
+          <button onClick="{{ closeReview }}" style="border:none;cursor:pointer;background:#f4f6f9;width:30px;height:30px;border-radius:50%;font-family:inherit;color:#5c6675;flex:none">✕</button>
+        </div>
+        <div style="padding:22px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8b93a1;margin-bottom:6px">{{ tr.reviewLabel }}</div>
+          <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:20px;margin-bottom:16px">{{ reviewTitle }}</div>
+          <div style="height:200px;border-radius:14px;background:repeating-linear-gradient(45deg,#eef1f5 0 10px,#e5e9f0 10px 20px);display:grid;place-items:center;margin-bottom:18px;border:1px dashed #c8d0dc">
+            <span style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8b93a1">{{ tr.reelHint }}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <label style="font-size:13px;font-weight:700">{{ tr.captionLabel }}</label>
+            <span style="font-size:12px;color:#8b93a1">{{ tr.captionEditHint }}</span>
+          </div>
+          <textarea value="{{ reviewCaption }}" onChange="{{ onReviewCaption }}" style="width:100%;box-sizing:border-box;height:110px;resize:none;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;line-height:1.5;color:#0f172a;background:#fbfcfe"></textarea>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px">
+            <sc-for list="{{ reviewPlats }}" as="sp" hint-placeholder-count="2">
+              <span style="display:inline-flex;align-items:center;gap:6px;background:#f4f6f9;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:{{ sp.color }}"></span>{{ sp.name }}</span>
+            </sc-for>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:#8b93a1;margin-top:12px">{{ reviewWhen }}</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;padding:16px 22px;border-top:1px solid #eef1f5;justify-content:flex-end">
+          <sc-if value="{{ reviewIsDone }}" hint-placeholder-val="{{ false }}">
+            <span style="margin-inline-end:auto;background:{{ reviewBadgeBg }};color:{{ reviewBadgeColor }};font-size:12px;font-weight:700;padding:7px 14px;border-radius:999px">{{ reviewStatusLabel }}</span>
+          </sc-if>
+          <button onClick="{{ saveReview }}" style="border:1px solid #dbe1ea;cursor:pointer;background:#fff;color:#0f172a;font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;font-family:inherit" style-hover="border-color:#2563eb;color:#2563eb">{{ tr.saveChanges }}</button>
+          <sc-if value="{{ reviewCanDiscard }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ discardReview }}" style="border:1px solid #f3c1c1;cursor:pointer;background:#fff;color:#d64545;font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;font-family:inherit" style-hover="background:#fdf2f2">{{ tr.discard }}</button>
+          </sc-if>
+          <sc-if value="{{ reviewCanAct }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ declineReview }}" style="border:1px solid #f3c1c1;cursor:pointer;background:#fff;color:#d64545;font-weight:700;font-size:13px;padding:10px 18px;border-radius:999px;font-family:inherit" style-hover="background:#fdf2f2">{{ tr.decline }}</button>
+            <button onClick="{{ approveReview }}" style="border:none;cursor:pointer;background:#17a99b;color:#fff;font-weight:700;font-size:13px;padding:10px 20px;border-radius:999px;font-family:inherit" style-hover="background:#128d81">{{ tr.approve }}</button>
+          </sc-if>
+          <sc-if value="{{ reviewNoPerm }}" hint-placeholder-val="{{ false }}">
+            <span style="font-size:12px;color:#8b93a1;text-align:end;max-width:260px">{{ tr.reviewNoPerm }}</span>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasStat }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeStat }}" style="position:fixed;inset:0;background:rgba(15,23,42,.45);display:grid;place-items:center;z-index:60;padding:24px">
+      <div dir="{{ dir }}" onClick="{{ stopProp }}" style="width:600px;max-width:100%;max-height:88vh;overflow:auto;background:#fff;border-radius:20px;box-shadow:0 30px 80px rgba(15,23,42,.35)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 22px;border-bottom:1px solid #eef1f5">
+          <div style="min-width:0">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8b93a1;margin-bottom:6px">{{ tr.postAnalytics }}</div>
+            <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:18px">{{ statView.title }}</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px">
+              <sc-for list="{{ statView.plats }}" as="sp" hint-placeholder-count="2">
+                <span style="display:inline-flex;align-items:center;gap:6px;background:#f4f6f9;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:600"><span style="width:7px;height:7px;border-radius:50%;background:{{ sp.color }}"></span>{{ sp.name }}</span>
+              </sc-for>
+              <span style="font-size:12px;color:#8b93a1">{{ statView.whenLabel }}</span>
+            </div>
+          </div>
+          <button onClick="{{ closeStat }}" style="border:none;cursor:pointer;background:#f4f6f9;width:30px;height:30px;border-radius:50%;font-family:inherit;color:#5c6675;flex:none">✕</button>
+        </div>
+        <div style="padding:22px">
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:22px">
+            <sc-for list="{{ statView.metrics }}" as="m" hint-placeholder-count="8">
+              <div style="background:#f8fafc;border:1px solid #eef1f5;border-radius:12px;padding:14px">
+                <div style="font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">{{ m.label }}</div>
+                <div style="font-family:'Space Grotesk','Tajawal',sans-serif;font-weight:700;font-size:20px">{{ m.value }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div>
+              <div style="font-size:13px;font-weight:700;margin-bottom:14px">{{ tr.perAccountLabel }}</div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <sc-for list="{{ statView.perAccount }}" as="pa" hint-placeholder-count="2">
+                  <div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                      <span style="display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:{{ pa.color }}"></span>{{ pa.name }}</span>
+                      <span style="font-size:13px;font-weight:700">{{ pa.reach }}</span>
+                    </div>
+                    <div style="height:8px;border-radius:4px;background:#f0f3f7"><div style="height:8px;border-radius:4px;background:{{ pa.color }};width:{{ pa.w }}"></div></div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:700;margin-bottom:14px">{{ tr.viewsTrend }}</div>
+              <div style="display:flex;align-items:flex-end;gap:8px;height:120px">
+                <sc-for list="{{ statView.trend }}" as="b" hint-placeholder-count="7">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end">
+                    <div style="width:100%;border-radius:6px 6px 3px 3px;background:{{ b.color }};height:{{ b.h }}%"></div>
+                    <span style="font-size:10px;font-weight:600;color:#8b93a1">{{ b.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;font-weight:600;font-size:14px;padding:13px 24px;border-radius:999px;box-shadow:0 12px 32px rgba(15,23,42,.3);animation:toastIn .25s ease;z-index:50">{{ toastMsg }}</div>
+  </sc-if>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;defaultLang&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;en&quot;, &quot;ar&quot;], &quot;default&quot;: &quot;en&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Behavior&quot;},
+  &quot;defaultView&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;landing&quot;, &quot;app&quot;], &quot;default&quot;: &quot;landing&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Behavior&quot;},
+  &quot;aiTone&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;punchy&quot;, &quot;professional&quot;, &quot;friendly&quot;], &quot;default&quot;: &quot;punchy&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Behavior&quot;},
+  &quot;weekStartsMonday&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Behavior&quot;}
+}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.PLATFORMS = [
+      { key: 'instagram', en: 'Instagram', ar: 'إنستغرام', color: '#e0457b' },
+      { key: 'tiktok', en: 'TikTok', ar: 'تيك توك', color: '#17a99b' },
+      { key: 'x', en: 'X', ar: 'إكس', color: '#0f172a' },
+      { key: 'facebook', en: 'Facebook', ar: 'فيسبوك', color: '#2563eb' },
+      { key: 'linkedin', en: 'LinkedIn', ar: 'لينكدإن', color: '#0a66c2' }
+    ];
+    this.EVENTS = [
+      { id: 'auto', en: 'Riyadh Auto Show', ar: 'معرض الرياض للسيارات', color: '#e0457b', barIx: 0,
+        socials: [{ key: 'instagram', handle: '@riyadhautoshow', f: 128000 }, { key: 'tiktok', handle: '@riyadhauto', f: 96000 }, { key: 'x', handle: '@RiyadhAutoShow', f: 41000 }, { key: 'facebook', handle: 'Riyadh Auto Show', f: 63000 }, { key: 'linkedin', handle: 'Riyadh Auto Show', f: 22000 }] },
+      { id: 'food', en: 'Saudi Food Expo', ar: 'إكسبو الغذاء السعودي', color: '#17a99b', barIx: 1,
+        socials: [{ key: 'instagram', handle: '@saudifoodexpo', f: 74000 }, { key: 'tiktok', handle: '@saudifood', f: 52000 }, { key: 'facebook', handle: 'Saudi Food Expo', f: 38000 }, { key: 'linkedin', handle: 'Saudi Food Expo', f: 31000 }] },
+      { id: 'beauty', en: 'Beauty World KSA', ar: 'بيوتي وورلد السعودية', color: '#7c5cf0', barIx: 2,
+        socials: [{ key: 'instagram', handle: '@beautyworldksa', f: 210000 }, { key: 'tiktok', handle: '@beautyworldksa', f: 175000 }, { key: 'x', handle: '@BeautyWorldKSA', f: 33000 }, { key: 'linkedin', handle: 'Beauty World KSA', f: 18000 }] },
+      { id: 'big5', en: 'Big 5 Construct Saudi', ar: 'بيغ 5 للإنشاءات السعودية', color: '#2563eb', barIx: 3,
+        socials: [{ key: 'instagram', handle: '@big5saudi', f: 45000 }, { key: 'x', handle: '@Big5Saudi', f: 28000 }, { key: 'facebook', handle: 'Big 5 Construct Saudi', f: 51000 }, { key: 'linkedin', handle: 'Big 5 Construct Saudi', f: 96000 }] },
+      { id: 'gaming', en: 'Gaming & Esports Expo', ar: 'إكسبو الألعاب والرياضات الإلكترونية', color: '#f59e0b', barIx: 4,
+        socials: [{ key: 'instagram', handle: '@gamingexpoksa', f: 156000 }, { key: 'tiktok', handle: '@gamingexpo', f: 240000 }, { key: 'x', handle: '@GamingExpoKSA', f: 88000 }, { key: 'facebook', handle: 'Gaming Esports Expo', f: 72000 }, { key: 'linkedin', handle: 'Gaming & Esports Expo', f: 27000 }] }
+    ];
+    this.SUFFIX = {
+      teaser: { en: 'Teaser', ar: 'تشويق', capEn: 'Save the date — something big is coming.', capAr: 'احجزوا الموعد — شيء كبير قادم.' },
+      lineup: { en: 'Exhibitor lineup', ar: 'قائمة العارضين', capEn: 'Meet the brands exhibiting this year.', capAr: 'تعرّفوا على العلامات المشاركة هذا العام.' },
+      tickets: { en: 'Tickets live', ar: 'التذاكر متاحة', capEn: 'Passes are now available — grab yours before they sell out.', capAr: 'التذاكر متاحة الآن — احجزوا قبل نفادها.' },
+      speaker: { en: 'Speaker reveal', ar: 'الكشف عن المتحدثين', capEn: 'Our keynote lineup just dropped. Swipe to see who is joining.', capAr: 'أعلنّا عن قائمة المتحدثين الرئيسيين. اكتشفوا من سينضم.' },
+      recap: { en: 'Day 1 recap', ar: 'ملخص اليوم الأول', capEn: 'Day one, in 30 seconds. Watch till the end.', capAr: 'اليوم الأول في 30 ثانية. شاهدوا حتى النهاية.' },
+      bts: { en: 'Behind the scenes', ar: 'خلف الكواليس', capEn: 'A peek at how it all comes together.', capAr: 'نظرة على كيفية تجهيز كل شيء.' },
+      countdown: { en: 'Countdown', ar: 'العد التنازلي', capEn: 'Only a few days to go. Are you ready?', capAr: 'أيام قليلة تبقّت. هل أنتم مستعدون؟' },
+      highlights: { en: 'Highlights', ar: 'أبرز اللحظات', capEn: 'The best moments, all in one reel.', capAr: 'أفضل اللحظات في ريل واحد.' }
+    };
+    this.T = {
+      en: {
+        brand: 'Sunaidi Design Central',
+        navFeatures: 'Features', navHow: 'How it works', openApp: 'Open the app',
+        badge: 'Multi-event social, automated',
+        h1a: 'Multiple events.', h1b: 'One', h1c: 'command center.',
+        heroSub: 'Sunaidi Design Central runs the social calendars for all your events from a single dashboard — schedule, auto-publish and measure every account, with AI-written captions.',
+        launchApp: 'Launch the app →', seeFeatures: 'See features', eventsRun: 'Now running',
+        reelHint: 'reel · 9:16', scheduleWord: 'Schedule',
+        chipAi: 'Caption written by AI ✦', chipEvents: 'Multiple events · one calendar',
+        featH2: 'Run every event from one place.',
+        featSub: 'Six tools. One workflow. Every event, every account, no tab-juggling.',
+        f1t: 'One dashboard, every event', f1d: 'Switch between events in a click. Each keeps its own accounts, calendar and numbers.',
+        f2t: 'AI captions & hashtags', f2d: 'Pick a tone, hit generate. Platform-ready copy and hashtags in seconds.',
+        f3t: 'One-click cross-posting', f3d: 'Toggle the accounts you want. One upload becomes native posts everywhere.',
+        f4t: 'Analytics per event', f4d: 'Views, engagement and growth for each event, side by side.',
+        f5t: 'Content library', f5d: 'Every video, reel and asset per event — tagged and reusable.',
+        f6t: 'Approvals built in', f6d: 'Teammates review and approve before anything goes live. No surprises.',
+        howH2: "Three steps. That's it.",
+        s1t: 'Pick an event', s1d: 'Choose which event you are posting for and upload your video.',
+        s2t: 'Let AI write & schedule', s2d: 'Captions, hashtags and the best posting time — generated for you.',
+        s3t: 'We post everywhere', s3d: "That event's Instagram, TikTok, X and Facebook — published on time.",
+        ctaH2: 'Every event, a month ahead.', ctaSub: 'Built for the Sunaidi marketing team. Free to try inside.',
+        footer1: '© 2026 Sunaidi Design Central', footer2: 'Made for the internal marketing team',
+        backToSite: '← Back to site', connected: 'Connected accounts', managing: 'Managing',
+        loginWelcome: 'Welcome back', loginSub: 'Sign in to Sunaidi Design Central', passwordLabel: 'Password', signInBtn: 'Sign in', orWord: 'or', ssoBtn: 'Continue with Sunaidi SSO', mfaStepTitle: 'Two-factor authentication', mfaStepSub: 'Enter the 6-digit code from your authenticator app', verifyBtn: 'Verify & sign in', backupCode: 'Use a backup code instead', loginBrandH: 'Every event, one command center.', loginBrandSub: 'Plan, publish and measure social across all your events — in one place.', secureNote: 'Protected by two-factor authentication', backToLogin: '← Back',
+        tabDashboard: 'Dashboard', tabCompose: 'Compose', tabCalendar: 'Calendar', tabLibrary: 'Library', tabAnalytics: 'Analytics', tabTeam: 'Approvals',
+        dashH2: 'Marketing dashboard', dashSub: 'All your events at a glance.',
+        yourEvents: 'Your events', cardScheduled: 'scheduled', cardNext: 'next post', cardOpen: 'Open →',
+        reachAllEvents: 'Reach across all events', reachMonthSub: 'last 30 days', audienceByEventLabel: 'Audience by event', upcomingLabel: 'Upcoming posts', nothingUpcoming: 'Nothing scheduled yet', accountsWord: 'accounts',
+        kpiReach: 'Total audience', kpiScheduled: 'Scheduled posts', kpiAwaiting: 'Awaiting approval', kpiEvents: 'Active events',
+        kpiReachSub: 'across all accounts', kpiSchedSub: 'ready to publish', kpiAwaitSub: 'need a review', kpiEventsSub: 'live right now',
+        statusOnTrack: 'On track', statusNeeds: 'Add posts',
+        tabAdmin: 'Admin', workspace: 'Workspace',
+        adminH2: 'Admin console', adminSub: 'Manage events, people and workspace settings.',
+        secUsers: 'Team & access', secEvents: 'Events', secSettings: 'Settings',
+        secIntegrations: 'Integrations', integrationsSub: 'Each event connects its own accounts — add an API key or token per account.', apiConnected: 'Connected', apiNotConnected: 'Not connected', apiKeyLabel: 'API key / access token', apiKeyPh: 'Paste API key or access token', connect: 'Connect', disconnect: 'Disconnect', usedByEvents: n => 'Used by ' + n + ' event' + (n === 1 ? '' : 's'), connectedOf: (a, b) => a + '/' + b + ' connected', toastConnected: 'Account connected ✓', toastDisconnected: 'Account disconnected',
+        addAccountLabel: 'Add account', removeAccountTitle: 'Remove account', toastAccountAdded: 'Account added ✓', toastAccountRemoved: 'Account removed',
+        inviteUser: 'Invite user', roleAdmin: 'Admin', roleEditor: 'Editor', roleViewer: 'Viewer',
+        roleManager: 'Manager', approverTag: 'Can approve', actingAs: 'Acting as', flowNote: 'Editors submit posts; Managers and Admins approve them before they go live.', reviewNoPerm: 'Only Managers and Admins can approve. You can review and edit.', discard: 'Discard', toastDiscarded: 'Post discarded',
+        roleColLabel: 'Role', mfaOn: 'MFA on', mfaOff: 'MFA off', mfaRequired: 'MFA required',
+        enableMfa: 'Enable MFA', resetMfa: 'Reset MFA', statusActive: 'Active', statusInvited: 'Invited', removeUser: 'Remove',
+        mfaTitle: 'Set up two-factor auth', mfaScan: 'Scan this QR code with your authenticator app, then enter the 6-digit code.', mfaCodePh: '6-digit code', verify: 'Verify & enable',
+        inviteTitle: 'Invite a teammate', nameLabel: 'Full name', emailLabel: 'Work email', roleLabel: 'Role', sendInvite: 'Send invite', accessAll: 'All events',
+        eventsManageSub: 'Rename, recolour or add events.', accountsCount: n => n + ' accounts',
+        setLangLabel: 'Interface language', setWeekLabel: 'Week starts on', sunday: 'Sunday', monday: 'Monday',
+        setToneLabel: 'Default AI tone', tonePunchy: 'Punchy', toneProfessional: 'Professional', toneFriendly: 'Friendly',
+        setMfaLabel: 'Require MFA for everyone', setMfaDesc: 'Members without two-factor must set it up before they can publish.',
+        setAutoLabel: 'Auto-publish scheduled posts', setAutoDesc: 'Turn off to require a manual tap at publish time.',
+        peopleLabel: 'People', settingsLabel: 'Publishing & security',
+        toastRoleUpdated: 'Role updated ✓', toastMfaReset: 'MFA reset', toastMfaOn: 'Two-factor enabled ✓', toastUserRemoved: 'User removed', toastInvited: 'Invitation sent ✓',
+        addEvent: '+ New event', newEventTitle: 'Add an event', eventNameLabel: 'Event name', namePh: 'e.g. Riyadh Book Fair', colorLabel: 'Colour', createEvent: 'Create event', newEventNote: 'You can connect its social accounts after creating.', toastEventAdded: 'Event added ✓', newEventDefault: 'Untitled event',
+        composeH2: 'Compose', composeSub: 'One post, every account of',
+        dropHint: 'drop video / reel here · 9:16 or 1:1',
+        captionLabel: 'Caption', captionPh: 'Write a caption, or let AI do it…',
+        genIdle: 'Generate with AI', genBusy: 'Writing…',
+        publishTo: 'Publish to', on: 'ON', off: 'OFF',
+        scheduleFor: 'Schedule for', schedulePost: 'Schedule post →', today: 'Today',
+        calendarH2: 'Calendar', schedLine: n => n + ' posts scheduled',
+        arrPrev: '←', arrNext: '→',
+        deletePost: 'Delete post', posted: 'Posted', scheduled: 'Scheduled',
+        libraryH2: 'Library', librarySub: 'Every asset, tagged and ready to reuse.',
+        reuseBtn: 'Use in a post →', removeAsset: 'Remove', fromLibrary: 'from Library', toastAdded: 'Added to the composer ✓',
+        filterAll: 'All', typeVideo: 'Video', typeReel: 'Reel', typeImage: 'Image',
+        analyticsH2: 'Analytics', analyticsSub: 'Across this event\u2019s accounts.',
+        r7: 'Last 7 days', r30: 'Last 30 days', rToday: 'Today', r90: 'Last 90 days', r365: 'Last 12 months',
+        dQuarter: '% vs last quarter', dYear: '% vs last year', thisQuarter: 'this quarter', thisYear: 'this year',
+        stViewsLabel: 'Views', stEngLabel: 'Engagement', stFollowersLabel: 'New followers', stPostsLabel: 'Posts published',
+        dWeek: '% vs last week', dMonth: '% vs last month', thisWeek: 'this week', thisMonth: 'this month',
+        viewsOverTime: 'Views over time', byPlatform: 'By account',
+        secAccountPerf: 'Account performance', colAccount: 'Account', colFollowers: 'Followers', colViews: 'Views', colEng: 'Engagement', colGrowth: 'Growth', topPostsLabel: 'Top posts', engRateLabel: 'Avg engagement rate', contentFormat: 'By content format', bestTimeLabel: 'Best time to post',
+        postAnalytics: 'Post analytics', mReach: 'Reach', mLikes: 'Likes', mComments: 'Comments', mShares: 'Shares', mSaves: 'Saves', mCompletion: 'Avg. watch', viewsTrend: 'Views — last 7 days', perAccountLabel: 'Reach by account', viewAnalytics: 'View analytics',
+        approvalsH2: 'Approvals', pendingLine: n => n + ' waiting for review',
+        approve: 'Approve', decline: 'Decline', approvedBadge: 'Approved ✓', declinedBadge: 'Declined',
+        openLabel: 'Preview & edit', reviewLabel: 'Review post', saveChanges: 'Save changes', captionEditHint: 'Edit before you approve', toastSaved: 'Changes saved ✓',
+        toastSched: n => 'Scheduled to ' + n + ' account' + (n > 1 ? 's' : '') + ' ✓',
+        toastApproved: 'Approved — will publish as scheduled ✓',
+        toastDeclined: 'Declined and sent back to draft',
+        toastDeleted: 'Post deleted',
+        dows: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+        weekLabel: 'Week', dash: '—', whenToday: 'Today', whenYesterday: 'Yesterday',
+        eventsCount: n => n + ' events',
+        subA: 'submitted for', by: 'by'
+      },
+      ar: {
+        brand: 'سنيدي ديزاين سنترال',
+        navFeatures: 'المميزات', navHow: 'كيف يعمل', openApp: 'افتح التطبيق',
+        badge: 'نشر متعدد الفعاليات، مؤتمت',
+        h1a: 'عدة فعاليات.', h1b: 'مركز', h1c: 'تحكم واحد.',
+        heroSub: 'سنيدي ديزاين سنترال يدير تقاويم التواصل الاجتماعي لكل فعالياتك من لوحة واحدة — جدولة ونشر تلقائي وقياس لكل حساب، مع تعليقات مكتوبة بالذكاء الاصطناعي.',
+        launchApp: 'أطلق التطبيق ←', seeFeatures: 'استعرض المميزات', eventsRun: 'قيد التشغيل الآن',
+        reelHint: 'ريل · 9:16', scheduleWord: 'جدولة',
+        chipAi: 'تعليق مكتوب بالذكاء الاصطناعي ✦', chipEvents: 'عدة فعاليات · تقويم واحد',
+        featH2: 'أدر كل فعالية من مكان واحد.',
+        featSub: 'ست أدوات. سير عمل واحد. كل فعالية وكل حساب، دون تنقّل بين النوافذ.',
+        f1t: 'لوحة واحدة، كل فعالية', f1d: 'انتقل بين الفعاليات بنقرة. لكل واحدة حساباتها وتقويمها وأرقامها.',
+        f2t: 'تعليقات وهاشتاقات بالذكاء الاصطناعي', f2d: 'اختر النبرة واضغط توليد. نصوص وهاشتاقات جاهزة لكل منصة في ثوانٍ.',
+        f3t: 'نشر متعدد بنقرة واحدة', f3d: 'فعّل الحسابات التي تريدها. رفع واحد يتحول إلى منشورات أصلية في كل مكان.',
+        f4t: 'تحليلات لكل فعالية', f4d: 'المشاهدات والتفاعل والنمو لكل فعالية، جنباً إلى جنب.',
+        f5t: 'مكتبة المحتوى', f5d: 'كل فيديو وريل وأصل لكل فعالية — موسوم وقابل لإعادة الاستخدام.',
+        f6t: 'موافقات مدمجة', f6d: 'يراجع الزملاء ويوافقون قبل نشر أي شيء. لا مفاجآت.',
+        howH2: 'ثلاث خطوات. هذا كل شيء.',
+        s1t: 'اختر الفعالية', s1d: 'اختر الفعالية التي تنشر لها وارفع الفيديو.',
+        s2t: 'دع الذكاء الاصطناعي يكتب ويجدول', s2d: 'التعليقات والهاشتاقات وأفضل وقت للنشر — تُولَّد لك تلقائياً.',
+        s3t: 'ننشر في كل مكان', s3d: 'إنستغرام وتيك توك وإكس وفيسبوك الخاصة بالفعالية — نشر في الوقت المحدد.',
+        ctaH2: 'كل فعالية، بشهر مقدماً.', ctaSub: 'صُمم لفريق تسويق سنيدي. جربه مجاناً من الداخل.',
+        footer1: '© 2026 سنيدي ديزاين سنترال', footer2: 'صُنع لفريق التسويق الداخلي',
+        backToSite: '→ العودة للموقع', connected: 'الحسابات المتصلة', managing: 'تدير',
+        loginWelcome: 'أهلاً بعودتك', loginSub: 'سجّل الدخول إلى سنيدي ديزاين سنترال', passwordLabel: 'كلمة المرور', signInBtn: 'تسجيل الدخول', orWord: 'أو', ssoBtn: 'المتابعة عبر الدخول الموحّد', mfaStepTitle: 'المصادقة الثنائية', mfaStepSub: 'أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة', verifyBtn: 'تحقّق ودخول', backupCode: 'استخدم رمزًا احتياطيًا', loginBrandH: 'كل فعالية، مركز تحكم واحد.', loginBrandSub: 'خطّط وانشر وقس التواصل الاجتماعي لكل فعالياتك — في مكان واحد.', secureNote: 'محمي بالمصادقة الثنائية', backToLogin: '→ رجوع',
+        tabDashboard: 'اللوحة', tabCompose: 'إنشاء', tabCalendar: 'التقويم', tabLibrary: 'المكتبة', tabAnalytics: 'التحليلات', tabTeam: 'الموافقات',
+        dashH2: 'لوحة تحكم التسويق', dashSub: 'كل فعالياتك في لمحة.',
+        yourEvents: 'فعالياتك', cardScheduled: 'مجدول', cardNext: 'المنشور القادم', cardOpen: 'فتح ←',
+        reachAllEvents: 'الوصول عبر كل الفعاليات', reachMonthSub: 'آخر 30 يومًا', audienceByEventLabel: 'الجمهور حسب الفعالية', upcomingLabel: 'المنشورات القادمة', nothingUpcoming: 'لا شيء مجدول بعد', accountsWord: 'حسابات',
+        kpiReach: 'إجمالي الجمهور', kpiScheduled: 'منشورات مجدولة', kpiAwaiting: 'بانتظار الموافقة', kpiEvents: 'فعاليات نشطة',
+        kpiReachSub: 'عبر كل الحسابات', kpiSchedSub: 'جاهزة للنشر', kpiAwaitSub: 'تحتاج مراجعة', kpiEventsSub: 'نشطة الآن',
+        statusOnTrack: 'على المسار', statusNeeds: 'أضف منشورات',
+        tabAdmin: 'الإدارة', workspace: 'مساحة العمل',
+        adminH2: 'وحدة الإدارة', adminSub: 'أدر الفعاليات والأشخاص وإعدادات مساحة العمل.',
+        secUsers: 'الفريق والصلاحيات', secEvents: 'الفعاليات', secSettings: 'الإعدادات',
+        secIntegrations: 'التكاملات', integrationsSub: 'كل فعالية تربط حساباتها الخاصة — أضف مفتاح API أو رمز وصول لكل حساب.', apiConnected: 'متصل', apiNotConnected: 'غير متصل', apiKeyLabel: 'مفتاح API / رمز الوصول', apiKeyPh: 'الصق مفتاح API أو رمز الوصول', connect: 'ربط', disconnect: 'فصل', usedByEvents: n => 'تستخدمه ' + n + ' فعاليات', connectedOf: (a, b) => a + '/' + b + ' متصل', toastConnected: 'تم ربط الحساب ✓', toastDisconnected: 'تم فصل الحساب',
+        addAccountLabel: 'إضافة حساب', removeAccountTitle: 'إزالة الحساب', toastAccountAdded: 'أُضيف الحساب ✓', toastAccountRemoved: 'تمت إزالة الحساب',
+        inviteUser: 'دعوة مستخدم', roleAdmin: 'مدير', roleEditor: 'محرر', roleViewer: 'مشاهد',
+        roleManager: 'مسؤول اعتماد', approverTag: 'صلاحية الاعتماد', actingAs: 'تعمل باسم', flowNote: 'المحررون يقدّمون المنشورات؛ والمديرون والمسؤولون يعتمدونها قبل نشرها.', reviewNoPerm: 'الاعتماد للمديرين والمسؤولين فقط. يمكنك المراجعة والتحرير.', discard: 'تجاهل', toastDiscarded: 'تم تجاهل المنشور',
+        roleColLabel: 'الصلاحية', mfaOn: 'المصادقة مفعّلة', mfaOff: 'غير مفعّلة', mfaRequired: 'مطلوبة',
+        enableMfa: 'تفعيل المصادقة', resetMfa: 'إعادة تعيين', statusActive: 'نشط', statusInvited: 'مدعو', removeUser: 'إزالة',
+        mfaTitle: 'إعداد المصادقة الثنائية', mfaScan: 'امسح رمز QR بتطبيق المصادقة، ثم أدخل الرمز المكوّن من 6 أرقام.', mfaCodePh: 'الرمز المكوّن من 6 أرقام', verify: 'تحقّق وفعّل',
+        inviteTitle: 'دعوة زميل', nameLabel: 'الاسم الكامل', emailLabel: 'البريد الإلكتروني', roleLabel: 'الصلاحية', sendInvite: 'إرسال الدعوة', accessAll: 'كل الفعاليات',
+        eventsManageSub: 'أعد التسمية أو اللون أو أضف فعاليات.', accountsCount: n => n + ' حسابات',
+        setLangLabel: 'لغة الواجهة', setWeekLabel: 'يبدأ الأسبوع يوم', sunday: 'الأحد', monday: 'الاثنين',
+        setToneLabel: 'نبرة الذكاء الافتراضية', tonePunchy: 'جريئة', toneProfessional: 'احترافية', toneFriendly: 'ودّية',
+        setMfaLabel: 'إلزام المصادقة الثنائية للجميع', setMfaDesc: 'يجب على الأعضاء دون مصادقة ثنائية إعدادها قبل النشر.',
+        setAutoLabel: 'النشر التلقائي للمنشورات المجدولة', setAutoDesc: 'أوقفه لطلب تأكيد يدوي عند النشر.',
+        peopleLabel: 'الأشخاص', settingsLabel: 'النشر والأمان',
+        toastRoleUpdated: 'تم تحديث الصلاحية ✓', toastMfaReset: 'تمت إعادة تعيين المصادقة', toastMfaOn: 'تم تفعيل المصادقة الثنائية ✓', toastUserRemoved: 'تمت إزالة المستخدم', toastInvited: 'تم إرسال الدعوة ✓',
+        addEvent: '+ فعالية جديدة', newEventTitle: 'إضافة فعالية', eventNameLabel: 'اسم الفعالية', namePh: 'مثال: معرض الرياض للكتاب', colorLabel: 'اللون', createEvent: 'إنشاء الفعالية', newEventNote: 'يمكنك ربط حساباتها الاجتماعية بعد الإنشاء.', toastEventAdded: 'أُضيفت الفعالية ✓', newEventDefault: 'فعالية بلا اسم',
+        composeH2: 'إنشاء منشور', composeSub: 'منشور واحد، كل حسابات',
+        dropHint: 'أسقط الفيديو / الريل هنا · 9:16 أو 1:1',
+        captionLabel: 'التعليق', captionPh: 'اكتب تعليقاً، أو دع الذكاء الاصطناعي يكتبه…',
+        genIdle: 'توليد بالذكاء الاصطناعي', genBusy: 'جارٍ الكتابة…',
+        publishTo: 'النشر على', on: 'مفعّل', off: 'موقوف',
+        scheduleFor: 'الجدولة في', schedulePost: 'جدولة المنشور ←', today: 'اليوم',
+        calendarH2: 'التقويم', schedLine: n => n + ' منشورات مجدولة',
+        arrPrev: '→', arrNext: '←',
+        deletePost: 'حذف المنشور', posted: 'نُشر', scheduled: 'مجدول',
+        libraryH2: 'المكتبة', librarySub: 'كل الأصول، موسومة وجاهزة لإعادة الاستخدام.',
+        reuseBtn: 'استخدم في منشور ←', removeAsset: 'إزالة', fromLibrary: 'من المكتبة', toastAdded: 'أُضيف إلى المُنشئ ✓',
+        filterAll: 'الكل', typeVideo: 'فيديو', typeReel: 'ريل', typeImage: 'صورة',
+        analyticsH2: 'التحليلات', analyticsSub: 'عبر حسابات هذه الفعالية.',
+        r7: 'آخر 7 أيام', r30: 'آخر 30 يوماً', rToday: 'اليوم', r90: 'آخر 90 يوماً', r365: 'آخر 12 شهراً',
+        dQuarter: '% عن الربع الماضي', dYear: '% عن العام الماضي', thisQuarter: 'هذا الربع', thisYear: 'هذا العام',
+        stViewsLabel: 'المشاهدات', stEngLabel: 'التفاعل', stFollowersLabel: 'متابعون جدد', stPostsLabel: 'منشورات منشورة',
+        dWeek: '% عن الأسبوع الماضي', dMonth: '% عن الشهر الماضي', thisWeek: 'هذا الأسبوع', thisMonth: 'هذا الشهر',
+        viewsOverTime: 'المشاهدات عبر الوقت', byPlatform: 'حسب الحساب',
+        secAccountPerf: 'أداء الحسابات', colAccount: 'الحساب', colFollowers: 'المتابعون', colViews: 'المشاهدات', colEng: 'التفاعل', colGrowth: 'النمو', topPostsLabel: 'أفضل المنشورات', engRateLabel: 'متوسط معدل التفاعل', contentFormat: 'حسب نوع المحتوى', bestTimeLabel: 'أفضل وقت للنشر',
+        postAnalytics: 'تحليلات المنشور', mReach: 'الوصول', mLikes: 'الإعجابات', mComments: 'التعليقات', mShares: 'المشاركات', mSaves: 'الحفظ', mCompletion: 'متوسط المشاهدة', viewsTrend: 'المشاهدات — آخر 7 أيام', perAccountLabel: 'الوصول حسب الحساب', viewAnalytics: 'عرض التحليلات',
+        approvalsH2: 'الموافقات', pendingLine: n => n + ' بانتظار المراجعة',
+        approve: 'موافقة', decline: 'رفض', approvedBadge: 'تمت الموافقة ✓', declinedBadge: 'مرفوض',
+        openLabel: 'معاينة وتحرير', reviewLabel: 'مراجعة المنشور', saveChanges: 'حفظ التغييرات', captionEditHint: 'حرّر قبل الموافقة', toastSaved: 'تم حفظ التغييرات ✓',
+        toastSched: n => 'تمت الجدولة على ' + n + ' حسابات ✓',
+        toastApproved: 'تمت الموافقة — سيُنشر كما هو مجدول ✓',
+        toastDeclined: 'رُفض وأُعيد إلى المسودات',
+        toastDeleted: 'تم حذف المنشور',
+        dows: ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'],
+        weekLabel: 'أسبوع', dash: '—', whenToday: 'اليوم', whenYesterday: 'أمس',
+        eventsCount: n => n + ' فعاليات',
+        subA: 'مُقدَّم لـ', by: 'من'
+      }
+    };
+    const today = new Date();
+    this.today = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    this.state = {
+      view: null, lang: null, tab: 'dashboard',
+      activeEventId: 'auto', eventMenuOpen: false,
+      events: this.EVENTS.map(e => ({ ...e })), addOpen: false, newName: '', newColor: '#7c5cf0',
+      caption: '', hashtags: [], generating: false, genIdx: 0,
+      composeAsset: null,
+      platforms: {}, schedDay: this._iso(this._addDays(this.today, 1)), schedTime: '18:00',
+      monthOffset: 0, selectedPostId: null,
+      reviewId: null, reviewCaption: '', editedCaps: {},
+      posts: this._seedPosts(),
+      libFilter: 'All', range: '7d', toast: null,
+      approvals: this._seedApprovals(),
+      adminSection: 'users', requireMfa: false, autoPublish: true, weekMon: null, tone: null,
+      inviteOpen: false, invName: '', invEmail: '', invRole: 'Editor',
+      mfaUserId: null, mfaCode: '',
+      currentUserId: 1, actingMenuOpen: false, stat: null, rangeMenuOpen: false,
+      loginStep: 'creds', loginEmail: 'sara@sunaidiexpo.com', loginPass: '••••••••••', loginCode: '',
+      conns: this._seedConns(),
+      users: [
+        { id: 1, name: 'Sara Al-Sunaidi', email: 'sara@sunaidiexpo.com', init: 'SA', avColor: '#e0457b', role: 'Admin', mfa: true, status: 'active' },
+        { id: 2, name: 'Maya Khan', email: 'maya@sunaidiexpo.com', init: 'MK', avColor: '#7c5cf0', role: 'Manager', mfa: true, status: 'active' },
+        { id: 3, name: 'Omar Rashed', email: 'omar@sunaidiexpo.com', init: 'OR', avColor: '#f59e0b', role: 'Editor', mfa: false, status: 'active' },
+        { id: 4, name: 'Lina Saeed', email: 'lina@sunaidiexpo.com', init: 'LS', avColor: '#17a99b', role: 'Viewer', mfa: false, status: 'active' },
+        { id: 5, name: 'Yusuf Ahmed', email: 'yusuf@sunaidiexpo.com', init: 'YA', avColor: '#2563eb', role: 'Editor', mfa: true, status: 'active' },
+        { id: 6, name: 'Nora Fahad', email: 'nora@sunaidiexpo.com', init: 'NF', avColor: '#0ea5a3', role: 'Viewer', mfa: false, status: 'invited' }
+      ]
+    };
+  }
+  _lang() { return this.state.lang || this.props.defaultLang || 'en'; }
+  componentDidMount() {
+    this._slideTimer = setInterval(() => {
+      if (this._slidePaused) return;
+      const el = document.getElementById('dc-upcoming');
+      if (!el) return;
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 2) return;
+      this._slideDir = this._slideDir || 1;
+      let next = el.scrollLeft + this._slideDir;
+      if (next >= max) { next = max; this._slideDir = -1; }
+      else if (next <= 0) { next = 0; this._slideDir = 1; }
+      el.scrollLeft = next;
+    }, 28);
+  }
+  componentWillUnmount() { clearInterval(this._slideTimer); }
+  _events() { return (this.state && this.state.events) || this.EVENTS; }
+  _addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  _iso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  _ev(id) { return this._events().find(e => e.id === id) || this._events()[0]; }
+  _fmt(n) {
+    if (n >= 1000) { const k = n / 1000; return (k >= 100 ? Math.round(k) : Math.round(k * 10) / 10).toString().replace(/\.0$/, '') + 'K'; }
+    return n.toLocaleString('en-US');
+  }
+  _metrics(v, seed) {
+    const eng = Math.round(v * (0.05 + (seed % 4) * 0.007));
+    return {
+      views: v, reach: Math.round(v * 0.82),
+      likes: Math.round(eng * 0.72), comments: Math.round(eng * 0.11), shares: Math.round(eng * 0.1), saves: Math.round(eng * 0.07),
+      rate: (eng / (v || 1) * 100).toFixed(1) + '%', completion: (52 + (seed * 7) % 36) + '%'
+    };
+  }
+  _seedPosts() {
+    const plan = {
+      auto: [[-3, '18:00', 'teaser', ['instagram', 'tiktok'], 'posted'], [0, '18:00', 'tickets', ['instagram', 'tiktok', 'facebook'], 'scheduled'], [3, '12:00', 'lineup', ['instagram', 'x'], 'scheduled'], [7, '20:30', 'countdown', ['tiktok'], 'scheduled']],
+      food: [[-1, '12:00', 'bts', ['instagram'], 'posted'], [1, '09:00', 'lineup', ['instagram', 'facebook'], 'scheduled'], [5, '15:00', 'tickets', ['instagram', 'tiktok'], 'scheduled'], [9, '18:00', 'highlights', ['facebook', 'instagram'], 'scheduled']],
+      beauty: [[-2, '18:00', 'speaker', ['instagram', 'tiktok'], 'posted'], [0, '20:00', 'tickets', ['instagram', 'tiktok', 'x'], 'scheduled'], [4, '12:00', 'bts', ['instagram'], 'scheduled'], [11, '15:00', 'countdown', ['tiktok', 'x'], 'scheduled']],
+      big5: [[2, '09:00', 'speaker', ['linkedin', 'x'], 'scheduled'], [6, '12:00', 'lineup', ['linkedin', 'facebook'], 'scheduled'], [13, '10:00', 'tickets', ['instagram', 'facebook'], 'scheduled']],
+      gaming: [[-1, '21:00', 'teaser', ['tiktok', 'instagram'], 'posted'], [0, '18:00', 'countdown', ['instagram', 'tiktok', 'x', 'facebook'], 'scheduled'], [2, '20:30', 'highlights', ['tiktok'], 'scheduled'], [8, '19:00', 'speaker', ['instagram', 'x'], 'scheduled'], [15, '12:00', 'tickets', ['instagram', 'facebook'], 'scheduled']]
+    };
+    const posts = [];
+    this.EVENTS.forEach(ev => {
+      (plan[ev.id] || []).forEach((row, i) => {
+        const [off, time, key, plats, status] = row;
+        const sfx = this.SUFFIX[key];
+        posts.push({
+          id: ev.id + i, eventId: ev.id, date: this._iso(this._addDays(this.today, off)), time,
+          title: { en: ev.en + ' · ' + sfx.en, ar: ev.ar + ' · ' + sfx.ar },
+          caption: { en: sfx.capEn, ar: sfx.capAr }, plats, status
+        });
+      });
+    });
+    return posts;
+  }
+  _seedApprovals() {
+    const plan = {
+      auto: [['speaker', 'Maya K.', 'مايا ك.', 'MK', '#7c5cf0', 'today', 'pending'], ['bts', 'Omar R.', 'عمر ر.', 'OR', '#f59e0b', 'today', 'pending']],
+      food: [['lineup', 'Lina S.', 'لينا س.', 'LS', '#17a99b', 'yesterday', 'pending']],
+      beauty: [['tickets', 'Maya K.', 'مايا ك.', 'MK', '#7c5cf0', 'today', 'pending'], ['countdown', 'Sara N.', 'سارة ن.', 'SN', '#e0457b', 'yesterday', 'approved']],
+      big5: [['speaker', 'Omar R.', 'عمر ر.', 'OR', '#f59e0b', 'yesterday', 'pending']],
+      gaming: [['highlights', 'Yusuf A.', 'يوسف أ.', 'YA', '#2563eb', 'today', 'pending'], ['teaser', 'Lina S.', 'لينا س.', 'LS', '#17a99b', 'yesterday', 'approved']]
+    };
+    const out = [];
+    let id = 1;
+    this.EVENTS.forEach(ev => {
+      (plan[ev.id] || []).forEach(row => {
+        const [key, whoEn, whoAr, init, avColor, when, status] = row;
+        const sfx = this.SUFFIX[key];
+        out.push({
+          id: id++, eventId: ev.id, who: { en: whoEn, ar: whoAr }, init, avColor,
+          title: { en: ev.en + ' · ' + sfx.en, ar: ev.ar + ' · ' + sfx.ar },
+          caption: { en: sfx.capEn, ar: sfx.capAr },
+          plats: ev.socials.slice(0, 2).map(s => s.key), when, status
+        });
+      });
+    });
+    return out;
+  }
+  _seedConns() {
+    const pref = { instagram: 'IG', tiktok: 'TT', x: 'X', facebook: 'FB', linkedin: 'LI' };
+    const out = {};
+    this.EVENTS.forEach(ev => ev.socials.forEach(s => {
+      const connected = !(s.key === 'linkedin' || s.key === 'x');
+      out[ev.id + ':' + s.key] = { connected, key: connected ? (pref[s.key] + '-live-' + ev.id + Math.random().toString(36).slice(2, 8)) : '' };
+    }));
+    return out;
+  }
+  _toast(msg) { clearTimeout(this._tt); this.setState({ toast: msg }); this._tt = setTimeout(() => this.setState({ toast: null }), 2600); }
+  _captions() {
+    const tone = this.state.tone || this.props.aiTone || 'punchy';
+    const lang = this._lang();
+    const sets = {
+      en: {
+        punchy: ['Stop the scroll. This is the one you save the date for.', 'Zero fluff. All hype. Watch this one to the end.', 'You will not want to miss this. Proof inside.'],
+        professional: ['Registration is now open — reserve your place at this year\u2019s edition.', 'A closer look at what to expect on the show floor this year.', 'This year\u2019s programme is live. Here is what to plan for.'],
+        friendly: ['We cannot wait to see you there! Here is a little preview.', 'Big things planned this year — take a look at what is coming.', 'Mark your calendar, friends. You will want to be in the room.']
+      },
+      ar: {
+        punchy: ['توقفوا عن التمرير. هذه الفعالية التي تستحق حجز الموعد لها.', 'بلا مقدمات. كل الحماس هنا. شاهدوا حتى النهاية.', 'لن ترغبوا في تفويت هذا. الدليل في الداخل.'],
+        professional: ['التسجيل مفتوح الآن — احجزوا مكانكم في نسخة هذا العام.', 'نظرة أقرب على ما ينتظركم في أرض المعرض هذا العام.', 'برنامج هذا العام متاح الآن. إليكم ما يمكنكم التخطيط له.'],
+        friendly: ['لا نطيق الانتظار لرؤيتكم هناك! إليكم لمحة صغيرة.', 'أمور كبيرة مخطط لها هذا العام — ألقوا نظرة على ما هو قادم.', 'دوّنوا الموعد يا أصدقاء. ستودّون التواجد في القاعة.']
+      }
+    };
+    const tags = {
+      en: [['#SunaidiExpo', '#SaveTheDate', '#Riyadh'], ['#TradeShow', '#Exhibition', '#KSAEvents'], ['#MarketingTeam', '#SocialFirst', '#SeeYouThere']],
+      ar: [['#سنيدي_إكسبو', '#احجز_الموعد', '#الرياض'], ['#معرض', '#فعاليات_السعودية', '#إكسبو'], ['#فريق_التسويق', '#السوشيال_أولاً', '#نراكم_هناك']]
+    };
+    const L = sets[lang] || sets.en;
+    return { caps: L[tone] || L.punchy, tags: tags[lang] || tags.en };
+  }
+  generate = () => {
+    if (this.state.generating) return;
+    this.setState({ generating: true });
+    setTimeout(() => {
+      const { caps, tags } = this._captions();
+      const i = this.state.genIdx;
+      this.setState({ caption: caps[i % caps.length], hashtags: tags[i % tags.length], genIdx: i + 1, generating: false });
+    }, 900);
+  };
+  schedule = () => {
+    const tr = this.T[this._lang()];
+    const ev = this._ev(this.state.activeEventId);
+    const keys = ev.socials.map(s => s.key).filter(k => this.state.platforms[k] !== false);
+    if (!this.state.caption.trim() || !keys.length) return;
+    const d = new Date(this.state.schedDay + 'T00:00:00');
+    const offset = (d.getFullYear() - this.today.getFullYear()) * 12 + (d.getMonth() - this.today.getMonth());
+    const titleTxt = this.state.caption.split(/[.!؟?—]/)[0].slice(0, 40) || 'New post';
+    const post = {
+      id: 'p' + Date.now(), eventId: ev.id, date: this.state.schedDay, time: this.state.schedTime,
+      title: { en: ev.en + ' · ' + titleTxt, ar: ev.ar + ' · ' + titleTxt },
+      caption: { en: this.state.caption, ar: this.state.caption }, plats: keys, status: 'scheduled'
+    };
+    this.setState({ posts: [...this.state.posts, post], tab: 'calendar', monthOffset: offset, caption: '', hashtags: [], composeAsset: null, selectedPostId: post.id });
+    this._toast(tr.toastSched(keys.length));
+  };
+  selectEvent = (id) => { this.setState({ activeEventId: id, eventMenuOpen: false, platforms: {}, selectedPostId: null, monthOffset: 0 }); };
+  createEvent = () => {
+    const tr = this.T[this._lang()];
+    const name = (this.state.newName || '').trim() || tr.newEventDefault;
+    const slug = (name.toLowerCase().replace(/[^a-z0-9]+/g, '') || 'event').slice(0, 16);
+    const id = 'ev' + Date.now();
+    const ev = { id, en: name, ar: name, color: this.state.newColor, barIx: this.state.events.length % 5,
+      socials: [{ key: 'instagram', handle: '@' + slug, f: 0 }, { key: 'tiktok', handle: '@' + slug, f: 0 }, { key: 'linkedin', handle: name, f: 0 }] };
+    this.setState({ events: [...this.state.events, ev], activeEventId: id, addOpen: false, newName: '', eventMenuOpen: false, platforms: {}, selectedPostId: null, monthOffset: 0, tab: 'dashboard' }, () => this._toast(tr.toastEventAdded));
+  };
+  setUserRole = (id, role) => { const tr = this.T[this._lang()]; this.setState({ users: this.state.users.map(u => u.id === id ? { ...u, role } : u) }, () => this._toast(tr.toastRoleUpdated)); };
+  resetMfa = (id) => { const tr = this.T[this._lang()]; this.setState({ users: this.state.users.map(u => u.id === id ? { ...u, mfa: false } : u) }, () => this._toast(tr.toastMfaReset)); };
+  verifyMfa = () => { const tr = this.T[this._lang()]; const id = this.state.mfaUserId; this.setState({ users: this.state.users.map(u => u.id === id ? { ...u, mfa: true } : u), mfaUserId: null, mfaCode: '' }, () => this._toast(tr.toastMfaOn)); };
+  removeUser = (id) => { const tr = this.T[this._lang()]; this.setState({ users: this.state.users.filter(u => u.id !== id) }, () => this._toast(tr.toastUserRemoved)); };
+  sendInvite = () => {
+    const tr = this.T[this._lang()];
+    const name = (this.state.invName || '').trim() || 'New user';
+    const email = (this.state.invEmail || '').trim() || 'invite@sunaidiexpo.com';
+    const init = (name.split(/\s+/).slice(0, 2).map(w => w[0]).join('') || 'NU').toUpperCase();
+    const palette = ['#e0457b', '#17a99b', '#7c5cf0', '#2563eb', '#f59e0b', '#0ea5a3'];
+    const user = { id: 'u' + Date.now(), name, email, init, avColor: palette[this.state.users.length % palette.length], role: this.state.invRole, mfa: false, status: 'invited' };
+    this.setState({ users: [...this.state.users, user], inviteOpen: false, invName: '', invEmail: '' }, () => this._toast(tr.toastInvited));
+  };
+  renameEvent = (id, name) => { this.setState({ events: this.state.events.map(e => e.id === id ? { ...e, en: name, ar: name } : e) }); };
+  setEventColor = (id, color) => { this.setState({ events: this.state.events.map(e => e.id === id ? { ...e, color } : e) }); };
+  setApiKey = (ek, v) => { this.setState({ conns: { ...this.state.conns, [ek]: { ...(this.state.conns[ek] || {}), key: v } } }); };
+  connectApi = (ek) => { const tr = this.T[this._lang()]; const it = this.state.conns[ek] || { key: '' }; if (!(it.key || '').trim()) return; this.setState({ conns: { ...this.state.conns, [ek]: { ...it, connected: true } } }, () => this._toast(tr.toastConnected)); };
+  disconnectApi = (ek) => { const tr = this.T[this._lang()]; const it = this.state.conns[ek] || {}; this.setState({ conns: { ...this.state.conns, [ek]: { ...it, connected: false } } }, () => this._toast(tr.toastDisconnected)); };
+  addSocial = (id, key) => {
+    const tr = this.T[this._lang()]; const ev = this._ev(id);
+    if (ev.socials.some(s => s.key === key)) return;
+    const slug = (ev.en.toLowerCase().replace(/[^a-z0-9]+/g, '') || 'event').slice(0, 16);
+    const handle = (key === 'facebook' || key === 'linkedin') ? ev.en : '@' + slug;
+    this.setState({ events: this.state.events.map(e => e.id === id ? { ...e, socials: [...e.socials, { key, handle, f: 0 }] } : e) }, () => this._toast(tr.toastAccountAdded));
+  };
+  removeSocial = (id, key) => {
+    const tr = this.T[this._lang()];
+    this.setState(st => { const conns = { ...st.conns }; delete conns[id + ':' + key]; return { events: st.events.map(e => e.id === id ? { ...e, socials: e.socials.filter(s => s.key !== key) } : e), conns }; }, () => this._toast(tr.toastAccountRemoved));
+  };
+  renderVals() {
+    const S = this.state, P = this.PLATFORMS;
+    const lang = this._lang();
+    const tr = this.T[lang];
+    const dir = lang === 'ar' ? 'rtl' : 'ltr';
+    const locale = lang === 'ar' ? 'ar-u-nu-latn' : 'en-US';
+    const view = S.view || this.props.defaultView || 'landing';
+    const pmap = {}; P.forEach(p => pmap[p.key] = p);
+    const pname = k => (pmap[k] ? pmap[k][lang] : k);
+    const pcolor = k => (pmap[k] ? pmap[k].color : '#94a3b8');
+    const activeEvent = this._ev(S.activeEventId);
+    const EV = S.events;
+    const bars7base = [[48, 61, 55, 82, 100, 74, 66], [52, 70, 63, 58, 90, 100, 80], [40, 55, 72, 66, 88, 100, 61], [60, 52, 74, 68, 100, 84, 70], [45, 63, 58, 100, 77, 69, 54]];
+    const bars30base = [[58, 71, 64, 100], [62, 80, 73, 100], [55, 68, 90, 100], [70, 64, 88, 100], [60, 84, 72, 100]];
+
+    const langOpts = ['en', 'ar'].map(l => ({
+      label: l === 'en' ? 'EN' : 'عربي', pick: () => this.setState({ lang: l }),
+      bg: lang === l ? '#0f172a' : 'transparent', color: lang === l ? '#fff' : '#5c6675'
+    }));
+
+    const pendingByEvent = {};
+    EV.forEach(e => pendingByEvent[e.id] = S.approvals.filter(a => a.eventId === e.id && a.status === 'pending').length);
+    const totalPending = S.approvals.filter(a => a.status === 'pending').length;
+
+    const tabDefs = [
+      ['dashboard', tr.tabDashboard], ['compose', tr.tabCompose], ['calendar', tr.tabCalendar],
+      ['library', tr.tabLibrary], ['analytics', tr.tabAnalytics], ['team', tr.tabTeam]
+    ];
+    const tabs = tabDefs.map(([key, label]) => ({
+      key, label,
+      go: () => this.setState({ tab: key, selectedPostId: null, eventMenuOpen: false }),
+      bg: S.tab === key ? '#eef2f8' : 'transparent',
+      color: S.tab === key ? '#2563eb' : '#3d4757',
+      weight: S.tab === key ? 700 : 600,
+      dot: S.tab === key ? '#2563eb' : '#c8d0dc',
+      hasBadge: key === 'team' && pendingByEvent[S.activeEventId] > 0,
+      badge: pendingByEvent[S.activeEventId]
+    }));
+
+    const eventMenu = EV.map(e => ({
+      name: e[lang], color: e.color, followers: this._fmt(e.socials.reduce((s, x) => s + x.f, 0)),
+      pick: () => this.selectEvent(e.id),
+      bg: e.id === S.activeEventId ? '#f4f6f9' : 'transparent'
+    }));
+    const activeSocials = activeEvent.socials.map(s => ({ handle: s.handle, color: pcolor(s.key), followers: this._fmt(s.f) }));
+
+    // dashboard
+    const totalFollowers = EV.reduce((s, e) => s + e.socials.reduce((a, x) => a + x.f, 0), 0);
+    const totalScheduled = S.posts.filter(p => p.status === 'scheduled').length;
+    const kpiMeta = [
+      { accent: '#2563eb', spark: [52, 60, 58, 72, 80, 76, 92] },
+      { accent: '#17a99b', spark: [30, 42, 38, 55, 60, 72, 80] },
+      { accent: '#e0457b', spark: [68, 44, 58, 36, 50, 62, 52] },
+      { accent: '#f59e0b', spark: [40, 55, 60, 70, 82, 90, 100] }
+    ];
+    const kpis = [
+      { label: tr.kpiReach, value: this._fmt(totalFollowers), sub: tr.kpiReachSub, subColor: '#17a99b' },
+      { label: tr.kpiScheduled, value: String(totalScheduled), sub: tr.kpiSchedSub, subColor: '#8b93a1' },
+      { label: tr.kpiAwaiting, value: String(totalPending), sub: tr.kpiAwaitSub, subColor: totalPending ? '#e0457b' : '#8b93a1' },
+      { label: tr.kpiEvents, value: String(EV.length), sub: tr.kpiEventsSub, subColor: '#17a99b' }
+    ].map((k, i) => ({ ...k, accent: kpiMeta[i].accent, spark: kpiMeta[i].spark.map(h => ({ h, accent: kpiMeta[i].accent })) }));
+    const eventCountLabel = tr.eventsCount(EV.length);
+    const maxAud = Math.max(1, ...EV.map(e => e.socials.reduce((a, x) => a + x.f, 0)));
+    const audienceByEvent = EV.map(e => { const aud = e.socials.reduce((a, x) => a + x.f, 0); const pct = Math.round(aud / maxAud * 100); return { name: e[lang], color: e.color, value: this._fmt(aud), w: pct + '%' }; });
+    const reachBars = [46, 52, 49, 58, 55, 64, 60, 71, 68, 80, 88, 100].map((h, i) => ({ h, color: i >= 10 ? '#2563eb' : '#c7d7f8' }));
+    const totalReachMonth = this._fmt(Math.round(totalFollowers * 4.2));
+    const sparkPat = [[46, 58, 52, 70, 64, 82, 100], [52, 60, 68, 58, 80, 90, 100], [40, 55, 72, 66, 88, 78, 100], [60, 52, 74, 68, 84, 92, 100], [45, 63, 58, 80, 77, 88, 100]];
+    const upcoming = S.posts.filter(p => p.status === 'scheduled').sort((a, b) => a.date < b.date ? -1 : (a.date > b.date ? 1 : 0)).slice(0, 5).map(p => { const ev = this._ev(p.eventId); return { eventName: ev[lang], color: ev.color, title: p.title[lang], dateLabel: new Date(p.date + 'T00:00:00').toLocaleDateString(locale, { month: 'short', day: 'numeric' }) + ' · ' + p.time, plats: p.plats.map(k => ({ color: pcolor(k) })), open: () => this.setState({ activeEventId: p.eventId, tab: 'calendar', platforms: {}, monthOffset: 0, selectedPostId: p.id }) }; });
+    const hasUpcoming = upcoming.length > 0;
+    const eventCards = EV.map((e, i) => {
+      const sched = S.posts.filter(p => p.eventId === e.id && p.status === 'scheduled');
+      const upc = sched.map(p => p.date).sort();
+      const nextLabel = upc.length ? new Date(upc[0] + 'T00:00:00').toLocaleDateString(locale, { month: 'short', day: 'numeric' }) : tr.dash;
+      const onTrack = sched.length >= 3;
+      return {
+        name: e[lang], color: e.color,
+        audienceBig: this._fmt(e.socials.reduce((s, x) => s + x.f, 0)), audienceSub: tr.kpiReachSub,
+        spark: sparkPat[i % 5].map(h => ({ h, color: e.color })),
+        socials: e.socials.map(s => ({ color: pcolor(s.key) })),
+        accountsCount: e.socials.length,
+        scheduled: sched.length, nextLabel,
+        statusLabel: onTrack ? tr.statusOnTrack : tr.statusNeeds,
+        statusColor: onTrack ? '#128d81' : '#b17a09', statusBg: onTrack ? '#e7f6f3' : '#fdf6e7',
+        open: () => this.setState({ activeEventId: e.id, tab: 'calendar', platforms: {}, monthOffset: 0, selectedPostId: null })
+      };
+    });
+
+    // compose
+    const platformList = activeEvent.socials.map(s => {
+      const on = S.platforms[s.key] !== false;
+      return {
+        name: pname(s.key), color: pcolor(s.key), handle: s.handle,
+        toggle: () => this.setState({ platforms: { ...S.platforms, [s.key]: !on } }),
+        bd: on ? pcolor(s.key) : '#e3e8ef', bg: on ? '#fff' : '#f8fafc',
+        stateLabel: on ? tr.on : tr.off, stateColor: on ? pcolor(s.key) : '#c0c7d2'
+      };
+    });
+    const schedDays = [];
+    for (let i = 0; i < 10; i++) {
+      const d = this._addDays(this.today, i);
+      const iso = this._iso(d), active = S.schedDay === iso;
+      schedDays.push({ iso, dow: i === 0 ? tr.today : tr.dows[d.getDay()], num: d.getDate(), pick: () => this.setState({ schedDay: iso }), bd: active ? '#2563eb' : '#e3e8ef', bg: active ? '#2563eb' : '#fff', color: active ? '#fff' : '#0f172a' });
+    }
+    const timeOpts = ['09:00', '12:00', '15:00', '18:00', '20:30'].map(t => {
+      const active = S.schedTime === t;
+      return { label: t, pick: () => this.setState({ schedTime: t }), bd: active ? '#0f172a' : '#e3e8ef', bg: active ? '#0f172a' : '#fff', color: active ? '#fff' : '#5c6675' };
+    });
+    const anyPlat = activeEvent.socials.some(s => S.platforms[s.key] !== false);
+    const canSched = !!S.caption.trim() && anyPlat;
+
+    // calendar (active event only)
+    const weekStartMon = this.state.weekMon != null ? this.state.weekMon : !!this.props.weekStartsMonday;
+    const base = new Date(this.today.getFullYear(), this.today.getMonth() + S.monthOffset, 1);
+    const monthLabel = base.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+    const heroMonth = this.today.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+    const rot = weekStartMon ? 1 : 0;
+    const dowLabels = [];
+    for (let i = 0; i < 7; i++) dowLabels.push(tr.dows[(i + rot) % 7]);
+    let start = base.getDay() - rot;
+    if (start < 0) start += 7;
+    const first = this._addDays(base, -start);
+    const todayIso = this._iso(this.today);
+    const eventPosts = S.posts.filter(p => p.eventId === S.activeEventId);
+    const days = [];
+    for (let i = 0; i < 42; i++) {
+      const d = this._addDays(first, i);
+      const iso = this._iso(d);
+      const inMonth = d.getMonth() === base.getMonth();
+      const isToday = iso === todayIso;
+      const cellPosts = eventPosts.filter(p => p.date === iso).map(p => ({ id: p.id, title: p.title[lang], color: pcolor(p.plats[0]), click: () => this.setState({ selectedPostId: p.id }) }));
+      days.push({ num: d.getDate(), posts: cellPosts, bg: inMonth ? '#fff' : '#f8fafc', bd: isToday ? '#2563eb' : '#e9edf3', opacity: inMonth ? 1 : 0.55, numColor: isToday ? '#fff' : (inMonth ? '#0f172a' : '#b3bac6'), numBg: isToday ? '#2563eb' : 'transparent' });
+    }
+    const sel = S.posts.find(p => p.id === S.selectedPostId);
+    const selDate = sel ? new Date(sel.date + 'T00:00:00') : null;
+    const schedLine = tr.schedLine(eventPosts.filter(p => p.status === 'scheduled').length);
+
+    // library
+    const LIB = [
+      { name: 'teaser-cut.mp4', type: 'Video', dur: '0:32', hintEn: 'video · 16:9' },
+      { name: 'floor-bts-reel.mp4', type: 'Reel', dur: '0:18', hintEn: 'reel · 9:16' },
+      { name: 'hero-keyvisual.png', type: 'Image', dur: 'PNG', hintEn: 'image · 1:1' },
+      { name: 'exhibitor-spotlight.mp4', type: 'Reel', dur: '0:41', hintEn: 'reel · 9:16' },
+      { name: 'howto-60s.mp4', type: 'Video', dur: '1:00', hintEn: 'video · 16:9' },
+      { name: 'lineup-card.png', type: 'Image', dur: 'PNG', hintEn: 'image · 4:5' },
+      { name: 'speaker-teaser.mp4', type: 'Reel', dur: '0:15', hintEn: 'reel · 9:16' },
+      { name: 'day1-recap.mp4', type: 'Video', dur: '0:29', hintEn: 'video · 16:9' }
+    ];
+    const typeLabel = { Video: tr.typeVideo, Reel: tr.typeReel, Image: tr.typeImage };
+    const tagColors = { Video: ['#eef2f8', '#2563eb'], Reel: ['#fdeef4', '#e0457b'], Image: ['#fdf6e7', '#b17a09'] };
+    const libFilters = ['All', 'Video', 'Reel', 'Image'].map(f => {
+      const active = S.libFilter === f;
+      return { label: f === 'All' ? tr.filterAll : typeLabel[f], pick: () => this.setState({ libFilter: f }), bd: active ? '#0f172a' : '#e3e8ef', bg: active ? '#0f172a' : '#fff', color: active ? '#fff' : '#5c6675' };
+    });
+    const libItems = LIB.filter(a => S.libFilter === 'All' || a.type === S.libFilter).map(a => ({ ...a, typeLabel: typeLabel[a.type], hint: lang === 'ar' ? a.hintEn.replace('video', 'فيديو').replace('reel', 'ريل').replace('image', 'صورة') : a.hintEn, tagBg: tagColors[a.type][0], tagColor: tagColors[a.type][1], reuse: () => this.setState({ composeAsset: { name: a.name, dur: a.dur, type: a.type }, tab: 'compose', selectedPostId: null }, () => this._toast(tr.toastAdded)) }));
+
+    // analytics for active event
+    const evF = activeEvent.socials.reduce((s, x) => s + x.f, 0);
+    const dI = activeEvent.barIx;
+    const rm = {
+      '1d': { vm: 0.24, em: 0.014, fm: 0.003, p: 2, dv: 9 + dI, de: 6 + dI, df: 4, sub: tr.today2, dtxt: tr.dWeek, bars: [30, 45, 40, 55, 48, 70, 100], labels: ['6a', '9a', '12p', '3p', '6p', '9p', 'now'] },
+      '7d': { vm: 1.6, em: 0.092, fm: 0.02, p: 8 + dI * 2, dv: 14 + dI * 2, de: 8 + dI, df: 5 + dI, sub: tr.thisWeek, dtxt: tr.dWeek, bars: bars7base[dI], labels: [tr.dows[1], tr.dows[2], tr.dows[3], tr.dows[4], tr.dows[5], tr.dows[6], tr.dows[0]] },
+      '30d': { vm: 6.1, em: 0.35, fm: 0.075, p: 34 + dI * 5, dv: 20 + dI * 2, de: 13 + dI, df: 9 + dI, sub: tr.thisMonth, dtxt: tr.dMonth, bars: bars30base[dI], labels: [tr.weekLabel + ' 1', tr.weekLabel + ' 2', tr.weekLabel + ' 3', tr.weekLabel + ' 4'] },
+      '90d': { vm: 17, em: 1.0, fm: 0.2, p: 96 + dI * 8, dv: 26 + dI, de: 18 + dI, df: 14 + dI, sub: tr.thisQuarter, dtxt: tr.dQuarter, bars: [50, 62, 58, 74, 88, 100], labels: ['1', '2', '3', '4', '5', '6'] },
+      '365d': { vm: 64, em: 3.6, fm: 0.78, p: 340 + dI * 20, dv: 38 + dI, de: 27 + dI, df: 21 + dI, sub: tr.thisYear, dtxt: tr.dYear, bars: [40, 48, 52, 60, 58, 66, 72, 70, 80, 86, 92, 100], labels: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'] }
+    };
+    const rk = rm[S.range] ? S.range : '7d';
+    const rmeta = rm[rk];
+    const stat = { v: evF * rmeta.vm, e: evF * rmeta.em, f: evF * rmeta.fm, p: rmeta.p, dv: rmeta.dv, de: rmeta.de, df: rmeta.df, sub: rmeta.sub, dtxt: rmeta.dtxt };
+    const rangeDefs = [['1d', tr.rToday], ['7d', tr.r7], ['30d', tr.r30], ['90d', tr.r90], ['365d', tr.r365]];
+    const rangeLabel = (rangeDefs.find(x => x[0] === rk) || rangeDefs[1])[1];
+    const rangeMenu = rangeDefs.map(([k, l]) => ({ label: l, pick: () => this.setState({ range: k, rangeMenuOpen: false }), bg: k === rk ? '#f4f6f9' : 'transparent', active: k === rk }));
+    const barsBase = rmeta.bars;
+    const barLabels = rmeta.labels;
+    const bars = barsBase.map((h, i) => ({ label: barLabels[i], h, color: h === 100 ? activeEvent.color : '#c7d7f8' }));
+    const totF = activeEvent.socials.reduce((s, x) => s + x.f, 0);
+    const platSplit = activeEvent.socials.map(s => { const pct = totF > 0 ? Math.round(s.f / totF * 100) : 0; return { name: pname(s.key), color: pcolor(s.key), pct, w: pct + '%' }; });
+    const accountPerf = activeEvent.socials.map((s, i) => {
+      const share = totF > 0 ? s.f / totF : (1 / Math.max(1, activeEvent.socials.length));
+      return { name: pname(s.key), handle: s.handle, color: pcolor(s.key), followers: this._fmt(s.f), views: this._fmt(Math.round(stat.v * share)), eng: this._fmt(Math.round(stat.e * share)), growth: '+' + (4 + ((i * 3 + dI) % 12)) + '%' };
+    });
+    const topSeed = [['highlights', 'instagram', 1.0], ['teaser', 'tiktok', 0.82], ['tickets', 'instagram', 0.7], ['speaker', 'linkedin', 0.55], ['bts', 'tiktok', 0.44]];
+    const topPosts = topSeed.map(([key, pk, factor], i) => {
+      const plat = activeEvent.socials.some(s => s.key === pk) ? pk : activeEvent.socials[0].key;
+      const vN = Math.round(stat.v * factor * 0.35);
+      return { rank: i + 1, title: activeEvent[lang] + ' · ' + this.SUFFIX[key][lang], platName: pname(plat), platKey: plat, color: pcolor(plat), views: this._fmt(vN), viewsN: vN, rate: (9 - i * 0.9).toFixed(1) + '%', open: () => this.setState({ stat: { kind: 'top', ix: i } }) };
+    });
+    const fmtSplit = [[tr.typeReel, 52, '#e0457b'], [tr.typeVideo, 33, '#2563eb'], [tr.typeImage, 15, '#f59e0b']].map(([name, pct, color], i) => { const p = Math.max(5, pct + (i === 0 ? dI : -dI)); return { name, color, pct: p, w: p + '%' }; });
+    const fmt12 = t => { const [h, m] = t.split(':').map(Number); const am = h < 12; const hh = (h % 12) || 12; const ap = lang === 'ar' ? (am ? 'ص' : 'م') : (am ? 'AM' : 'PM'); return hh + ':' + String(m).padStart(2, '0') + ' ' + ap; };
+    const bestTime = fmt12(['18:00', '20:00', '21:00', '12:00', '19:30'][dI % 5]);
+    const engRateOverall = (stat.e / (stat.v || 1) * 100).toFixed(1) + '%';
+    // per-post analytics modal
+    let statView = null;
+    if (S.stat) {
+      let title, platsArr, base, seed, statusLabel = '', whenLabel = '';
+      if (S.stat.kind === 'top') {
+        const tp = topPosts[S.stat.ix];
+        if (tp) { title = tp.title; platsArr = [tp.platKey]; base = tp.viewsN; seed = S.stat.ix + 2; statusLabel = tr.posted; }
+      } else {
+        const post = S.posts.find(p => p.id === S.stat.id);
+        if (post) {
+          title = post.title[lang]; platsArr = post.plats;
+          const idx = eventPosts.indexOf(post);
+          base = Math.round((totF || 60000) * (0.5 + ((idx < 0 ? 0 : idx) % 5) * 0.18));
+          seed = (idx < 0 ? 0 : idx) + 3;
+          statusLabel = post.status === 'posted' ? tr.posted : tr.scheduled;
+          whenLabel = new Date(post.date + 'T00:00:00').toLocaleDateString(locale, { month: 'long', day: 'numeric' }) + ' · ' + post.time;
+        }
+      }
+      if (title) {
+        const m = this._metrics(base, seed);
+        const weights = platsArr.map(k => { const s = activeEvent.socials.find(x => x.key === k); return s ? Math.max(1, s.f) : 1; });
+        const wsum = weights.reduce((a, b) => a + b, 0) || 1;
+        const perAccount = platsArr.map((k, ix) => { const pct = Math.round(weights[ix] / wsum * 100); return { name: pname(k), color: pcolor(k), pct, w: pct + '%', reach: this._fmt(Math.round(m.reach * weights[ix] / wsum)) }; });
+        const trendBase = [40, 58, 50, 78, 100, 70, 62]; const rot = seed % 7;
+        const trend = trendBase.map((h, ix) => ({ h, color: h === 100 ? activeEvent.color : '#c7d7f8', label: tr.dows[(ix + rot) % 7] }));
+        statView = {
+          title, statusLabel, whenLabel,
+          plats: platsArr.map(k => ({ name: pname(k), color: pcolor(k) })),
+          metrics: [
+            { label: tr.stViewsLabel, value: this._fmt(m.views) },
+            { label: tr.mReach, value: this._fmt(m.reach) },
+            { label: tr.engRateLabel, value: m.rate },
+            { label: tr.mCompletion, value: m.completion },
+            { label: tr.mLikes, value: this._fmt(m.likes) },
+            { label: tr.mComments, value: this._fmt(m.comments) },
+            { label: tr.mShares, value: this._fmt(m.shares) },
+            { label: tr.mSaves, value: this._fmt(m.saves) }
+          ],
+          perAccount, trend
+        };
+      }
+    }
+
+    // approvals for active event
+    const whenTxt = a => (a.when === 'today' ? tr.whenToday : tr.whenYesterday);
+    const openReview = a => this.setState({ reviewId: a.id, reviewCaption: (S.editedCaps[a.id] != null ? S.editedCaps[a.id] : a.caption[lang]) });
+    const approvals = S.approvals.filter(a => a.eventId === S.activeEventId).map(a => ({
+      init: a.init, avColor: a.avColor, titleL: a.title[lang],
+      metaL: a.who[lang] + ' · ' + whenTxt(a) + ' · ' + a.plats.map(pname).join(' · '),
+      isPending: a.status === 'pending', isDone: a.status !== 'pending',
+      statusLabel: a.status === 'approved' ? tr.approvedBadge : tr.declinedBadge,
+      badgeBg: a.status === 'approved' ? '#e7f6f3' : '#fdf2f2', badgeColor: a.status === 'approved' ? '#128d81' : '#d64545',
+      openLabel: a.status === 'pending' ? tr.openLabel : tr.reviewLabel,
+      open: () => openReview(a)
+    }));
+
+    // review modal
+    const rev = S.reviewId != null ? S.approvals.find(a => a.id === S.reviewId) : null;
+    const revEvent = rev ? this._ev(rev.eventId) : null;
+    const commitCap = () => ({ ...S.editedCaps, [S.reviewId]: S.reviewCaption });
+    const setStatus = (st, msg) => this.setState({
+      approvals: this.state.approvals.map(x => x.id === S.reviewId ? { ...x, status: st } : x),
+      editedCaps: commitCap(), reviewId: null
+    }, () => this._toast(msg));
+
+    // admin console
+    const segStyle = active => ({ bd: active ? '#0f172a' : '#e3e8ef', bg: active ? '#0f172a' : '#fff', color: active ? '#fff' : '#5c6675' });
+    const adminSections = [['users', tr.secUsers], ['events', tr.secEvents], ['integrations', tr.secIntegrations], ['settings', tr.secSettings]].map(([k, l]) => {
+      const active = S.adminSection === k; const s = segStyle(active);
+      return { label: l, pick: () => this.setState({ adminSection: k }), bd: s.bd, bg: s.bg, color: s.color };
+    });
+    const roleLabel = { Admin: tr.roleAdmin, Manager: tr.roleManager, Editor: tr.roleEditor, Viewer: tr.roleViewer };
+    const currentUser = S.users.find(u => u.id === S.currentUserId) || S.users.find(u => u.role === 'Admin') || S.users[0];
+    const canApprove = !!currentUser && (currentUser.role === 'Admin' || currentUser.role === 'Manager');
+    const canDiscard = !!currentUser && currentUser.role === 'Editor';
+    const users = S.users.map(u => {
+      const on = u.mfa;
+      const badge = on ? { l: tr.mfaOn, bg: '#e7f6f3', c: '#128d81' } : (S.requireMfa ? { l: tr.mfaRequired, bg: '#fdf2f2', c: '#d64545' } : { l: tr.mfaOff, bg: '#f0f3f7', c: '#8b93a1' });
+      return {
+        name: u.name, email: u.email, init: u.init, avColor: u.avColor,
+        canApprove: u.role === 'Admin' || u.role === 'Manager',
+        roleButtons: ['Admin', 'Manager', 'Editor', 'Viewer'].map(r => { const a = u.role === r; return { label: roleLabel[r], set: () => this.setUserRole(u.id, r), bg: a ? '#eef2f8' : '#fff', color: a ? '#2563eb' : '#8b93a1', bd: a ? '#2563eb' : '#e3e8ef' }; }),
+        mfaLabel: badge.l, mfaBg: badge.bg, mfaColor: badge.c,
+        mfaAction: () => on ? this.resetMfa(u.id) : this.setState({ mfaUserId: u.id, mfaCode: '' }),
+        mfaActionLabel: on ? tr.resetMfa : tr.enableMfa,
+        statusLabel: u.status === 'active' ? tr.statusActive : tr.statusInvited,
+        statusBg: u.status === 'active' ? '#e7f6f3' : '#fdf6e7', statusColor: u.status === 'active' ? '#128d81' : '#b17a09',
+        remove: () => this.removeUser(u.id)
+      };
+    });
+    const adminPalette = ['#e0457b', '#17a99b', '#7c5cf0', '#2563eb', '#f59e0b', '#0ea5a3'];
+    const adminEvents = EV.map(e => ({
+      id: e.id, nameVal: e.en, color: e.color, accounts: tr.accountsCount(e.socials.length),
+      onName: ev => this.renameEvent(e.id, ev.target.value),
+      swatches: adminPalette.map(c => ({ color: c, pick: () => this.setEventColor(e.id, c), ring: e.color === c ? '#0f172a' : 'transparent' }))
+    }));
+    const langSet = ['en', 'ar'].map(l => { const a = lang === l; const s = segStyle(a); return { label: l === 'en' ? 'English' : 'العربية', pick: () => this.setState({ lang: l }), bd: s.bd, bg: s.bg, color: s.color }; });
+    const weekSet = [[false, tr.sunday], [true, tr.monday]].map(([v, l]) => { const a = weekStartMon === v; const s = segStyle(a); return { label: l, pick: () => this.setState({ weekMon: v }), bd: s.bd, bg: s.bg, color: s.color }; });
+    const curTone = this.state.tone || this.props.aiTone || 'punchy';
+    const toneSet = [['punchy', tr.tonePunchy], ['professional', tr.toneProfessional], ['friendly', tr.toneFriendly]].map(([v, l]) => { const a = curTone === v; const s = segStyle(a); return { label: l, pick: () => this.setState({ tone: v }), bd: s.bd, bg: s.bg, color: s.color }; });
+    const mkToggle = (on, toggle) => ({ on, toggle, bg: on ? '#17a99b' : '#dce1e8', knob: on ? '23px' : '3px' });
+    const invRoleBtns = ['Admin', 'Manager', 'Editor', 'Viewer'].map(r => { const a = S.invRole === r; const s = segStyle(a); return { label: roleLabel[r], set: () => this.setState({ invRole: r }), bd: s.bd, bg: s.bg, color: s.color }; });
+    const mfaUser = S.mfaUserId != null ? S.users.find(u => u.id === S.mfaUserId) : null;
+    const integrationsByEvent = EV.map(e => {
+      const accounts = e.socials.map(s => {
+        const ek = e.id + ':' + s.key;
+        const it = S.conns[ek] || { connected: false, key: '' };
+        return {
+          platName: pname(s.key), platColor: pcolor(s.key), handle: s.handle,
+          connected: it.connected, notConnected: !it.connected,
+          statusLabel: it.connected ? tr.apiConnected : tr.apiNotConnected,
+          statusBg: it.connected ? '#e7f6f3' : '#f0f3f7', statusColor: it.connected ? '#128d81' : '#8b93a1',
+          masked: it.key ? ('••••••••••••' + it.key.slice(-4)) : '',
+          keyVal: it.key, onKey: ev => this.setApiKey(ek, ev.target.value),
+          connect: () => this.connectApi(ek), disconnect: () => this.disconnectApi(ek),
+          remove: () => this.removeSocial(e.id, s.key)
+        };
+      });
+      const connCount = accounts.filter(a => a.connected).length;
+      const addable = P.filter(p => !e.socials.some(s => s.key === p.key)).map(p => ({ name: p[lang], color: p.color, add: () => this.addSocial(e.id, p.key) }));
+      return { name: e[lang], color: e.color, connLabel: tr.connectedOf(connCount, accounts.length), accounts, addable, hasAddable: addable.length > 0 };
+    });
+
+    return {
+      tr, dir, langOpts, heroMonth,
+      eventChips: EV.map(e => ({ name: e[lang], color: e.color })),
+      isLanding: view === 'landing', isApp: view === 'app', isLogin: view === 'login',
+      goApp: () => this.setState({ view: 'login', loginStep: 'creds' }),
+      goLanding: () => this.setState({ view: 'landing' }),
+      loginStepCreds: S.loginStep !== 'mfa', loginStepMfa: S.loginStep === 'mfa',
+      loginEmail: S.loginEmail, onLoginEmail: e => this.setState({ loginEmail: e.target.value }),
+      loginPass: S.loginPass, onLoginPass: e => this.setState({ loginPass: e.target.value }),
+      loginCode: S.loginCode, onLoginCode: e => this.setState({ loginCode: e.target.value }),
+      signIn: () => this.setState({ loginStep: 'mfa' }),
+      ssoLogin: () => this.setState({ view: 'app', tab: 'dashboard' }),
+      verifyLogin: () => this.setState({ view: 'app', tab: 'dashboard', loginStep: 'creds', loginCode: '' }),
+      backToCreds: () => this.setState({ loginStep: 'creds' }),
+      tabs,
+      tabDashboard: S.tab === 'dashboard', tabCompose: S.tab === 'compose', tabCalendar: S.tab === 'calendar',
+      tabLibrary: S.tab === 'library', tabAnalytics: S.tab === 'analytics', tabTeam: S.tab === 'team',
+      toggleEventMenu: () => this.setState({ eventMenuOpen: !S.eventMenuOpen }),
+      eventMenuOpen: S.eventMenuOpen, eventMenu,
+      openAddEvent: () => this.setState({ addOpen: true, eventMenuOpen: false, newName: '' }),
+      hasAdd: S.addOpen,
+      closeAdd: () => this.setState({ addOpen: false }),
+      newName: S.newName, onNewName: e => this.setState({ newName: e.target.value }),
+      colorSwatches: ['#e0457b', '#17a99b', '#7c5cf0', '#2563eb', '#f59e0b', '#0ea5a3'].map(c => ({
+        color: c, pick: () => this.setState({ newColor: c }),
+        ring: S.newColor === c ? '#0f172a' : 'transparent'
+      })),
+      createEvent: this.createEvent,
+      stopProp: e => e.stopPropagation(),
+      activeEventName: activeEvent[lang], activeEventColor: activeEvent.color, activeSocials,
+      kpis, eventCards, eventCountLabel,
+      audienceByEvent, reachBars, totalReachMonth, upcoming, hasUpcoming,
+      pauseSlide: () => { this._slidePaused = true; }, resumeSlide: () => { this._slidePaused = false; },
+      caption: S.caption, onCaption: e => this.setState({ caption: e.target.value }), capLen: S.caption.length,
+      hashtags: S.hashtags, generate: this.generate,
+      genLabel: S.generating ? tr.genBusy : tr.genIdle, genAnim: S.generating ? 'pulse 1s ease infinite' : 'none',
+      composeSubL: tr.composeSub,
+      composeHasAsset: !!S.composeAsset, composeNoAsset: !S.composeAsset,
+      composeAssetName: S.composeAsset ? S.composeAsset.name : '',
+      composeAssetDur: S.composeAsset ? S.composeAsset.dur : '',
+      composeAssetMeta: S.composeAsset ? (typeLabel[S.composeAsset.type] + ' · ' + tr.fromLibrary) : '',
+      removeAsset: () => this.setState({ composeAsset: null }),
+      platformList, schedDays, timeOpts,
+      schedule: this.schedule, schedDisabled: !canSched, schedOpacity: canSched ? 1 : 0.45,
+      schedTime: S.schedTime, onSchedTime: e => this.setState({ schedTime: e.target.value || S.schedTime }),
+      schedTimeLabel: (() => { const [h, m] = S.schedTime.split(':').map(Number); const am = h < 12; const hh = (h % 12) || 12; const ap = lang === 'ar' ? (am ? 'ص' : 'م') : (am ? 'AM' : 'PM'); return hh + ':' + String(m).padStart(2, '0') + ' ' + ap; })(),
+      monthLabel, dowLabels, days, schedLine,
+      prevMonth: () => this.setState({ monthOffset: S.monthOffset - 1, selectedPostId: null }),
+      nextMonth: () => this.setState({ monthOffset: S.monthOffset + 1, selectedPostId: null }),
+      hasSel: !!sel, selTitle: sel ? sel.title[lang] : '', selCaption: sel ? sel.caption[lang] : '',
+      selStatus: sel ? (sel.status === 'posted' ? tr.posted : tr.scheduled) : '',
+      selStatusColor: sel && sel.status === 'posted' ? '#17a99b' : '#2563eb',
+      selWhen: sel ? selDate.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' }) + ' · ' + sel.time : '',
+      selPlats: sel ? sel.plats.map(k => ({ name: pname(k), color: pcolor(k) })) : [],
+      closeSel: () => this.setState({ selectedPostId: null }),
+      selCanStat: !!sel && sel.status === 'posted',
+      openSelStat: () => { if (sel) this.setState({ stat: { kind: 'post', id: sel.id } }); },
+      delSel: () => { this.setState({ posts: S.posts.filter(p => p.id !== S.selectedPostId), selectedPostId: null }); this._toast(tr.toastDeleted); },
+      libFilters, libItems,
+      ranges: rangeMenu, rangeMenu, rangeLabel, rangeMenuOpen: S.rangeMenuOpen, toggleRangeMenu: () => this.setState({ rangeMenuOpen: !S.rangeMenuOpen }),
+      bars, platSplit,
+      accountPerf, topPosts, fmtSplit, bestTime, engRateOverall,
+      hasStat: !!statView, statView, closeStat: () => this.setState({ stat: null }),
+      stViews: this._fmt(Math.round(stat.v)), stViewsDelta: '+' + stat.dv + stat.dtxt,
+      stEng: this._fmt(Math.round(stat.e)), stEngDelta: '+' + stat.de + stat.dtxt,
+      stFollowers: this._fmt(Math.round(stat.f)), stFollowersDelta: '+' + stat.df + stat.dtxt,
+      stPosts: String(stat.p), stPostsDelta: stat.sub,
+      approvals, pendingLine: tr.pendingLine(pendingByEvent[S.activeEventId]),
+      canApprove, approvalsFlowNote: tr.flowNote,
+      currentInit: currentUser ? currentUser.init : '?', currentColor: currentUser ? currentUser.avColor : '#94a3b8', currentRoleLabel: currentUser ? roleLabel[currentUser.role] : '',
+      toggleActingMenu: () => this.setState({ actingMenuOpen: !S.actingMenuOpen }), actingMenuOpen: S.actingMenuOpen,
+      actingMenu: S.users.map(u => ({ init: u.init, avColor: u.avColor, name: u.name, roleLabel: roleLabel[u.role], pick: () => this.setState({ currentUserId: u.id, actingMenuOpen: false }), bg: u.id === S.currentUserId ? '#f4f6f9' : 'transparent' })),
+      hasReview: !!rev,
+      stopProp: e => e.stopPropagation(),
+      closeReview: () => this.setState({ reviewId: null }),
+      reviewEventName: revEvent ? revEvent[lang] : '', reviewColor: revEvent ? revEvent.color : '#94a3b8',
+      reviewTitle: rev ? rev.title[lang] : '',
+      reviewCaption: S.reviewCaption,
+      onReviewCaption: e => this.setState({ reviewCaption: e.target.value }),
+      reviewPlats: rev ? rev.plats.map(k => ({ name: pname(k), color: pcolor(k) })) : [],
+      reviewWhen: rev ? (whenTxt(rev) + ' · ' + rev.who[lang]) : '',
+      reviewIsPending: rev ? rev.status === 'pending' : false,
+      reviewCanAct: rev ? (rev.status === 'pending' && canApprove) : false,
+      reviewCanDiscard: rev ? (rev.status === 'pending' && canDiscard) : false,
+      reviewNoPerm: rev ? (rev.status === 'pending' && !canApprove && !canDiscard) : false,
+      discardReview: () => this.setState({ approvals: this.state.approvals.filter(x => x.id !== S.reviewId), reviewId: null }, () => this._toast(tr.toastDiscarded)),
+      reviewIsDone: rev ? rev.status !== 'pending' : false,
+      reviewStatusLabel: rev ? (rev.status === 'approved' ? tr.approvedBadge : tr.declinedBadge) : '',
+      reviewBadgeBg: rev && rev.status === 'approved' ? '#e7f6f3' : '#fdf2f2',
+      reviewBadgeColor: rev && rev.status === 'approved' ? '#128d81' : '#d64545',
+      saveReview: () => this.setState({ editedCaps: commitCap() }, () => this._toast(tr.toastSaved)),
+      approveReview: () => setStatus('approved', tr.toastApproved),
+      declineReview: () => setStatus('declined', tr.toastDeclined),
+      tabAdmin: S.tab === 'admin', goAdmin: () => this.setState({ tab: 'admin', eventMenuOpen: false, selectedPostId: null }),
+      adminTabBg: S.tab === 'admin' ? '#eef2f8' : 'transparent', adminTabColor: S.tab === 'admin' ? '#2563eb' : '#3d4757', adminTabDot: S.tab === 'admin' ? '#2563eb' : '#c8d0dc',
+      adminSections, users, adminEvents, langSet, weekSet, toneSet, invRoleBtns,
+      adminUsers: S.adminSection === 'users', adminEventsSec: S.adminSection === 'events', adminSettings: S.adminSection === 'settings',
+      adminIntegrations: S.adminSection === 'integrations', integrationsByEvent,
+      userCount: S.users.length + ' · ' + S.users.filter(u => u.mfa).length + ' MFA',
+      requireMfaT: mkToggle(S.requireMfa, () => this.setState({ requireMfa: !S.requireMfa })),
+      autoPublishT: mkToggle(S.autoPublish, () => this.setState({ autoPublish: !S.autoPublish })),
+      openInvite: () => this.setState({ inviteOpen: true, invName: '', invEmail: '', invRole: 'Editor' }),
+      hasInvite: S.inviteOpen, closeInvite: () => this.setState({ inviteOpen: false }),
+      invName: S.invName, invEmail: S.invEmail,
+      onInvName: e => this.setState({ invName: e.target.value }), onInvEmail: e => this.setState({ invEmail: e.target.value }),
+      sendInvite: this.sendInvite,
+      hasMfa: !!mfaUser, mfaUserName: mfaUser ? mfaUser.name : '',
+      mfaCode: S.mfaCode, onMfaCode: e => this.setState({ mfaCode: e.target.value }),
+      verifyMfa: this.verifyMfa, closeMfa: () => this.setState({ mfaUserId: null }),
+      renameEvent: this.renameEvent, openAddEvent2: () => this.setState({ addOpen: true, newName: '' }),
+      hasToast: !!S.toast, toastMsg: S.toast || ''
+    };
+  }
+}
+</script>
+</body>
+</html>
