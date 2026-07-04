@@ -37,6 +37,8 @@ export interface PostDTO {
   captionAr: string;
   platforms: string[];
   status: PostStatus;
+  format: string | null; // Image | Video | Reel
+  mediaUrl: string | null; // /api/media/<id> when the post has an upload
 }
 
 export interface ApprovalDTO {

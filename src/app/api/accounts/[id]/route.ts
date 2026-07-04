@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAuth, json, error } from "@/lib/api";
+import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/lib/api";
 import { toAccountDTO } from "@/lib/serialize";
 
 const Body = z.object({
@@ -16,6 +16,9 @@ export async function PATCH(
 ) {
   const ctx = await requireAuth();
   if (!ctx) return error("Not authenticated", 401);
+  if (!roleCan(effectiveRole(ctx), ["Admin", "Manager"])) {
+    return forbidden("Only Admins and Managers can manage integrations");
+  }
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return error("Invalid body", 400);
@@ -47,6 +50,9 @@ export async function DELETE(
 ) {
   const ctx = await requireAuth();
   if (!ctx) return error("Not authenticated", 401);
+  if (!roleCan(effectiveRole(ctx), ["Admin", "Manager"])) {
+    return forbidden("Only Admins and Managers can manage integrations");
+  }
   try {
     await prisma.socialAccount.delete({ where: { id: params.id } });
     return json({ ok: true });

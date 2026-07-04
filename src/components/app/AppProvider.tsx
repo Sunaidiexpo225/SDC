@@ -52,7 +52,14 @@ interface UiState {
   hashtags: string[];
   generating: boolean;
   genIdx: number;
-  composeAsset: { name: string; dur: string; type: AssetType } | null;
+  composeAsset: {
+    name: string;
+    dur: string;
+    type: AssetType;
+    mediaId?: string;
+    url?: string;
+    mime?: string;
+  } | null;
   platforms: Record<string, boolean>;
   schedDay: string;
   schedTime: string;
@@ -304,6 +311,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         time: ui.schedTime,
         caption: ui.caption,
         platforms: keys,
+        ...(ui.composeAsset?.mediaId
+          ? { mediaId: ui.composeAsset.mediaId, format: ui.composeAsset.type }
+          : {}),
       });
       await reload();
       patch({

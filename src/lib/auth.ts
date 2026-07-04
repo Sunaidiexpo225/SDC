@@ -4,12 +4,46 @@ import { authenticator } from "otplib";
 import { cookies } from "next/headers";
 import { prisma } from "./db";
 
-const secret = new TextEncoder().encode(
-  process.env.AUTH_SECRET || "dev-secret-change-me-please-0000000000",
-);
+// AUTH_SECRET signs session cookies. It MUST be set in production — falling
+// back to a hardcoded default there would let anyone forge sessions, so we
+// fail fast instead. Development keeps a convenience default.
+function loadSecret(): Uint8Array {
+  const s = process.env.AUTH_SECRET;
+  if (s) return new TextEncoder().encode(s);
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "AUTH_SECRET is required in production — set it to a long random string.",
+    );
+  }
+  return new TextEncoder().encode("dev-secret-change-me-please-0000000000");
+}
+const secret = loadSecret();
 
 export const SESSION_COOKIE = "sdc_session";
 export const PENDING_COOKIE = "sdc_pending";
+export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+export const PENDING_MAX_AGE = 600; // 10 minutes
+
+// Demo mode enables the handoff conveniences that must NEVER be on for real
+// data: the "123456" TOTP bypass, the passwordless SSO shortcut, and the
+// "acting as" role switcher. On by default off-production; set
+// AUTH_DEMO_BYPASS=0 (or run in production without it) to turn them all off.
+export const DEMO_MODE =
+  process.env.AUTH_DEMO_BYPASS === "1" ||
+  (process.env.AUTH_DEMO_BYPASS !== "0" &&
+    process.env.NODE_ENV !== "production");
+
+// Shared cookie options — Secure in production so the session never travels
+// over plaintext HTTP.
+export function authCookie(maxAge: number) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge,
+  };
+}
 
 export interface SessionPayload {
   uid: string; // authenticated user
@@ -53,23 +87,22 @@ export function checkPassword(pw: string, hash: string): Promise<boolean> {
   return bcrypt.compare(pw, hash);
 }
 
-// TOTP helpers (RFC 6238 via otplib). In dev we also accept the demo code
-// "123456" so the flow is exercisable without provisioning an authenticator.
+// TOTP helpers (RFC 6238 via otplib). In demo mode we also accept the demo
+// code "123456" so the flow is exercisable without provisioning an
+// authenticator.
 export function newTotpSecret(): string {
   return authenticator.generateSecret();
 }
 export function totpUri(email: string, secret: string): string {
   return authenticator.keyuri(email, "Sunaidi Design Central", secret);
 }
-// Demo bypass: accept "123456" when AUTH_DEMO_BYPASS=1 (default on for the
-// handoff build) or in development. Set AUTH_DEMO_BYPASS=0 for real production.
-const demoBypassOn =
-  process.env.AUTH_DEMO_BYPASS === "1" ||
-  (process.env.AUTH_DEMO_BYPASS !== "0" && process.env.NODE_ENV !== "production");
 
-export function verifyTotp(secret: string | null | undefined, token: string): boolean {
+export function verifyTotp(
+  secret: string | null | undefined,
+  token: string,
+): boolean {
   const code = (token || "").replace(/\s/g, "");
-  if (demoBypassOn && code === "123456") return true;
+  if (DEMO_MODE && code === "123456") return true;
   if (!secret) return false;
   try {
     return authenticator.verify({ token: code, secret });
@@ -92,9 +125,13 @@ export async function requireSession(): Promise<SessionPayload | null> {
 export async function currentUsers() {
   const session = await readSession();
   if (!session) return { session: null, authUser: null, actingUser: null };
+  // "Acting as" only takes effect in demo mode. Outside it the effective user
+  // is always the authenticated user, so a stale/forged `acting` claim in the
+  // token cannot escalate privileges in production.
+  const actingId = DEMO_MODE ? (session.acting ?? session.uid) : session.uid;
   const [authUser, actingUser] = await Promise.all([
     prisma.user.findUnique({ where: { id: session.uid } }),
-    prisma.user.findUnique({ where: { id: session.acting ?? session.uid } }),
+    prisma.user.findUnique({ where: { id: actingId } }),
   ]);
   return { session, authUser, actingUser: actingUser ?? authUser };
 }

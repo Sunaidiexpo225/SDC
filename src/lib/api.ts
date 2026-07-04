@@ -53,6 +53,8 @@ export async function loadAppData(): Promise<AppData> {
 }
 
 // ---- guards ----
+type Ctx = NonNullable<Awaited<ReturnType<typeof requireAuth>>>;
+
 export async function requireAuth() {
   const ctx = await currentUsers();
   if (!ctx.session || !ctx.authUser) return null;
@@ -61,4 +63,22 @@ export async function requireAuth() {
 
 export function roleCan(role: Role | undefined, allowed: Role[]): boolean {
   return !!role && allowed.includes(role);
+}
+
+// The role permission checks run against: the "acting as" user in demo mode,
+// otherwise the authenticated user (currentUsers() already collapses these
+// outside demo mode, so this is simply the effective role).
+export function effectiveRole(ctx: Ctx): Role | undefined {
+  return ctx.actingUser?.role as Role | undefined;
+}
+
+// The effective identity — the "acting as" user in demo mode, otherwise the
+// authenticated user. Used for "is this me?" checks (own MFA setup, self-
+// delete guard) so they track the identity the app is presenting.
+export function effectiveUserId(ctx: Ctx): string {
+  return ctx.actingUser?.id ?? ctx.authUser!.id;
+}
+
+export function forbidden(message = "You don't have permission to do that") {
+  return error(message, 403);
 }

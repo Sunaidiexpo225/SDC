@@ -1,10 +1,13 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useApp } from "../AppProvider";
 import { useLang } from "../../LangProvider";
 import { Hov } from "../../ui";
 import { s } from "@/lib/style";
 import { addDays, isoDate, fmt12 } from "@/lib/format";
+import { uploadMedia } from "@/lib/client";
+import type { AssetType } from "@/lib/content";
 
 const TIME_OPTS = ["09:00", "12:00", "15:00", "18:00", "20:30"];
 
@@ -12,6 +15,38 @@ export default function Compose() {
   const app = useApp();
   const { t, lang } = useLang();
   const { ui, patch, activeEvent, today } = app;
+
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  async function handleFile(file?: File | null) {
+    if (!file || uploading) return;
+    const isImg = file.type.startsWith("image/");
+    const isVid = file.type.startsWith("video/");
+    if (!isImg && !isVid) return app.toast(t.uploadBadType);
+    setUploading(true);
+    try {
+      // Server validates type/size before any bytes move, then stores via the
+      // configured driver (Supabase/S3 direct upload, or Postgres).
+      const data = await uploadMedia(file, activeEvent.id);
+      patch({
+        composeAsset: {
+          name: data.filename,
+          dur: isImg ? "IMG" : "VID",
+          type: data.kind as AssetType,
+          mediaId: data.id,
+          url: data.url,
+          mime: data.mimeType,
+        },
+      });
+    } catch (e) {
+      app.toast(e instanceof Error ? e.message : t.uploadFailed);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
 
   const typeLabel: Record<string, string> = {
     Video: t.typeVideo,
@@ -61,7 +96,26 @@ export default function Compose() {
       <div style={s("display:grid;grid-template-columns:1fr 350px;gap:20px;align-items:start")}>
         {/* left: media + caption */}
         <div style={s("background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:22px")}>
-          {ui.composeAsset ? (
+          {ui.composeAsset?.url ? (
+            <div style={s("margin-bottom:18px")}>
+              {ui.composeAsset.type === "Image" ? (
+                <img src={ui.composeAsset.url} alt={ui.composeAsset.name} style={s("width:100%;max-height:340px;object-fit:contain;border-radius:14px;display:block;background:#0f172a")} />
+              ) : (
+                <video src={ui.composeAsset.url} controls style={s("width:100%;max-height:340px;border-radius:14px;display:block;background:#000")} />
+              )}
+              <div style={s("display:flex;align-items:center;gap:8px;margin-top:10px")}>
+                <span dir="ltr" style={s("flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#8b93a1;text-align:start")}>{ui.composeAsset.name}</span>
+                {ui.composeAsset.type !== "Image" &&
+                  (["Video", "Reel"] as const).map((k) => {
+                    const on = ui.composeAsset!.type === k;
+                    return (
+                      <button key={k} onClick={() => patch({ composeAsset: { ...ui.composeAsset!, type: k } })} style={s(`border:2px solid ${on ? "#0f172a" : "#e3e8ef"};cursor:pointer;background:${on ? "#0f172a" : "#fff"};color:${on ? "#fff" : "#5c6675"};font-weight:700;font-size:12px;padding:6px 12px;border-radius:999px;font-family:inherit`)}>{typeLabel[k]}</button>
+                    );
+                  })}
+                <Hov tag="button" onClick={() => patch({ composeAsset: null })} css="border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#5c6675;font-weight:700;font-size:12px;padding:6px 12px;border-radius:999px;font-family:inherit;flex:none" hover="border-color:#d64545;color:#d64545">{t.removeAsset}</Hov>
+              </div>
+            </div>
+          ) : ui.composeAsset ? (
             <div style={s("display:flex;align-items:center;gap:14px;border:1px solid #e3e8ef;border-radius:14px;padding:14px;margin-bottom:18px;background:#fbfcfe")}>
               <div style={s("width:64px;height:64px;border-radius:10px;background:repeating-linear-gradient(45deg,#eef1f5 0 8px,#e5e9f0 8px 16px);flex:none;display:grid;place-items:center")}><span style={s("font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#8b93a1")}>{ui.composeAsset.dur}</span></div>
               <div style={s("flex:1;min-width:0")}>
@@ -71,10 +125,24 @@ export default function Compose() {
               <Hov tag="button" onClick={() => patch({ composeAsset: null })} css="border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#5c6675;font-weight:700;font-size:12px;padding:8px 14px;border-radius:999px;font-family:inherit;flex:none" hover="border-color:#d64545;color:#d64545">{t.removeAsset}</Hov>
             </div>
           ) : (
-            <div style={s("height:180px;border-radius:14px;background:repeating-linear-gradient(45deg,#eef1f5 0 10px,#e5e9f0 10px 20px);display:grid;place-items:center;margin-bottom:18px;border:1px dashed #c8d0dc")}>
-              <span style={s("font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8b93a1")}>{t.dropHint}</span>
+            <div
+              onClick={() => fileRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files?.[0]); }}
+              style={s(`height:180px;border-radius:14px;background:${dragOver ? "#eef2f8" : "repeating-linear-gradient(45deg,#eef1f5 0 10px,#e5e9f0 10px 20px)"};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin-bottom:18px;border:1px dashed ${dragOver ? "#2563eb" : "#c8d0dc"};cursor:pointer;text-align:center;padding:0 16px`)}
+            >
+              {uploading ? (
+                <span style={s("font-size:13px;font-weight:700;color:#2563eb")}>{t.uploading}</span>
+              ) : (
+                <>
+                  <span style={s("font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8b93a1")}>{t.dropHint}</span>
+                  <span style={s("font-size:12px;font-weight:600;color:#2563eb")}>{t.orBrowse}</span>
+                </>
+              )}
             </div>
           )}
+          <input ref={fileRef} type="file" accept="image/*,video/*" onChange={(e) => handleFile(e.target.files?.[0])} style={s("display:none")} />
           <div style={s("display:flex;align-items:center;justify-content:space-between;margin-bottom:8px")}>
             <label style={s("font-size:13px;font-weight:700")}>{t.captionLabel}</label>
             <Hov tag="button" onClick={app.generate} css={`border:none;cursor:pointer;background:#0f172a;color:#a3e04f;font-weight:700;font-size:13px;padding:8px 16px;border-radius:999px;font-family:inherit;animation:${ui.generating ? "pulse 1s ease infinite" : "none"}`} hover="background:#1e293b">✦ {ui.generating ? t.genBusy : t.genIdle}</Hov>

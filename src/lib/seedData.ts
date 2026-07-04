@@ -2,10 +2,12 @@
 // runtime auto-seed (ensureSeeded), so a freshly-deployed empty database
 // populates itself on first load with no manual step.
 
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient, Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { authenticator } from "otplib";
 import { prisma } from "./db";
+
+type Db = PrismaClient | Prisma.TransactionClient;
 
 function isoDate(d: Date): string {
   return (
@@ -81,7 +83,7 @@ export const DEMO_PASSWORD = "password";
 
 // Inserts users, events (+accounts), posts and approvals. Assumes the tables
 // are empty and does NOT touch Setting (the caller manages that as a lock).
-export async function seedCore(db: PrismaClient) {
+export async function seedCore(db: Db) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
@@ -177,9 +179,13 @@ export async function ensureSeeded(): Promise<void> {
         return; // another instance grabbed the lock
       }
       try {
-        await seedCore(prisma);
+        // Run the inserts in a transaction so a mid-seed failure rolls back
+        // every row — otherwise partial data (e.g. some users) would remain
+        // and the unique-email constraint would make every retry fail.
+        await prisma.$transaction((tx) => seedCore(tx), { timeout: 30_000 });
       } catch (e) {
         console.error("[seed] failed:", e);
+        // Release the lock so a later request can retry from a clean slate.
         await prisma.setting.delete({ where: { id: 1 } }).catch(() => {});
         seeding = null;
       }

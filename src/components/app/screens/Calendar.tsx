@@ -90,6 +90,13 @@ export default function Calendar() {
             <span style={s(`font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${sel.status === "posted" ? "#17a99b" : "#2563eb"}`)}>{sel.status === "posted" ? t.posted : t.scheduled}</span>
             <button onClick={() => patch({ selectedPostId: null })} style={s("border:none;cursor:pointer;background:#f4f6f9;width:28px;height:28px;border-radius:50%;font-family:inherit;color:#5c6675")}>✕</button>
           </div>
+          {sel.mediaUrl && (
+            sel.format === "Image" ? (
+              <img src={sel.mediaUrl} alt="" style={s("width:100%;max-height:200px;object-fit:cover;border-radius:12px;display:block;margin-bottom:12px;background:#0f172a")} />
+            ) : (
+              <video src={sel.mediaUrl} controls style={s("width:100%;max-height:200px;border-radius:12px;display:block;margin-bottom:12px;background:#000")} />
+            )
+          )}
           <div style={s("font-family:var(--grotesk);font-weight:700;font-size:18px;margin-bottom:6px")}>{title(sel)}</div>
           <p style={s("font-size:13px;line-height:1.5;color:#5c6675;margin:0 0 14px")}>{caption(sel)}</p>
           <div style={s("font-size:12px;font-weight:700;color:#8b93a1;margin-bottom:8px")}>{selDate.toLocaleDateString(locale, { weekday: "long", month: "long", day: "numeric" })} · {sel.time}</div>

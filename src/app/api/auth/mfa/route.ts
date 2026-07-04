@@ -8,9 +8,12 @@ import {
   signSession,
   PENDING_COOKIE,
   SESSION_COOKIE,
+  SESSION_MAX_AGE,
+  authCookie,
   type PendingPayload,
 } from "@/lib/auth";
 import { json, error } from "@/lib/api";
+import { rateLimit, clientIp } from "@/lib/ratelimit";
 
 const Body = z.object({ code: z.string().min(1) });
 
@@ -22,6 +25,10 @@ export async function POST(req: NextRequest) {
   const pending = await verify<PendingPayload>(pendingToken);
   if (!pending || pending.step !== "mfa") return error("Session expired — sign in again", 401);
 
+  // Cap code attempts per pending user so the 6-digit TOTP can't be brute-forced.
+  const limited = rateLimit(`mfa:${pending.uid}:${clientIp(req)}`, 5, 60_000);
+  if (limited) return error("Too many attempts. Please wait and try again.", 429);
+
   const user = await prisma.user.findUnique({ where: { id: pending.uid } });
   if (!user) return error("Account not found", 404);
 
@@ -31,12 +38,7 @@ export async function POST(req: NextRequest) {
 
   const token = await signSession({ uid: user.id, acting: user.id });
   const res = json({ ok: true });
-  res.cookies.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  res.cookies.set(SESSION_COOKIE, token, authCookie(SESSION_MAX_AGE));
   res.cookies.set(PENDING_COOKIE, "", { path: "/", maxAge: 0 });
   return res;
 }

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAuth, json, error, getSetting } from "@/lib/api";
+import { requireAuth, json, error, getSetting, forbidden, effectiveRole, roleCan } from "@/lib/api";
 import { toSettingDTO } from "@/lib/serialize";
 
 const Body = z.object({
@@ -21,6 +21,9 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   const ctx = await requireAuth();
   if (!ctx) return error("Not authenticated", 401);
+  if (!roleCan(effectiveRole(ctx), ["Admin"])) {
+    return forbidden("Only Admins can change workspace settings");
+  }
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return error("Invalid body", 400);

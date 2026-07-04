@@ -48,7 +48,31 @@ model Post {
   captionAr    String
   platformsCsv String // comma-separated platform keys
   status       String   @default("scheduled") // scheduled | posted
+  format       String? // Image | Video | Reel (content type of the attached media)
+  mediaId      String?
+  media        Media?   @relation(fields: [mediaId], references: [id], onDelete: SetNull)
   createdAt    DateTime @default(now())
+}
+
+// Uploaded post media. Two storage drivers (lib/media.ts):
+//   - "db": bytes stored in `data` (no external service; capped by the Vercel
+//     function body limit ~4 MB).
+//   - "s3": bytes live in an S3-compatible bucket (Supabase Storage / AWS S3);
+//     `storageKey` is the object key, uploaded client-direct so large files
+//     bypass the function body limit. `data` is null.
+model Media {
+  id         String   @id @default(cuid())
+  eventId    String?
+  filename   String
+  mimeType   String
+  size       Int
+  kind       String // Image | Video | Reel
+  driver     String   @default("db") // db | s3
+  storageKey String? // object key when driver = s3
+  status     String   @default("ready") // pending | ready
+  data       Bytes? // bytes when driver = db
+  posts      Post[]
+  createdAt  DateTime @default(now())
 }
 
 model Approval {

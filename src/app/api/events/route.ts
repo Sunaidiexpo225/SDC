@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAuth, json, error } from "@/lib/api";
+import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/lib/api";
 import { toEventDTO } from "@/lib/serialize";
 import { tr } from "@/lib/i18n";
 
@@ -22,6 +22,9 @@ const STARTER: { key: string; handleFromSlug: boolean }[] = [
 export async function POST(req: NextRequest) {
   const ctx = await requireAuth();
   if (!ctx) return error("Not authenticated", 401);
+  if (!roleCan(effectiveRole(ctx), ["Admin", "Manager"])) {
+    return forbidden("Only Admins and Managers can create events");
+  }
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return error("Invalid body", 400);
