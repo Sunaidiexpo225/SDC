@@ -6,12 +6,21 @@ export const metadata: Metadata = {
   title: "Sunaidi Design Central",
   description:
     "Run the social calendars for all your events from one dashboard — schedule, auto-publish and measure every account, with AI-written captions.",
+  applicationName: "Design Central",
+  appleWebApp: {
+    capable: true,
+    title: "Design Central",
+    statusBarStyle: "default",
+  },
+  formatDetection: { telephone: false },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
   viewportFit: "cover",
+  themeColor: "#2563eb",
 };
 
 export default function RootLayout({
