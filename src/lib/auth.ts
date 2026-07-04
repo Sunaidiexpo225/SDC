@@ -6,18 +6,21 @@ import { prisma } from "./db";
 
 // AUTH_SECRET signs session cookies. It MUST be set in production — falling
 // back to a hardcoded default there would let anyone forge sessions, so we
-// fail fast instead. Development keeps a convenience default.
-function loadSecret(): Uint8Array {
+// require it. Resolved lazily (on first sign/verify) rather than at module
+// load, so a missing value surfaces as a clear runtime error on the auth path
+// instead of crashing the build when Next imports route modules.
+let _secret: Uint8Array | null = null;
+function sessionSecret(): Uint8Array {
+  if (_secret) return _secret;
   const s = process.env.AUTH_SECRET;
-  if (s) return new TextEncoder().encode(s);
+  if (s) return (_secret = new TextEncoder().encode(s));
   if (process.env.NODE_ENV === "production") {
     throw new Error(
       "AUTH_SECRET is required in production — set it to a long random string.",
     );
   }
-  return new TextEncoder().encode("dev-secret-change-me-please-0000000000");
+  return (_secret = new TextEncoder().encode("dev-secret-change-me-please-0000000000"));
 }
-const secret = loadSecret();
 
 export const SESSION_COOKIE = "sdc_session";
 export const PENDING_COOKIE = "sdc_pending";
@@ -59,7 +62,7 @@ export async function signSession(p: SessionPayload): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(secret);
+    .sign(sessionSecret());
 }
 
 export async function signPending(uid: string): Promise<string> {
@@ -67,13 +70,13 @@ export async function signPending(uid: string): Promise<string> {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("10m")
-    .sign(secret);
+    .sign(sessionSecret());
 }
 
 export async function verify<T>(token?: string): Promise<T | null> {
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, sessionSecret());
     return payload as T;
   } catch {
     return null;
