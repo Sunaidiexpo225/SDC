@@ -8,7 +8,7 @@ const Body = z.object({
   eventId: z.string().min(1),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   time: z.string().regex(/^\d{2}:\d{2}$/),
-  caption: z.string().min(1),
+  caption: z.string().optional(),
   platforms: z.array(z.string()).min(1),
   mediaId: z.string().optional(),
   format: z.enum(["Image", "Video", "Reel"]).optional(),
@@ -22,8 +22,12 @@ export async function POST(req: NextRequest) {
   }
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return error("Caption and at least one account are required", 400);
-  const { eventId, date, time, caption, platforms, mediaId, format } = parsed.data;
+  if (!parsed.success) return error("At least one account is required", 400);
+  const { eventId, date, time, platforms, mediaId, format } = parsed.data;
+  const caption = (parsed.data.caption ?? "").trim();
+
+  // A post must carry some content: a caption, media, or both.
+  if (!caption && !mediaId) return error("Add a caption or attach media", 400);
 
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (!event) return error("Event not found", 404);
@@ -37,7 +41,8 @@ export async function POST(req: NextRequest) {
     if (!mediaFormat) mediaFormat = media.kind;
   }
 
-  const titleTxt = caption.split(/[.!؟?—]/)[0].slice(0, 40) || "New post";
+  const titleTxt =
+    caption.split(/[.!؟?—]/)[0].slice(0, 40) || mediaFormat || "New post";
   const post = await prisma.post.create({
     data: {
       eventId,

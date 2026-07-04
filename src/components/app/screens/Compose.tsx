@@ -87,7 +87,8 @@ export default function Compose() {
   });
 
   const anyPlat = activeEvent.accounts.some((a) => ui.platforms[a.platform] !== false);
-  const canSched = !!ui.caption.trim() && anyPlat;
+  // A post needs at least one account and some content — a caption or media.
+  const canSched = anyPlat && (!!ui.caption.trim() || !!ui.composeAsset);
 
   return (
     <div style={s("padding:28px 32px;max-width:1060px")}>

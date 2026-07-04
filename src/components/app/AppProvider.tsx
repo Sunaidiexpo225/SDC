@@ -300,7 +300,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const keys = evt.accounts
       .map((a) => a.platform)
       .filter((k) => ui.platforms[k] !== false);
-    if (!ui.caption.trim() || !keys.length) return;
+    if ((!ui.caption.trim() && !ui.composeAsset) || !keys.length) return;
     const d = new Date(ui.schedDay + "T00:00:00");
     const offset =
       (d.getFullYear() - today.getFullYear()) * 12 + (d.getMonth() - today.getMonth());
