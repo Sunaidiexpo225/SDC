@@ -6,6 +6,7 @@ import { Hov } from "../ui";
 import { s } from "@/lib/style";
 import { fmt } from "@/lib/format";
 import { roleLabelOf } from "./helpers";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 import Dashboard from "./screens/Dashboard";
 import Compose from "./screens/Compose";
@@ -25,6 +26,8 @@ export default function AppShell() {
   const app = useApp();
   const { t, lang, dir, setLang } = useLang();
   const { ui, patch, data, events, activeEvent, currentUser } = app;
+  const mobile = useIsMobile();
+  const closeNav = () => patch({ navOpen: false });
 
   const pendingByEvent: Record<string, number> = {};
   events.forEach((e) => {
@@ -57,12 +60,17 @@ export default function AppShell() {
       {/* top bar */}
       <div style={s("display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:58px;background:#fff;border-bottom:1px solid #e3e8ef;flex:none")}>
         <div style={s("display:flex;align-items:center;gap:10px")}>
+          {mobile && (
+            <Hov tag="button" onClick={() => patch({ navOpen: !ui.navOpen })} aria-label="Menu" css="display:grid;place-items:center;width:38px;height:38px;flex:none;border:1px solid #e3e8ef;cursor:pointer;background:#fff;border-radius:10px;font-size:18px;color:#0f172a;font-family:inherit;line-height:1" hover="border-color:#c8d0dc">☰</Hov>
+          )}
           <div style={s("width:28px;height:28px;border-radius:8px;background:#2563eb;display:grid;place-items:center;color:#fff;font-family:var(--grotesk);font-weight:700;font-size:15px")}>✦</div>
           <div style={s("font-family:var(--grotesk);font-weight:700;font-size:16px;letter-spacing:-.2px")}>{t.brand}</div>
         </div>
         <div style={s("display:flex;align-items:center;gap:12px")}>
-          <LangPill />
-          <Hov tag="button" onClick={app.logout} css="border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#5c6675;font-weight:600;font-size:13px;padding:8px 16px;border-radius:999px;font-family:inherit" hover="border-color:#2563eb;color:#2563eb">{t.backToSite}</Hov>
+          {!mobile && <LangPill />}
+          {!mobile && (
+            <Hov tag="button" onClick={app.logout} css="border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#5c6675;font-weight:600;font-size:13px;padding:8px 16px;border-radius:999px;font-family:inherit" hover="border-color:#2563eb;color:#2563eb">{t.backToSite}</Hov>
+          )}
           <div style={s("position:relative")}>
             <Hov tag="button" onClick={() => patch({ actingMenuOpen: !ui.actingMenuOpen })} css="display:flex;align-items:center;gap:8px;border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:4px 12px 4px 4px;border-radius:999px;font-family:inherit" hover="border-color:#c8d0dc">
               <span style={s(`width:30px;height:30px;border-radius:50%;background:${currentUser?.avColor || "#94a3b8"};display:grid;place-items:center;color:#fff;font-weight:700;font-size:12px`)}>{currentUser?.init || "?"}</span>
@@ -88,8 +96,20 @@ export default function AppShell() {
       </div>
 
       <div style={s("flex:1;display:flex;min-height:0")}>
-        {/* sidebar */}
-        <div style={s("width:224px;flex:none;background:#fff;border-inline-end:1px solid #e3e8ef;padding:16px 12px;display:flex;flex-direction:column;gap:4px")}>
+        {/* backdrop behind the mobile drawer */}
+        {mobile && ui.navOpen && (
+          <div onClick={closeNav} style={s("position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:55")} />
+        )}
+        {/* sidebar — static rail on desktop, slide-in drawer on mobile */}
+        <div
+          style={
+            mobile
+              ? s(
+                  `position:fixed;inset-block:0;inset-inline-start:0;width:min(82vw,300px);z-index:60;overflow-y:auto;background:#fff;border-inline-end:1px solid #e3e8ef;padding:16px 12px;display:flex;flex-direction:column;gap:4px;box-shadow:0 20px 60px rgba(15,23,42,.28);transition:transform .28s ease;transform:translateX(${ui.navOpen ? "0" : dir === "rtl" ? "105%" : "-105%"})`,
+                )
+              : s("width:224px;flex:none;background:#fff;border-inline-end:1px solid #e3e8ef;padding:16px 12px;display:flex;flex-direction:column;gap:4px")
+          }
+        >
           <div style={s("font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#a3abb8;padding:0 6px 8px")}>{t.managing}</div>
           <div style={s("position:relative;margin-bottom:12px")}>
             <Hov tag="button" onClick={() => patch({ eventMenuOpen: !ui.eventMenuOpen })} css="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:9px;border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:10px 12px;border-radius:12px;font-family:inherit" hover="border-color:#c8d0dc">
@@ -119,7 +139,7 @@ export default function AppShell() {
             const active = ui.tab === key;
             const hasBadge = key === "team" && pendingByEvent[ui.activeEventId] > 0;
             return (
-              <Hov key={key} tag="button" onClick={() => patch({ tab: key, selectedPostId: null, eventMenuOpen: false })} css={`display:flex;align-items:center;gap:10px;border:none;cursor:pointer;text-align:start;background:${active ? "#eef2f8" : "transparent"};color:${active ? "#2563eb" : "#3d4757"};font-weight:${active ? 700 : 600};font-size:14px;padding:11px 14px;border-radius:12px;font-family:inherit`} hover="background:#eef2f8">
+              <Hov key={key} tag="button" onClick={() => patch({ tab: key, selectedPostId: null, eventMenuOpen: false, navOpen: false })} css={`display:flex;align-items:center;gap:10px;border:none;cursor:pointer;text-align:start;background:${active ? "#eef2f8" : "transparent"};color:${active ? "#2563eb" : "#3d4757"};font-weight:${active ? 700 : 600};font-size:14px;padding:11px 14px;border-radius:12px;font-family:inherit`} hover="background:#eef2f8">
                 <span style={s(`width:8px;height:8px;border-radius:50%;background:${active ? "#2563eb" : "#c8d0dc"};flex:none`)} />
                 <span style={s("flex:1")}>{label}</span>
                 {hasBadge && (
@@ -131,7 +151,7 @@ export default function AppShell() {
 
           <div style={s("height:1px;background:#eef1f5;margin:10px 6px 8px")} />
           <div style={s("font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#a3abb8;padding:0 6px 6px")}>{t.workspace}</div>
-          <Hov tag="button" onClick={() => patch({ tab: "admin", eventMenuOpen: false, selectedPostId: null })} css={`display:flex;align-items:center;gap:10px;border:none;cursor:pointer;text-align:start;background:${ui.tab === "admin" ? "#eef2f8" : "transparent"};color:${ui.tab === "admin" ? "#2563eb" : "#3d4757"};font-weight:600;font-size:14px;padding:11px 14px;border-radius:12px;font-family:inherit`} hover="background:#eef2f8">
+          <Hov tag="button" onClick={() => patch({ tab: "admin", eventMenuOpen: false, selectedPostId: null, navOpen: false })} css={`display:flex;align-items:center;gap:10px;border:none;cursor:pointer;text-align:start;background:${ui.tab === "admin" ? "#eef2f8" : "transparent"};color:${ui.tab === "admin" ? "#2563eb" : "#3d4757"};font-weight:600;font-size:14px;padding:11px 14px;border-radius:12px;font-family:inherit`} hover="background:#eef2f8">
             <span style={s(`width:8px;height:8px;border-radius:50%;background:${ui.tab === "admin" ? "#2563eb" : "#c8d0dc"};flex:none`)} />
             <span style={s("flex:1")}>{t.tabAdmin}</span>
           </Hov>
@@ -148,6 +168,14 @@ export default function AppShell() {
               ))}
             </div>
           </div>
+
+          {/* language + sign-out live in the drawer on mobile (hidden from the top bar) */}
+          {mobile && (
+            <div style={s("display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding-top:12px;border-top:1px solid #eef1f5")}>
+              <LangPill />
+              <Hov tag="button" onClick={app.logout} css="border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#5c6675;font-weight:600;font-size:13px;padding:8px 16px;border-radius:999px;font-family:inherit" hover="border-color:#2563eb;color:#2563eb">{t.backToSite}</Hov>
+            </div>
+          )}
         </div>
 
         {/* content */}

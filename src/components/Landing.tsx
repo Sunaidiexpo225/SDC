@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLang } from "./LangProvider";
 import { Hov, Box } from "./ui";
 import { s } from "@/lib/style";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 interface Chip {
   id: string;
@@ -15,6 +16,7 @@ interface Chip {
 
 export default function Landing() {
   const { t, dir, lang, locale, setLang } = useLang();
+  const mobile = useIsMobile();
   const router = useRouter();
   const [chips, setChips] = useState<Chip[]>([]);
 
@@ -76,8 +78,8 @@ export default function Landing() {
           <div style={s("font-family:var(--grotesk);font-weight:700;font-size:18px;letter-spacing:-.3px")}>{t.brand}</div>
         </div>
         <div style={s("display:flex;align-items:center;gap:22px")}>
-          <a href="#features" style={s("font-size:14px;font-weight:600;color:#0f172a;text-decoration:none")}>{t.navFeatures}</a>
-          <a href="#how" style={s("font-size:14px;font-weight:600;color:#0f172a;text-decoration:none")}>{t.navHow}</a>
+          {!mobile && <a href="#features" style={s("font-size:14px;font-weight:600;color:#0f172a;text-decoration:none")}>{t.navFeatures}</a>}
+          {!mobile && <a href="#how" style={s("font-size:14px;font-weight:600;color:#0f172a;text-decoration:none")}>{t.navHow}</a>}
           <LangPill />
           <Hov tag="button" onClick={goApp} css="border:none;cursor:pointer;background:#0f172a;color:#fff;font-weight:700;font-size:14px;padding:11px 22px;border-radius:999px;font-family:inherit" hover="background:#2563eb">{t.openApp}</Hov>
         </div>
@@ -89,7 +91,7 @@ export default function Landing() {
           <div style={s("display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e3e8ef;border-radius:999px;padding:7px 14px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2563eb;margin-bottom:22px")}>
             <span style={s("width:7px;height:7px;border-radius:50%;background:#e0457b")} />{t.badge}
           </div>
-          <h1 style={s("font-family:var(--grotesk);font-weight:700;font-size:60px;line-height:1.08;letter-spacing:-2.5px;margin:0 0 20px")}>
+          <h1 style={s(`font-family:var(--grotesk);font-weight:700;font-size:${mobile ? "34px" : "60px"};line-height:1.08;letter-spacing:${mobile ? "-1px" : "-2.5px"};margin:0 0 20px`)}>
             {t.h1a}<br />{t.h1b} <span style={s("color:#2563eb")}>{t.h1c}</span>
           </h1>
           <p style={s("font-size:18px;line-height:1.6;color:#5c6675;margin:0 0 30px;max-width:490px")}>{t.heroSub}</p>
@@ -107,8 +109,8 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* hero collage */}
-        <div style={s("position:relative;height:460px")}>
+        {/* hero collage — decorative, hidden on phones */}
+        <div style={s(`position:relative;height:460px${mobile ? ";display:none" : ""}`)}>
           <div style={s("position:absolute;top:30px;inset-inline-end:6px;width:320px;background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(15,23,42,.10);transform:rotate(2deg)")}>
             <div style={s("font-size:12px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px")}>{heroMonth}</div>
             <div style={s("display:grid;grid-template-columns:repeat(7,1fr);gap:6px")}>
@@ -164,7 +166,7 @@ export default function Landing() {
 
       {/* CTA */}
       <div style={s("max-width:1200px;margin:0 auto;padding:0 48px 72px")}>
-        <div style={s("background:#0f172a;border-radius:24px;padding:56px;display:flex;align-items:center;justify-content:space-between;gap:32px")}>
+        <div style={s(`background:#0f172a;border-radius:24px;padding:${mobile ? "32px 24px" : "56px"};display:flex;align-items:${mobile ? "flex-start" : "center"};${mobile ? "flex-direction:column;" : ""}justify-content:space-between;gap:${mobile ? "22px" : "32px"}`)}>
           <div>
             <h2 style={s("font-family:var(--grotesk);font-weight:700;font-size:38px;letter-spacing:-1.5px;color:#fff;margin:0 0 8px")}>{t.ctaH2}</h2>
             <p style={s("font-size:16px;color:#9aa5b5;margin:0")}>{t.ctaSub}</p>

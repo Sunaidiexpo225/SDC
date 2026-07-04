@@ -74,6 +74,7 @@ interface UiState {
   actingMenuOpen: boolean;
   stat: StatRef;
   rangeMenuOpen: boolean;
+  navOpen: boolean;
 }
 
 interface AppCtx {
@@ -173,6 +174,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     actingMenuOpen: false,
     stat: null,
     rangeMenuOpen: false,
+    navOpen: false,
   });
 
   const patch = useCallback(

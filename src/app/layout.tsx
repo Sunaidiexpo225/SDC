@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { LangProvider } from "@/components/LangProvider";
 
@@ -6,6 +6,12 @@ export const metadata: Metadata = {
   title: "Sunaidi Design Central",
   description:
     "Run the social calendars for all your events from one dashboard — schedule, auto-publish and measure every account, with AI-written captions.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

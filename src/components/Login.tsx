@@ -6,6 +6,7 @@ import { useLang } from "./LangProvider";
 import { Hov } from "./ui";
 import { s } from "@/lib/style";
 import { api } from "@/lib/client";
+import { useIsMobile } from "@/lib/useIsMobile";
 
 interface Chip {
   id: string;
@@ -16,6 +17,7 @@ interface Chip {
 
 export default function Login() {
   const { t, dir, lang, setLang } = useLang();
+  const mobile = useIsMobile();
   const router = useRouter();
   const [step, setStep] = useState<"creds" | "mfa">("creds");
   const [email, setEmail] = useState("sara@sunaidiexpo.com");
@@ -74,8 +76,8 @@ export default function Login() {
 
   return (
     <div dir={dir} style={s("min-height:100vh;display:flex;background:#f4f6f9")}>
-      {/* brand panel */}
-      <div style={s("flex:1;background:#0f172a;color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:space-between;min-width:0")}>
+      {/* brand panel — hidden on phones to give the form the full screen */}
+      <div style={s(`${mobile ? "display:none;" : "display:flex;"}flex:1;background:#0f172a;color:#fff;padding:56px;flex-direction:column;justify-content:space-between;min-width:0`)}>
         <div style={s("display:flex;align-items:center;gap:10px")}>
           <div style={s("width:34px;height:34px;border-radius:10px;background:#2563eb;display:grid;place-items:center;color:#fff;font-family:var(--grotesk);font-weight:700;font-size:18px")}>✦</div>
           <div style={s("font-family:var(--grotesk);font-weight:700;font-size:18px")}>{t.brand}</div>
@@ -95,7 +97,7 @@ export default function Login() {
       </div>
 
       {/* form panel */}
-      <div style={s("width:480px;max-width:46%;flex:none;background:#fff;display:flex;flex-direction:column;padding:32px 48px")}>
+      <div style={s(`${mobile ? "width:100%;max-width:none;padding:24px 20px" : "width:480px;max-width:46%;padding:32px 48px"};flex:none;background:#fff;display:flex;flex-direction:column`)}>
         <div style={s("display:flex;align-items:center;justify-content:space-between")}>
           <a onClick={() => router.push("/")} style={s("cursor:pointer;font-size:13px;font-weight:600;color:#5c6675;text-decoration:none")}>{t.backToSite}</a>
           <div style={s("display:flex;gap:2px;background:#f4f6f9;border:1px solid #e3e8ef;border-radius:999px;padding:3px")}>

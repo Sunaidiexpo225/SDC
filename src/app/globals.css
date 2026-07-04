@@ -66,3 +66,66 @@ button {
 a {
   color: inherit;
 }
+
+/* ------------------------------------------------------------------ *
+ * Mobile / responsive layer.
+ *
+ * The screens are ported from the design prototype as inline `style`
+ * strings, so there are no class hooks to target. Instead we match the
+ * distinctive fragments of those inline styles (React serialises them
+ * into the element's `style` attribute) and reflow them for phones.
+ * A stylesheet `!important` rule outranks a normal inline style, so the
+ * fixed desktop grids collapse cleanly at <=768px.
+ * ------------------------------------------------------------------ */
+@media (max-width: 768px) {
+  /* KPI stat rows / asset galleries: 4-up -> 2-up */
+  [style*="repeat(4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  /* Marketing sections (features, how-it-works): 3-up -> stacked */
+  [style*="repeat(3"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Dashboard per-event cards: 2-up -> stacked */
+  [style*="repeat(2"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Asymmetric two-column splits (chart + side panel, editor + rail) -> stacked */
+  [style*="1.5fr 1fr"],
+  [style*="1.4fr 1fr"],
+  [style*="1.1fr 1fr"],
+  [style*="1fr 350px"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Roomy page gutters shrink to phone gutters */
+  [style*="28px 32px"] {
+    padding: 18px 16px !important;
+  }
+
+  /* Calendar cells get shorter so a week fits without a huge scroll */
+  [style*="min-height:92px"] {
+    min-height: 60px !important;
+  }
+
+  /* Calendar's floating post-detail panel becomes a bottom sheet */
+  [style*="top:82px"] {
+    inset-inline: 12px !important;
+    width: auto !important;
+    top: auto !important;
+    bottom: 12px !important;
+  }
+
+  /* Landing page section gutters: 48px -> 20px on phones */
+  [style*="20px 48px"],
+  [style*="60px 48px"],
+  [style*="56px 48px"],
+  [style*="24px 48px"],
+  [style*="0 48px"] {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+}
