@@ -6,7 +6,7 @@ import { Hov } from "../ui";
 import { s } from "@/lib/style";
 import { fmt } from "@/lib/format";
 import { roleLabelOf } from "./helpers";
-import { useIsMobile } from "@/lib/useIsMobile";
+import { useCompactShell } from "@/lib/useIsMobile";
 
 import Dashboard from "./screens/Dashboard";
 import Compose from "./screens/Compose";
@@ -26,7 +26,7 @@ export default function AppShell() {
   const app = useApp();
   const { t, lang, dir, setLang } = useLang();
   const { ui, patch, data, events, activeEvent, currentUser } = app;
-  const mobile = useIsMobile();
+  const mobile = useCompactShell();
   const closeNav = () => patch({ navOpen: false });
 
   const pendingByEvent: Record<string, number> = {};
