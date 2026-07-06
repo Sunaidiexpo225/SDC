@@ -34,6 +34,8 @@ export interface UploadedMedia {
   publicId?: string | null;
   cloudName?: string | null;
   resourceType?: string | null;
+  width?: number | null;
+  height?: number | null;
 }
 
 // Uploads a file, transparently using whichever driver the server reports:
@@ -84,7 +86,11 @@ export async function uploadMedia(
     const done = await fetch(`/api/media/${initData.mediaId}/complete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ publicId: upData.public_id }),
+      body: JSON.stringify({
+        publicId: upData.public_id,
+        width: upData.width,
+        height: upData.height,
+      }),
     });
     const d = await done.json().catch(() => null);
     if (!done.ok) throw new Error((d && d.error) || "Upload failed");

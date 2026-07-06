@@ -7,7 +7,7 @@ import { Hov } from "../../ui";
 import { s } from "@/lib/style";
 import { addDays, isoDate, fmt12 } from "@/lib/format";
 import { uploadMedia } from "@/lib/client";
-import { platformMediaUrl, platformAspect } from "@/lib/cloudinaryUrl";
+import { platformMediaUrl, platformAspect, aspectMatches } from "@/lib/cloudinaryUrl";
 import type { AssetType } from "@/lib/content";
 
 const TIME_OPTS = ["09:00", "12:00", "15:00", "18:00", "20:30"];
@@ -42,6 +42,8 @@ export default function Compose() {
           publicId: data.publicId,
           cloudName: data.cloudName,
           resourceType: data.resourceType,
+          width: data.width,
+          height: data.height,
         },
       });
     } catch (e) {
@@ -155,19 +157,21 @@ export default function Compose() {
               <div style={s("font-size:12px;font-weight:700;color:#5c6675;margin-bottom:8px")}>{t.perPlatform}</div>
               <div style={s("display:flex;gap:10px;overflow-x:auto;padding-bottom:4px")}>
                 {platformList.filter((p) => p.on).map((p) => {
-                  const ar = platformAspect(p.key, ui.composeAsset!.type);
-                  const url = platformMediaUrl(ui.composeAsset!.cloudName!, ui.composeAsset!.resourceType || "image", ui.composeAsset!.publicId!, p.key, ui.composeAsset!.type);
+                  const a = ui.composeAsset!;
+                  const ar = platformAspect(p.key, a.type);
+                  const url = platformMediaUrl(a.cloudName!, a.resourceType || "image", a.publicId!, p.key, a.type, a.width, a.height);
+                  const matched = aspectMatches(ar, a.width, a.height);
                   return (
                     <div key={p.key} style={s("flex:none;text-align:center")}>
                       <div style={s(`width:92px;aspect-ratio:${ar.replace(":", " / ")};border-radius:10px;overflow:hidden;background:#0f172a;border:1px solid #e3e8ef`)}>
-                        {ui.composeAsset!.resourceType === "video" ? (
+                        {a.resourceType === "video" ? (
                           <video src={url} muted preload="metadata" style={s("width:100%;height:100%;object-fit:cover")} />
                         ) : (
                           <img src={url} alt="" style={s("width:100%;height:100%;object-fit:cover")} />
                         )}
                       </div>
                       <div style={s("font-size:10px;font-weight:700;color:#5c6675;margin-top:4px")}>{p.name}</div>
-                      <div style={s("font-size:9px;color:#a3abb8")}>{ar}</div>
+                      <div style={s(`font-size:9px;color:${matched ? "#17a99b" : "#a3abb8"}`)}>{matched ? `${ar} ✓` : ar}</div>
                     </div>
                   );
                 })}

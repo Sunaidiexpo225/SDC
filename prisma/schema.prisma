@@ -67,9 +67,11 @@ model Media {
   mimeType   String
   size       Int
   kind       String // Image | Video | Reel
-  driver     String   @default("db") // db | s3
-  storageKey String? // object key when driver = s3
+  driver     String   @default("db") // db | s3 | cloudinary
+  storageKey String? // object key (s3) / public_id (cloudinary)
   status     String   @default("ready") // pending | ready
+  width      Int? // source pixel dimensions (used to skip no-op crops)
+  height     Int?
   data       Bytes? // bytes when driver = db
   posts      Post[]
   createdAt  DateTime @default(now())

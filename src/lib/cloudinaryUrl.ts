@@ -36,13 +36,47 @@ export function cldUrl(
   return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${tx}/${publicId}`;
 }
 
-// Convenience: the per-platform URL for a given asset + post format.
+// The original asset, untouched (no transformation → no transformation credit,
+// and the video-transform size cap doesn't apply).
+export function cldRawUrl(
+  cloudName: string,
+  resourceType: string,
+  publicId: string,
+): string {
+  return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${publicId}`;
+}
+
+function aspectValue(aspect: string): number {
+  const [w, h] = aspect.split(":").map(Number);
+  return h ? w / h : 1;
+}
+
+// True when the source dimensions already match the target aspect (within a
+// small tolerance), so no crop is needed.
+export function aspectMatches(
+  aspect: string,
+  srcW?: number | null,
+  srcH?: number | null,
+): boolean {
+  if (!srcW || !srcH) return false;
+  return Math.abs(srcW / srcH - aspectValue(aspect)) < 0.02;
+}
+
+// The per-platform delivery URL for an asset + post format. If the source is
+// already the right aspect, the original is served untouched (no transform);
+// otherwise it's fill-cropped to the platform's ratio.
 export function platformMediaUrl(
   cloudName: string,
   resourceType: string,
   publicId: string,
   platform: string,
   format?: string | null,
+  srcW?: number | null,
+  srcH?: number | null,
 ): string {
-  return cldUrl(cloudName, resourceType, publicId, platformAspect(platform, format));
+  const aspect = platformAspect(platform, format);
+  if (aspectMatches(aspect, srcW, srcH)) {
+    return cldRawUrl(cloudName, resourceType, publicId);
+  }
+  return cldUrl(cloudName, resourceType, publicId, aspect);
 }

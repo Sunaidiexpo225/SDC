@@ -62,6 +62,8 @@ interface UiState {
     publicId?: string | null;
     cloudName?: string | null;
     resourceType?: string | null;
+    width?: number | null;
+    height?: number | null;
   } | null;
   platforms: Record<string, boolean>;
   schedDay: string;

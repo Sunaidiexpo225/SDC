@@ -6,7 +6,11 @@ import { CLOUDINARY_CLOUD } from "@/lib/cloudinary";
 
 export const runtime = "nodejs";
 
-const Body = z.object({ publicId: z.string().optional() });
+const Body = z.object({
+  publicId: z.string().optional(),
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+});
 
 // Marks a client-direct upload ready once the browser has sent the bytes (to S3
 // or Cloudinary). For Cloudinary we record the returned public_id and hand the
@@ -22,13 +26,15 @@ export async function POST(
   if (!media) return error("Upload not found", 404);
 
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
-  const publicId = parsed.success ? parsed.data.publicId : undefined;
+  const data = parsed.success ? parsed.data : {};
 
   const updated = await prisma.media.update({
     where: { id: media.id },
     data: {
       status: "ready",
-      ...(publicId ? { storageKey: publicId } : {}),
+      ...(data.publicId ? { storageKey: data.publicId } : {}),
+      ...(data.width ? { width: data.width } : {}),
+      ...(data.height ? { height: data.height } : {}),
     },
     select: {
       id: true,
@@ -38,6 +44,8 @@ export async function POST(
       kind: true,
       driver: true,
       storageKey: true,
+      width: true,
+      height: true,
     },
   });
 
@@ -54,6 +62,8 @@ export async function POST(
       publicId: updated.driver === "cloudinary" ? updated.storageKey : null,
       cloudName: updated.driver === "cloudinary" ? CLOUDINARY_CLOUD : null,
       resourceType,
+      width: updated.width,
+      height: updated.height,
     },
     201,
   );
