@@ -5,6 +5,7 @@ import {
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { cloudinaryEnabled } from "./cloudinary";
 
 // Accepted image + video mime types.
 export const ALLOWED_MIME =
@@ -28,12 +29,17 @@ const S3_REGION = process.env.S3_REGION || "us-east-1";
 const S3_ACCESS_KEY_ID = process.env.S3_ACCESS_KEY_ID;
 const S3_SECRET_ACCESS_KEY = process.env.S3_SECRET_ACCESS_KEY;
 
-export const MEDIA_DRIVER: "s3" | "db" =
-  S3_BUCKET && S3_ACCESS_KEY_ID && S3_SECRET_ACCESS_KEY ? "s3" : "db";
+// Cloudinary (if configured) also does per-platform resizing, so it wins;
+// otherwise S3/Supabase; otherwise bytes-in-Postgres.
+export const MEDIA_DRIVER: "cloudinary" | "s3" | "db" = cloudinaryEnabled()
+  ? "cloudinary"
+  : S3_BUCKET && S3_ACCESS_KEY_ID && S3_SECRET_ACCESS_KEY
+    ? "s3"
+    : "db";
 
-// db is bounded by the serverless body limit; s3 uploads direct so can be large.
+// db is bounded by the serverless body limit; cloudinary/s3 upload direct.
 const MAX_MB =
-  Number(process.env.MEDIA_MAX_MB) || (MEDIA_DRIVER === "s3" ? 50 : 4);
+  Number(process.env.MEDIA_MAX_MB) || (MEDIA_DRIVER === "db" ? 4 : 100);
 export const MAX_UPLOAD_BYTES = MAX_MB * 1024 * 1024;
 export const MAX_UPLOAD_LABEL = `${MAX_MB} MB`;
 

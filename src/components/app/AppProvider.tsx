@@ -59,6 +59,9 @@ interface UiState {
     mediaId?: string;
     url?: string;
     mime?: string;
+    publicId?: string | null;
+    cloudName?: string | null;
+    resourceType?: string | null;
   } | null;
   platforms: Record<string, boolean>;
   schedDay: string;

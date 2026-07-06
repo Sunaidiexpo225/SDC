@@ -30,6 +30,10 @@ export interface UploadedMedia {
   filename: string;
   mimeType: string;
   size: number;
+  // Present for Cloudinary uploads — lets the UI build per-platform crop URLs.
+  publicId?: string | null;
+  cloudName?: string | null;
+  resourceType?: string | null;
 }
 
 // Uploads a file, transparently using whichever driver the server reports:
@@ -64,6 +68,30 @@ export async function uploadMedia(
     return d as UploadedMedia;
   }
 
+  if (initData.mode === "cloudinary") {
+    // Browser uploads straight to Cloudinary with the signed ticket.
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("api_key", initData.apiKey);
+    fd.append("timestamp", String(initData.timestamp));
+    fd.append("signature", initData.signature);
+    fd.append("folder", initData.folder);
+    const up = await fetch(initData.uploadUrl, { method: "POST", body: fd });
+    const upData = await up.json().catch(() => null);
+    if (!up.ok || !upData?.public_id) {
+      throw new Error(upData?.error?.message || "Upload to Cloudinary failed");
+    }
+    const done = await fetch(`/api/media/${initData.mediaId}/complete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ publicId: upData.public_id }),
+    });
+    const d = await done.json().catch(() => null);
+    if (!done.ok) throw new Error((d && d.error) || "Upload failed");
+    return d as UploadedMedia;
+  }
+
+  // s3
   const put = await fetch(initData.uploadUrl, {
     method: "PUT",
     headers: { "Content-Type": file.type },

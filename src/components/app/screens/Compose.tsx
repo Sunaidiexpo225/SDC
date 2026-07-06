@@ -7,6 +7,7 @@ import { Hov } from "../../ui";
 import { s } from "@/lib/style";
 import { addDays, isoDate, fmt12 } from "@/lib/format";
 import { uploadMedia } from "@/lib/client";
+import { platformMediaUrl, platformAspect } from "@/lib/cloudinaryUrl";
 import type { AssetType } from "@/lib/content";
 
 const TIME_OPTS = ["09:00", "12:00", "15:00", "18:00", "20:30"];
@@ -38,6 +39,9 @@ export default function Compose() {
           mediaId: data.id,
           url: data.url,
           mime: data.mimeType,
+          publicId: data.publicId,
+          cloudName: data.cloudName,
+          resourceType: data.resourceType,
         },
       });
     } catch (e) {
@@ -144,6 +148,32 @@ export default function Compose() {
             </div>
           )}
           <input ref={fileRef} type="file" accept="image/*,video/*" onChange={(e) => handleFile(e.target.files?.[0])} style={s("display:none")} />
+
+          {/* Per-platform crops — one master, auto-fit to each platform's aspect */}
+          {ui.composeAsset?.publicId && ui.composeAsset.cloudName && (
+            <div style={s("margin-bottom:18px")}>
+              <div style={s("font-size:12px;font-weight:700;color:#5c6675;margin-bottom:8px")}>{t.perPlatform}</div>
+              <div style={s("display:flex;gap:10px;overflow-x:auto;padding-bottom:4px")}>
+                {platformList.filter((p) => p.on).map((p) => {
+                  const ar = platformAspect(p.key, ui.composeAsset!.type);
+                  const url = platformMediaUrl(ui.composeAsset!.cloudName!, ui.composeAsset!.resourceType || "image", ui.composeAsset!.publicId!, p.key, ui.composeAsset!.type);
+                  return (
+                    <div key={p.key} style={s("flex:none;text-align:center")}>
+                      <div style={s(`width:92px;aspect-ratio:${ar.replace(":", " / ")};border-radius:10px;overflow:hidden;background:#0f172a;border:1px solid #e3e8ef`)}>
+                        {ui.composeAsset!.resourceType === "video" ? (
+                          <video src={url} muted preload="metadata" style={s("width:100%;height:100%;object-fit:cover")} />
+                        ) : (
+                          <img src={url} alt="" style={s("width:100%;height:100%;object-fit:cover")} />
+                        )}
+                      </div>
+                      <div style={s("font-size:10px;font-weight:700;color:#5c6675;margin-top:4px")}>{p.name}</div>
+                      <div style={s("font-size:9px;color:#a3abb8")}>{ar}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div style={s("display:flex;align-items:center;justify-content:space-between;margin-bottom:8px")}>
             <label style={s("font-size:13px;font-weight:700")}>{t.captionLabel}</label>
             <Hov tag="button" onClick={app.generate} css={`border:none;cursor:pointer;background:#0f172a;color:#a3e04f;font-weight:700;font-size:13px;padding:8px 16px;border-radius:999px;font-family:inherit;animation:${ui.generating ? "pulse 1s ease infinite" : "none"}`} hover="background:#1e293b">✦ {ui.generating ? t.genBusy : t.genIdle}</Hov>

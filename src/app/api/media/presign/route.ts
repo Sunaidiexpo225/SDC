@@ -11,6 +11,7 @@ import {
   objectKey,
   presignUpload,
 } from "@/lib/media";
+import { signUpload } from "@/lib/cloudinary";
 
 export const runtime = "nodejs";
 
@@ -47,6 +48,28 @@ export async function POST(req: NextRequest) {
   if (MEDIA_DRIVER === "db") return json({ mode: "db" });
 
   const kind = kindFromMime(contentType);
+
+  // Cloudinary: register a pending row (public_id is set on complete) and hand
+  // the browser a signed direct-upload ticket. Cloudinary both stores and
+  // resizes, so this unlocks the per-platform renditions.
+  if (MEDIA_DRIVER === "cloudinary") {
+    const media = await prisma.media.create({
+      data: {
+        eventId: eventId ?? null,
+        filename,
+        mimeType: contentType,
+        size,
+        kind,
+        driver: "cloudinary",
+        status: "pending",
+      },
+      select: { id: true, kind: true },
+    });
+    const resourceType = contentType.startsWith("video/") ? "video" : "image";
+    const sig = signUpload(`sdc/${eventId || "shared"}`, resourceType);
+    return json({ mode: "cloudinary", mediaId: media.id, ...sig });
+  }
+
   const key = objectKey(eventId ?? null, filename);
   const media = await prisma.media.create({
     data: {
