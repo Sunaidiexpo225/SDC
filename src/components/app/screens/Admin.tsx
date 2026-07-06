@@ -18,6 +18,7 @@ export default function Admin() {
   const { ui, patch, data, events } = app;
   const settings = data.settings;
   const [keys, setKeys] = useState<Record<string, string>>({});
+  const [extIds, setExtIds] = useState<Record<string, string>>({});
 
   const section = ui.adminSection;
   const adminSections: [typeof section, string][] = [
@@ -167,7 +168,8 @@ export default function Admin() {
                         ) : (
                           <>
                             <input dir="ltr" value={keys[a.id] || ""} onChange={(ev) => setKeys((p) => ({ ...p, [a.id]: ev.target.value }))} placeholder={t.apiKeyPh} style={s("flex:1;min-width:150px;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:8px;padding:9px 12px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#0f172a;background:#fbfcfe;text-align:start")} />
-                            <Hov tag="button" onClick={() => app.connectApi(a.id, keys[a.id] || "")} css="border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:12px;padding:9px 18px;border-radius:999px;font-family:inherit;flex:none" hover="background:#1d4ed8">{t.connect}</Hov>
+                            <input dir="ltr" value={extIds[a.id] || ""} onChange={(ev) => setExtIds((p) => ({ ...p, [a.id]: ev.target.value }))} placeholder={t.accountIdPh} style={s("flex:1;min-width:130px;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:8px;padding:9px 12px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#0f172a;background:#fbfcfe;text-align:start")} />
+                            <Hov tag="button" onClick={() => app.connectApi(a.id, keys[a.id] || "", extIds[a.id] || "")} css="border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:12px;padding:9px 18px;border-radius:999px;font-family:inherit;flex:none" hover="background:#1d4ed8">{t.connect}</Hov>
                           </>
                         )}
                         <Hov tag="button" onClick={() => app.removeSocial(a.id)} title={t.removeAccountTitle} css="border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#a3abb8;font-weight:700;font-size:13px;width:32px;height:32px;border-radius:50%;font-family:inherit;flex:none" hover="border-color:#d64545;color:#d64545">✕</Hov>

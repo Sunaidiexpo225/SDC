@@ -27,11 +27,12 @@ model SocialAccount {
   id        String  @id @default(cuid())
   eventId   String
   event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  platform  String // instagram | tiktok | x | facebook | linkedin
-  handle    String
-  followers Int     @default(0)
-  connected Boolean @default(false)
-  apiKey    String?
+  platform   String // instagram | tiktok | x | facebook | linkedin
+  handle     String
+  followers  Int     @default(0)
+  connected  Boolean @default(false)
+  apiKey     String? // access token used to publish
+  externalId String? // platform account id (IG Business Account ID / Page ID / URN)
 
   @@unique([eventId, platform])
 }

@@ -13,6 +13,7 @@ export interface AccountDTO {
   followers: number;
   connected: boolean;
   apiKey: string; // masked ("••••1234") for connected, "" otherwise
+  externalId: string | null; // platform account id (not secret) for publishing
 }
 
 export interface EventDTO {

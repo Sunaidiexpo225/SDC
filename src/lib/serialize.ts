@@ -29,6 +29,7 @@ export function toAccountDTO(a: SocialAccount): AccountDTO {
     followers: a.followers,
     connected: a.connected,
     apiKey: a.connected ? maskKey(a.apiKey) : "",
+    externalId: a.externalId ?? null,
   };
 }
 

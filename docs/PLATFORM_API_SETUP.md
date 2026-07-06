@@ -3,12 +3,15 @@
 This guide explains how to obtain API access for each platform the app
 supports, so an account can eventually **publish** from Sunaidi Design Central.
 
-> **Read this first — current status.** The app's **Admin → Integrations**
-> screen lets you store an API key/token per account, but **publishing is not
-> wired up yet** — scheduling saves a post to the calendar; it does **not** send
-> it to the platform. Turning these credentials into real posts is a separate
-> implementation step (one publisher per platform). This document is the
-> prerequisite: get the credentials first, then we wire the publishers.
+> **Read this first — current status.**
+> - **Instagram publishing is LIVE.** Once you connect an Instagram account
+>   (access token + IG Business Account ID) in **Admin → Integrations**, a
+>   scheduled post with Cloudinary media can be published to Instagram via the
+>   **Publish now** button (Calendar → open the post). This is the flow to
+>   demonstrate for Meta App Review.
+> - **Facebook, X, TikTok, LinkedIn publishers are not built yet** — the app
+>   stores their token but "Publish now" reports them as not-yet-supported. Get
+>   their credentials (below) and we'll wire each publisher.
 >
 > **Every platform below requires an app review / approval and a business or
 > creator account before it will allow posting.** Budget days-to-weeks for
@@ -63,7 +66,14 @@ supports, so an account can eventually **publish** from Sunaidi Design Central.
 Instagram Business Account ID.
 
 **In the app:** Admin → Integrations → the Instagram account → **Connect** →
-paste the access token. (The other IDs are stored for the publisher step.)
+paste **two** values: the **access token** (first field) and the **Instagram
+Business Account ID** (second field, "Account/Page ID"). Then open a scheduled
+post with an uploaded image/video in the **Calendar** and hit **Publish now** —
+that calls the Graph API and posts to Instagram.
+
+> **For Meta App Review:** record this exact flow (connect account → schedule a
+> post with media → Publish now → the post appears on Instagram) as your
+> screencast demonstrating `instagram_content_publish`.
 
 **Gotchas**
 - Personal IG accounts cannot use content publishing — must be Business/Creator.

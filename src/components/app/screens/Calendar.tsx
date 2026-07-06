@@ -108,6 +108,9 @@ export default function Calendar() {
           {sel.status === "posted" && (
             <Hov tag="button" onClick={() => patch({ stat: { kind: "post", id: sel.id } })} css="width:100%;border:none;cursor:pointer;background:#0f172a;color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:999px;font-family:inherit;margin-bottom:8px" hover="background:#2563eb">{t.viewAnalytics}</Hov>
           )}
+          {sel.status !== "posted" && (
+            <Hov tag="button" onClick={() => app.publishPost(sel.id)} css="width:100%;border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:999px;font-family:inherit;margin-bottom:8px" hover="background:#1d4ed8">{t.publishNow}</Hov>
+          )}
           <Hov tag="button" onClick={() => app.deletePost(sel.id)} css="width:100%;border:1px solid #f3c1c1;cursor:pointer;background:#fff;color:#d64545;font-weight:700;font-size:13px;padding:10px;border-radius:999px;font-family:inherit" hover="background:#fdf2f2">{t.deletePost}</Hov>
         </div>
       )}

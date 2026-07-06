@@ -62,6 +62,24 @@ export function aspectMatches(
   return Math.abs(srcW / srcH - aspectValue(aspect)) < 0.02;
 }
 
+// A delivery URL suitable for a platform to *ingest* (publish). Always
+// fill-crops to the platform aspect and forces a safe container — mp4/h264 for
+// video, jpg for image — so the target platform reliably accepts it. Unlike the
+// preview URL, this doesn't skip the transform, because publishing needs a
+// guaranteed format/aspect.
+export function platformPublishUrl(
+  cloudName: string,
+  resourceType: string,
+  publicId: string,
+  platform: string,
+  format?: string | null,
+): string {
+  const aspect = platformAspect(platform, format);
+  const fmt = resourceType === "video" ? "mp4" : "jpg";
+  const tx = ["c_fill", "g_auto", `ar_${aspect}`, "q_auto", `f_${fmt}`].join(",");
+  return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${tx}/${publicId}`;
+}
+
 // The per-platform delivery URL for an asset + post format. If the source is
 // already the right aspect, the original is served untouched (no transform);
 // otherwise it's fill-cropped to the platform's ratio.

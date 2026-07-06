@@ -7,6 +7,7 @@ import { toAccountDTO } from "@/lib/serialize";
 const Body = z.object({
   action: z.enum(["connect", "disconnect"]),
   apiKey: z.string().optional(),
+  externalId: z.string().optional(),
 });
 
 // Connect / disconnect an account's API (design's connectApi / disconnectApi).
@@ -29,9 +30,10 @@ export async function PATCH(
   if (parsed.data.action === "connect") {
     const key = (parsed.data.apiKey || "").trim();
     if (!key) return error("API key is required", 400);
+    const externalId = (parsed.data.externalId || "").trim() || null;
     const updated = await prisma.socialAccount.update({
       where: { id: account.id },
-      data: { connected: true, apiKey: key },
+      data: { connected: true, apiKey: key, externalId },
     });
     return json(toAccountDTO(updated));
   }

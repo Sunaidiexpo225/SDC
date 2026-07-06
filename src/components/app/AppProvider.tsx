@@ -112,12 +112,13 @@ interface AppCtx {
   generate: () => void;
   schedule: () => Promise<void>;
   deletePost: (id: string) => Promise<void>;
+  publishPost: (id: string) => Promise<void>;
   createEvent: () => Promise<void>;
   renameEvent: (id: string, name: string) => Promise<void>;
   setEventColor: (id: string, color: string) => Promise<void>;
   addSocial: (eventId: string, platform: string) => Promise<void>;
   removeSocial: (accountId: string) => Promise<void>;
-  connectApi: (accountId: string, key: string) => Promise<void>;
+  connectApi: (accountId: string, key: string, externalId?: string) => Promise<void>;
   disconnectApi: (accountId: string) => Promise<void>;
   setUserRole: (id: string, role: Role) => Promise<void>;
   resetMfa: (id: string) => Promise<void>;
@@ -441,13 +442,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const connectApi = useCallback(
-    async (accountId: string, key: string) => {
+    async (accountId: string, key: string, externalId?: string) => {
       if (!key.trim()) return;
       const { tr } = await import("@/lib/i18n");
       try {
-        await api.patch(`/api/accounts/${accountId}`, { action: "connect", apiKey: key });
+        await api.patch(`/api/accounts/${accountId}`, {
+          action: "connect",
+          apiKey: key,
+          externalId,
+        });
         await reload();
         toast(tr(lang).toastConnected);
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Failed");
+      }
+    },
+    [reload, toast, lang],
+  );
+
+  const publishPost = useCallback(
+    async (id: string) => {
+      const { tr } = await import("@/lib/i18n");
+      try {
+        const res = await api.post<{
+          ok: boolean;
+          results: { platform: string; ok: boolean; detail: string }[];
+        }>(`/api/posts/${id}/publish`);
+        await reload();
+        if (res.ok) {
+          toast(tr(lang).toastPublished);
+        } else {
+          toast(
+            res.results.map((r) => `${r.platform}: ${r.detail}`).join(" · ") ||
+              "Nothing published",
+          );
+        }
       } catch (e) {
         toast(e instanceof Error ? e.message : "Failed");
       }
@@ -662,6 +691,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     generate,
     schedule,
     deletePost,
+    publishPost,
     createEvent,
     renameEvent,
     setEventColor,
