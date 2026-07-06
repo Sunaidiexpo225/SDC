@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/lib/api";
 import { toAccountDTO } from "@/lib/serialize";
+import { fetchInstagramUsername } from "@/lib/publishers/instagram";
 
 const Body = z.object({
   action: z.enum(["connect", "disconnect"]),
@@ -31,9 +32,22 @@ export async function PATCH(
     const key = (parsed.data.apiKey || "").trim();
     if (!key) return error("API key is required", 400);
     const externalId = (parsed.data.externalId || "").trim() || null;
+    const data: {
+      connected: boolean;
+      apiKey: string;
+      externalId: string | null;
+      handle?: string;
+    } = { connected: true, apiKey: key, externalId };
+    // Replace the placeholder handle with the account's real @username so the
+    // Compose / Integrations screens show who's actually connected. Best-effort:
+    // if the lookup fails, the connection still succeeds with the old handle.
+    if (account.platform === "instagram" && externalId) {
+      const username = await fetchInstagramUsername(externalId, key);
+      if (username) data.handle = `@${username}`;
+    }
     const updated = await prisma.socialAccount.update({
       where: { id: account.id },
-      data: { connected: true, apiKey: key, externalId },
+      data,
     });
     return json(toAccountDTO(updated));
   }

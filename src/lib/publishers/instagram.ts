@@ -34,6 +34,34 @@ async function graphPost(path: string, params: Record<string, string>) {
   return data;
 }
 
+// Best-effort lookup of the account's real @username, used to replace the
+// placeholder handle when an account is connected. Never throws — on any
+// failure (bad token, network, timeout) it just returns null and the caller
+// keeps the existing handle.
+export async function fetchInstagramUsername(
+  igUserId: string,
+  accessToken: string,
+): Promise<string | null> {
+  if (!igUserId || !accessToken) return null;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetch(
+      `${GRAPH}/${igUserId}?fields=username&access_token=${encodeURIComponent(accessToken)}`,
+      { signal: ctrl.signal },
+    );
+    const data = await res.json().catch(() => null);
+    if (res.ok && data && typeof data.username === "string") {
+      return data.username;
+    }
+  } catch {
+    // ignore — handle stays as-is
+  } finally {
+    clearTimeout(timer);
+  }
+  return null;
+}
+
 export async function publishToInstagram(
   input: IgPublishInput,
 ): Promise<{ id: string }> {

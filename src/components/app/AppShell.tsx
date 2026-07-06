@@ -149,12 +149,16 @@ export default function AppShell() {
             );
           })}
 
-          <div style={s("height:1px;background:#eef1f5;margin:10px 6px 8px")} />
-          <div style={s("font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#a3abb8;padding:0 6px 6px")}>{t.workspace}</div>
-          <Hov tag="button" onClick={() => patch({ tab: "admin", eventMenuOpen: false, selectedPostId: null, navOpen: false })} css={`display:flex;align-items:center;gap:10px;border:none;cursor:pointer;text-align:start;background:${ui.tab === "admin" ? "#eef2f8" : "transparent"};color:${ui.tab === "admin" ? "#2563eb" : "#3d4757"};font-weight:600;font-size:14px;padding:11px 14px;border-radius:12px;font-family:inherit`} hover="background:#eef2f8">
-            <span style={s(`width:8px;height:8px;border-radius:50%;background:${ui.tab === "admin" ? "#2563eb" : "#c8d0dc"};flex:none`)} />
-            <span style={s("flex:1")}>{t.tabAdmin}</span>
-          </Hov>
+          {currentUser?.role === "Admin" && (
+            <>
+              <div style={s("height:1px;background:#eef1f5;margin:10px 6px 8px")} />
+              <div style={s("font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#a3abb8;padding:0 6px 6px")}>{t.workspace}</div>
+              <Hov tag="button" onClick={() => patch({ tab: "admin", eventMenuOpen: false, selectedPostId: null, navOpen: false })} css={`display:flex;align-items:center;gap:10px;border:none;cursor:pointer;text-align:start;background:${ui.tab === "admin" ? "#eef2f8" : "transparent"};color:${ui.tab === "admin" ? "#2563eb" : "#3d4757"};font-weight:600;font-size:14px;padding:11px 14px;border-radius:12px;font-family:inherit`} hover="background:#eef2f8">
+                <span style={s(`width:8px;height:8px;border-radius:50%;background:${ui.tab === "admin" ? "#2563eb" : "#c8d0dc"};flex:none`)} />
+                <span style={s("flex:1")}>{t.tabAdmin}</span>
+              </Hov>
+            </>
+          )}
 
           <div style={s("margin-top:auto;background:#f4f6f9;border-radius:14px;padding:14px")}>
             <div style={s("font-size:12px;font-weight:700;margin-bottom:8px")}>{t.connected}</div>
@@ -186,7 +190,7 @@ export default function AppShell() {
           {ui.tab === "library" && <Library />}
           {ui.tab === "analytics" && <Analytics />}
           {ui.tab === "team" && <Approvals />}
-          {ui.tab === "admin" && <Admin />}
+          {ui.tab === "admin" && (currentUser?.role === "Admin" ? <Admin /> : <Dashboard />)}
         </div>
       </div>
 
