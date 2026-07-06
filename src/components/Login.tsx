@@ -20,8 +20,8 @@ export default function Login() {
   const mobile = useIsMobile();
   const router = useRouter();
   const [step, setStep] = useState<"creds" | "mfa">("creds");
-  const [email, setEmail] = useState("sara@sunaidiexpo.com");
-  const [pass, setPass] = useState("password");
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
   const [code, setCode] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
@@ -63,18 +63,6 @@ export default function Login() {
       setBusy(false);
     }
   }
-  async function ssoLogin() {
-    setErr("");
-    setBusy(true);
-    try {
-      await api.post("/api/auth/sso", { email });
-      router.push("/app");
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "SSO failed");
-      setBusy(false);
-    }
-  }
-
   const eventChips = chips.map((e) => ({
     name: lang === "ar" ? e.nameAr : e.nameEn,
     color: e.color,
@@ -124,12 +112,6 @@ export default function Login() {
               <input dir="ltr" type="password" value={pass} onChange={(e) => setPass(e.target.value)} onKeyDown={(e) => e.key === "Enter" && signIn()} style={s("width:100%;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;color:#0f172a;background:#fbfcfe;margin-bottom:22px;text-align:start")} />
               {err && <div style={s("font-size:13px;color:#d64545;margin-bottom:14px;font-weight:600")}>{err}</div>}
               <Hov tag="button" onClick={signIn} disabled={busy} css="width:100%;border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:15px;padding:14px;border-radius:999px;font-family:inherit" hover="background:#1d4ed8">{t.signInBtn}</Hov>
-              <div style={s("display:flex;align-items:center;gap:12px;margin:20px 0")}>
-                <div style={s("flex:1;height:1px;background:#eef1f5")} />
-                <span style={s("font-size:12px;color:#a3abb8")}>{t.orWord}</span>
-                <div style={s("flex:1;height:1px;background:#eef1f5")} />
-              </div>
-              <Hov tag="button" onClick={ssoLogin} disabled={busy} css="width:100%;border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#0f172a;font-weight:700;font-size:14px;padding:13px;border-radius:999px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px" hover="border-color:#2563eb;color:#2563eb"><span style={s("width:8px;height:8px;border-radius:2px;background:#2563eb")} />{t.ssoBtn}</Hov>
             </div>
           ) : (
             <div>
