@@ -18,6 +18,7 @@ export default function Analytics() {
   const { ui, patch, activeEvent } = app;
 
   const [view, setView] = useState<"event" | "brands">("event");
+  const [showAllPosts, setShowAllPosts] = useState(false);
 
   const activeName = lang === "ar" ? activeEvent.nameAr : activeEvent.nameEn;
   const estimate = computeAnalytics(activeEvent.accounts, activeEvent.barIx, ui.range);
@@ -274,7 +275,7 @@ export default function Analytics() {
       <div style={s("display:grid;grid-template-columns:1.5fr 1fr;gap:16px;margin-top:16px")}>
         <div style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px")}>
           <div style={s("font-size:13px;font-weight:700;margin-bottom:6px")}>{t.topPostsLabel}</div>
-          {topPosts.map((tp) => (
+          {(showAllPosts ? topPosts : topPosts.slice(0, 5)).map((tp) => (
             <Hov key={tp.ix} onClick={() => (tp.permalink ? window.open(tp.permalink, "_blank", "noopener") : patch({ stat: { kind: "top", ix: tp.ix } }))} css="display:flex;align-items:center;gap:12px;padding:11px 8px;border-top:1px solid #f0f3f7;cursor:pointer;border-radius:8px" hover="background:#f8fafc">
               <span style={s("font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:700;color:#c0c7d2;flex:none;width:16px")}>{tp.rank}</span>
               <div style={s("flex:1;min-width:0")}>
@@ -292,6 +293,9 @@ export default function Analytics() {
               </div>
             </Hov>
           ))}
+          {topPosts.length > 5 && (
+            <Hov tag="button" onClick={() => setShowAllPosts((v) => !v)} css="width:100%;margin-top:10px;border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#2563eb;font-weight:700;font-size:12px;padding:9px;border-radius:999px;font-family:inherit" hover="border-color:#2563eb">{showAllPosts ? t.showLess : t.showMore}</Hov>
+          )}
         </div>
         <div style={s("display:flex;flex-direction:column;gap:16px")}>
           <div style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px")}>

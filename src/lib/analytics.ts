@@ -319,7 +319,7 @@ export function computeLiveAnalytics(
     // Rank by reach (Views) so the list reads high→low in the Views column;
     // fall back to engagement when reach is unavailable (no insights permission).
     .sort((a, b) => (b.md.reach ?? 0) - (a.md.reach ?? 0) || engOf(b) - engOf(a))
-    .slice(0, 5)
+    .slice(0, 20)
     .map((x, i) => {
       const eng = engOf(x);
       const denom = x.md.reach && x.md.reach > 0 ? x.md.reach : x.followers || 0;
