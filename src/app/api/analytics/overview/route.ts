@@ -34,7 +34,9 @@ export async function GET(_req: NextRequest) {
       e.accounts
         .filter((a) => a.platform === "instagram" && a.connected && a.apiKey && a.externalId)
         .map(async (a) => {
-          const data = await fetchInstagramAccountData(a.externalId as string, a.apiKey as string);
+          // Keep the overview light: skip per-post insight calls (insightsFor=0),
+          // so engagement here is likes + comments only across many accounts.
+          const data = await fetchInstagramAccountData(a.externalId as string, a.apiKey as string, 40, 0);
           if (!data) return null;
           const eng = (m: { likes: number; comments: number; saves: number | null; shares: number | null }) =>
             m.likes + m.comments + (m.saves ?? 0) + (m.shares ?? 0);

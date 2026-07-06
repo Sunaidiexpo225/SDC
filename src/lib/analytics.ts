@@ -309,7 +309,9 @@ export function computeLiveAnalytics(
   }));
 
   const topPosts = [...curr]
-    .sort((a, b) => engOf(b) - engOf(a))
+    // Rank by reach (Views) so the list reads high→low in the Views column;
+    // fall back to engagement when reach is unavailable (no insights permission).
+    .sort((a, b) => (b.md.reach ?? 0) - (a.md.reach ?? 0) || engOf(b) - engOf(a))
     .slice(0, 5)
     .map((x, i) => {
       const eng = engOf(x);

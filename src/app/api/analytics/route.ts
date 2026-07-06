@@ -46,9 +46,13 @@ export async function GET(req: NextRequest) {
   const live: LiveAccount[] = [];
   await Promise.all(
     igAccounts.map(async (a) => {
+      // Fetch reach/saves/shares for every fetched post so Views populate for
+      // all Top posts (not just the 25 most recent).
       const data = await fetchInstagramAccountData(
         a.externalId as string,
         a.apiKey as string,
+        50,
+        50,
       );
       if (data) {
         live.push({
