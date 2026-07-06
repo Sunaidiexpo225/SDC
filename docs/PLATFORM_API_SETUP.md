@@ -95,6 +95,24 @@ that calls the Graph API and posts to Instagram.
 - Page access tokens expire; you'll refresh them (~60 days for long-lived).
 - Review can take several days and requires a clear use-case + screencast.
 
+### Analytics (real data)
+
+The **Analytics** screen shows **live Instagram numbers** for any connected
+account. Two tiers, depending on permissions:
+
+- **Already works with `instagram_basic`** (which you have): real **follower
+  count**, real **likes + comments** per post, **content-format split**
+  (Reel/Video/Image), **best posting time**, and **top posts** (linked to the
+  real post). Connect the account and the Analytics badge switches from
+  *"Estimated"* to *"Live from Instagram"*.
+- **Needs the `instagram_manage_insights` permission** (add it under *Go to
+  permissions and features* → submit for App Review like the publishing one):
+  real **reach / views**. Without it, everything above is still live; only the
+  Views figure stays at 0 until the permission is granted.
+
+If no Instagram account is connected for an event, Analytics falls back to
+**estimated** numbers modelled from the audience size, clearly labelled as such.
+
 ---
 
 ## 2. Facebook Pages (via Meta Graph API)

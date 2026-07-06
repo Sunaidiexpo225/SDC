@@ -77,6 +77,8 @@ export const TOP_SEED: [SuffixKey, string, number][] = [
 
 export interface AnalyticsModel {
   range: RangeKey;
+  // "estimated" = modelled from follower count; "live" = real Instagram data.
+  source: "estimated" | "live";
   stat: { v: number; e: number; f: number; p: number; dv: number; de: number; df: number };
   subKey: keyof Translation;
   deltaKey: keyof Translation;
@@ -90,7 +92,16 @@ export interface AnalyticsModel {
     growth: string;
   }[];
   platSplit: { platform: string; pct: number }[];
-  topPosts: { rank: number; suffixKey: SuffixKey; platformKey: string; viewsN: number; rate: string }[];
+  topPosts: {
+    rank: number;
+    suffixKey: SuffixKey;
+    platformKey: string;
+    viewsN: number;
+    rate: string;
+    // Present only for live posts — the real caption + link to the post.
+    title?: string;
+    permalink?: string;
+  }[];
   fmtSplit: { typeKey: "typeReel" | "typeVideo" | "typeImage"; pct: number; color: string }[];
   bestTimeRaw: string;
   engRateOverall: string;
@@ -162,10 +173,174 @@ export function computeAnalytics(
 
   return {
     range: rk,
+    source: "estimated",
     stat,
     subKey: m.subKey,
     deltaKey: m.deltaKey,
     bars: m.bars(dI),
+    accountPerf,
+    platSplit,
+    topPosts,
+    fmtSplit,
+    bestTimeRaw,
+    engRateOverall,
+  };
+}
+
+// ── Live analytics from real Instagram data ────────────────────────────────
+
+import type { IgMedia } from "./publishers/instagramInsights";
+
+export interface LiveAccount {
+  platform: string;
+  handle: string;
+  followers: number;
+  media: IgMedia[];
+}
+
+const RANGE_DAYS: Record<RangeKey, number> = {
+  "1d": 1, "7d": 7, "30d": 30, "90d": 90, "365d": 365,
+};
+const RANGE_BUCKETS: Record<RangeKey, number> = {
+  "1d": 7, "7d": 7, "30d": 4, "90d": 6, "365d": 12,
+};
+
+const pctNum = (curr: number, prev: number): number => {
+  if (prev <= 0) return curr > 0 ? 100 : 0;
+  return Math.round(((curr - prev) / prev) * 100);
+};
+const truncate = (s: string, n: number) =>
+  s.length > n ? s.slice(0, n - 1).trimEnd() + "…" : s;
+
+// Build the AnalyticsModel from real Instagram data. `nowMs` is passed in so the
+// function stays pure/deterministic (the caller supplies Date.now()).
+export function computeLiveAnalytics(
+  accounts: LiveAccount[],
+  range: RangeKey,
+  nowMs: number,
+): AnalyticsModel {
+  const rk: RangeKey = RANGES[range] ? range : "7d";
+  const m = RANGES[rk];
+  const windowMs = RANGE_DAYS[rk] * 86400000;
+  const start = nowMs - windowMs;
+  const prevStart = nowMs - 2 * windowMs;
+  const tsOf = (md: IgMedia) => {
+    const t = Date.parse(md.timestamp);
+    return Number.isNaN(t) ? 0 : t;
+  };
+
+  const all = accounts.flatMap((a) =>
+    a.media.map((md) => ({ md, platform: a.platform, followers: a.followers })),
+  );
+  const inWindow = (t: number) => t >= start && t <= nowMs;
+  const inPrev = (t: number) => t >= prevStart && t < start;
+  const curr = all.filter((x) => inWindow(tsOf(x.md)));
+  const prev = all.filter((x) => inPrev(tsOf(x.md)));
+
+  const reachOf = (x: { md: IgMedia }) => x.md.reach ?? 0;
+  const engOf = (x: { md: IgMedia }) => x.md.likes + x.md.comments;
+  const sum = (xs: typeof curr, f: (x: (typeof curr)[number]) => number) =>
+    xs.reduce((s, x) => s + f(x), 0);
+
+  const vCurr = sum(curr, reachOf), vPrev = sum(prev, reachOf);
+  const eCurr = sum(curr, engOf), ePrev = sum(prev, engOf);
+  const followers = accounts.reduce((s, a) => s + a.followers, 0);
+
+  const stat = {
+    v: vCurr,
+    e: eCurr,
+    f: followers,
+    p: curr.length,
+    // In live mode dv/de carry percentage change vs the previous window.
+    dv: pctNum(vCurr, vPrev),
+    de: pctNum(eCurr, ePrev),
+    df: 0,
+  };
+
+  // Time-series bars: split the window into equal slices, sum reach (or
+  // engagement when reach is unavailable) per slice, normalise to 0–100.
+  const nB = RANGE_BUCKETS[rk];
+  const slice = windowMs / nB;
+  const vals = new Array(nB).fill(0);
+  for (const x of curr) {
+    const idx = Math.min(nB - 1, Math.max(0, Math.floor((tsOf(x.md) - start) / slice)));
+    vals[idx] += x.md.reach ?? engOf(x);
+  }
+  const maxBar = Math.max(1, ...vals);
+  const bars = vals.map((v) => Math.round((v / maxBar) * 100));
+
+  const accountPerf = accounts.map((a) => {
+    const mine = a.media.filter((md) => inWindow(tsOf(md)));
+    const minePrev = a.media.filter((md) => inPrev(tsOf(md)));
+    const engC = mine.reduce((s, md) => s + md.likes + md.comments, 0);
+    const engP = minePrev.reduce((s, md) => s + md.likes + md.comments, 0);
+    return {
+      platform: a.platform,
+      handle: a.handle,
+      followers: a.followers,
+      viewsN: mine.reduce((s, md) => s + (md.reach ?? 0), 0),
+      engN: engC,
+      growth: (pctNum(engC, engP) >= 0 ? "+" : "") + pctNum(engC, engP) + "%",
+    };
+  });
+
+  const totF = followers;
+  const platSplit = accounts.map((a) => ({
+    platform: a.platform,
+    pct: totF > 0 ? Math.round((a.followers / totF) * 100) : Math.round(100 / Math.max(1, accounts.length)),
+  }));
+
+  const topPosts = [...curr]
+    .sort((a, b) => engOf(b) - engOf(a))
+    .slice(0, 5)
+    .map((x, i) => {
+      const eng = engOf(x);
+      const denom = x.md.reach && x.md.reach > 0 ? x.md.reach : x.followers || 0;
+      return {
+        rank: i + 1,
+        suffixKey: "highlights" as SuffixKey, // unused when title is present
+        platformKey: x.platform,
+        viewsN: x.md.reach ?? 0,
+        rate: (denom > 0 ? (eng / denom) * 100 : 0).toFixed(1) + "%",
+        title: x.md.caption ? truncate(x.md.caption, 60) : "(no caption)",
+        permalink: x.md.permalink || undefined,
+      };
+    });
+
+  let reel = 0, video = 0, image = 0;
+  for (const x of curr) {
+    if (x.md.mediaType === "REELS") reel++;
+    else if (x.md.mediaType === "VIDEO") video++;
+    else image++; // IMAGE + CAROUSEL_ALBUM
+  }
+  const totM = curr.length || 1;
+  const fmtSplit = [
+    { typeKey: "typeReel" as const, pct: Math.round((reel / totM) * 100), color: "#e0457b" },
+    { typeKey: "typeVideo" as const, pct: Math.round((video / totM) * 100), color: "#2563eb" },
+    { typeKey: "typeImage" as const, pct: Math.round((image / totM) * 100), color: "#f59e0b" },
+  ];
+
+  const hourEng = new Array(24).fill(0);
+  for (const x of curr) {
+    const t = tsOf(x.md);
+    if (t) hourEng[new Date(t).getHours()] += engOf(x);
+  }
+  let bestH = 18, bestV = -1;
+  hourEng.forEach((v, h) => {
+    if (v > bestV) { bestV = v; bestH = h; }
+  });
+  const bestTimeRaw = String(bestH).padStart(2, "0") + ":00";
+
+  const denomOverall = vCurr > 0 ? vCurr : followers > 0 ? followers : 1;
+  const engRateOverall = ((eCurr / denomOverall) * 100).toFixed(1) + "%";
+
+  return {
+    range: rk,
+    source: "live",
+    stat,
+    subKey: m.subKey,
+    deltaKey: m.deltaKey,
+    bars,
     accountPerf,
     platSplit,
     topPosts,

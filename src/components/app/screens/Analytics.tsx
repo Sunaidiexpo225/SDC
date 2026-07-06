@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useApp } from "../AppProvider";
 import { useLang } from "../../LangProvider";
 import { Hov } from "../../ui";
 import { s } from "@/lib/style";
 import { fmt, fmt12 } from "@/lib/format";
-import { computeAnalytics, barLabels } from "@/lib/analytics";
+import { computeAnalytics, barLabels, type AnalyticsModel } from "@/lib/analytics";
+import { api } from "@/lib/client";
 import { SUFFIX } from "@/lib/content";
 
 export default function Analytics() {
@@ -14,16 +16,43 @@ export default function Analytics() {
   const { ui, patch, activeEvent } = app;
 
   const activeName = lang === "ar" ? activeEvent.nameAr : activeEvent.nameEn;
-  const model = computeAnalytics(activeEvent.accounts, activeEvent.barIx, ui.range);
+  const estimate = computeAnalytics(activeEvent.accounts, activeEvent.barIx, ui.range);
+
+  // Try to load real Instagram data for this event/range; fall back to the
+  // estimate until (or unless) it arrives. The server returns { source:
+  // "estimated" } when no Instagram account is connected.
+  const [live, setLive] = useState<AnalyticsModel | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setLive(null);
+    api
+      .get<AnalyticsModel | { source: "estimated" }>(
+        `/api/analytics?eventId=${encodeURIComponent(activeEvent.id)}&range=${ui.range}`,
+      )
+      .then((res) => {
+        if (!cancelled && res && res.source === "live") setLive(res as AnalyticsModel);
+      })
+      .catch(() => {
+        /* keep the estimate */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeEvent.id, ui.range]);
+
+  const model = live ?? estimate;
+  const isLive = model.source === "live";
   const { stat } = model;
   const dtxt = t[model.deltaKey] as string;
   const subTxt = t[model.subKey] as string;
   const labels = barLabels(model.range, t);
 
+  const pctDelta = (n: number) => (n >= 0 ? "+" : "") + n + "%";
+  const pctColor = (n: number) => (n >= 0 ? "#17a99b" : "#d64545");
   const kpi = [
-    { label: t.stViewsLabel, value: fmt(Math.round(stat.v)), delta: "+" + stat.dv + dtxt, deltaColor: "#17a99b" },
-    { label: t.stEngLabel, value: fmt(Math.round(stat.e)), delta: "+" + stat.de + dtxt, deltaColor: "#17a99b" },
-    { label: t.stFollowersLabel, value: fmt(Math.round(stat.f)), delta: "+" + stat.df + dtxt, deltaColor: "#17a99b" },
+    { label: t.stViewsLabel, value: fmt(Math.round(stat.v)), delta: isLive ? pctDelta(stat.dv) : "+" + stat.dv + dtxt, deltaColor: isLive ? pctColor(stat.dv) : "#17a99b" },
+    { label: t.stEngLabel, value: fmt(Math.round(stat.e)), delta: isLive ? pctDelta(stat.de) : "+" + stat.de + dtxt, deltaColor: isLive ? pctColor(stat.de) : "#17a99b" },
+    { label: t.stFollowersLabel, value: fmt(Math.round(stat.f)), delta: isLive ? subTxt : "+" + stat.df + dtxt, deltaColor: isLive ? "#8b93a1" : "#17a99b" },
     { label: t.stPostsLabel, value: String(stat.p), delta: subTxt, deltaColor: "#8b93a1" },
   ];
 
@@ -50,7 +79,8 @@ export default function Analytics() {
   const topPosts = model.topPosts.map((tp) => ({
     rank: tp.rank,
     ix: tp.rank - 1,
-    title: activeName + " · " + SUFFIX[tp.suffixKey][lang],
+    title: tp.title ?? activeName + " · " + SUFFIX[tp.suffixKey][lang],
+    permalink: tp.permalink,
     platName: app.pname(tp.platformKey),
     color: app.pcolor(tp.platformKey),
     views: fmt(tp.viewsN),
@@ -81,7 +111,13 @@ export default function Analytics() {
       <div style={s("display:flex;align-items:center;justify-content:space-between;margin-bottom:20px")}>
         <div>
           <h2 style={s("font-family:var(--grotesk);font-weight:700;font-size:28px;letter-spacing:-1px;margin:0 0 4px")}>{t.analyticsH2}</h2>
-          <p style={s("font-size:14px;color:#5c6675;margin:0")}><span style={s(`color:${activeEvent.color};font-weight:700`)}>{activeName}</span> · {t.analyticsSub}</p>
+          <p style={s("display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:#5c6675;margin:0")}>
+            <span><span style={s(`color:${activeEvent.color};font-weight:700`)}>{activeName}</span> · {t.analyticsSub}</span>
+            <span style={s(`display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:${isLive ? "#e7f6f3" : "#f0f3f7"};color:${isLive ? "#128d81" : "#8b93a1"}`)}>
+              <span style={s(`width:6px;height:6px;border-radius:50%;background:${isLive ? "#17a99b" : "#c8d0dc"}`)} />
+              {isLive ? t.liveBadge : t.estimatedBadge}
+            </span>
+          </p>
         </div>
         <div style={s("position:relative")}>
           <Hov tag="button" onClick={() => patch({ rangeMenuOpen: !ui.rangeMenuOpen })} css="display:flex;align-items:center;gap:10px;border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:9px 16px;border-radius:999px;font-family:inherit;font-weight:700;font-size:13px;color:#0f172a" hover="border-color:#c8d0dc">
@@ -170,7 +206,7 @@ export default function Analytics() {
         <div style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px")}>
           <div style={s("font-size:13px;font-weight:700;margin-bottom:6px")}>{t.topPostsLabel}</div>
           {topPosts.map((tp) => (
-            <Hov key={tp.ix} onClick={() => patch({ stat: { kind: "top", ix: tp.ix } })} css="display:flex;align-items:center;gap:12px;padding:11px 8px;border-top:1px solid #f0f3f7;cursor:pointer;border-radius:8px" hover="background:#f8fafc">
+            <Hov key={tp.ix} onClick={() => (tp.permalink ? window.open(tp.permalink, "_blank", "noopener") : patch({ stat: { kind: "top", ix: tp.ix } }))} css="display:flex;align-items:center;gap:12px;padding:11px 8px;border-top:1px solid #f0f3f7;cursor:pointer;border-radius:8px" hover="background:#f8fafc">
               <span style={s("font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:700;color:#c0c7d2;flex:none;width:16px")}>{tp.rank}</span>
               <div style={s("flex:1;min-width:0")}>
                 <div style={s("font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{tp.title}</div>

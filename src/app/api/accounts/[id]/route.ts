@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/lib/api";
 import { toAccountDTO } from "@/lib/serialize";
-import { fetchInstagramUsername } from "@/lib/publishers/instagram";
+import { fetchInstagramProfile } from "@/lib/publishers/instagramInsights";
 
 const Body = z.object({
   action: z.enum(["connect", "disconnect"]),
@@ -37,13 +37,16 @@ export async function PATCH(
       apiKey: string;
       externalId: string | null;
       handle?: string;
+      followers?: number;
     } = { connected: true, apiKey: key, externalId };
-    // Replace the placeholder handle with the account's real @username so the
-    // Compose / Integrations screens show who's actually connected. Best-effort:
-    // if the lookup fails, the connection still succeeds with the old handle.
+    // Pull the account's real @username and follower count so the Compose /
+    // Integrations / Analytics screens show who's actually connected and their
+    // true audience. Best-effort: if the lookup fails, the connection still
+    // succeeds with the existing handle/followers.
     if (account.platform === "instagram" && externalId) {
-      const username = await fetchInstagramUsername(externalId, key);
-      if (username) data.handle = `@${username}`;
+      const profile = await fetchInstagramProfile(externalId, key);
+      if (profile?.username) data.handle = `@${profile.username}`;
+      if (profile && profile.followersCount > 0) data.followers = profile.followersCount;
     }
     const updated = await prisma.socialAccount.update({
       where: { id: account.id },
