@@ -28,6 +28,8 @@ export default function InviteModal() {
           <input value={ui.invName} onInput={(e) => patch({ invName: (e.target as HTMLInputElement).value })} style={s("width:100%;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;color:#0f172a;background:#fbfcfe;margin-bottom:16px")} />
           <label style={s("font-size:13px;font-weight:700;display:block;margin-bottom:8px")}>{t.emailLabel}</label>
           <input dir="ltr" value={ui.invEmail} onInput={(e) => patch({ invEmail: (e.target as HTMLInputElement).value })} placeholder="name@sunaidiexpo.com" style={s("width:100%;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;color:#0f172a;background:#fbfcfe;margin-bottom:16px;text-align:start")} />
+          <label style={s("font-size:13px;font-weight:700;display:block;margin-bottom:8px")}>{t.tempPwLabel}</label>
+          <input dir="ltr" type="password" value={ui.invPassword} onInput={(e) => patch({ invPassword: (e.target as HTMLInputElement).value })} placeholder={t.tempPwPh} style={s("width:100%;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:12px;padding:12px 14px;font-family:inherit;font-size:14px;color:#0f172a;background:#fbfcfe;margin-bottom:16px;text-align:start")} />
           <label style={s("font-size:13px;font-weight:700;display:block;margin-bottom:8px")}>{t.roleLabel}</label>
           <div style={s("display:flex;gap:6px")}>
             {ROLES.map((r) => {

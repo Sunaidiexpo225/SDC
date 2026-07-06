@@ -12,14 +12,18 @@ const Body = z.object({
   name: z.string().optional(),
   email: z.string().email("A valid email is required"),
   role: z.enum(["Admin", "Manager", "Editor", "Viewer"]).default("Editor"),
+  password: z.string().optional(),
 });
 
-// Invite a teammate (design's sendInvite) — created with "invited" status.
+// Create a teammate's account. Admins provide a temporary password, which makes
+// the account "active" so the person can sign in immediately (they can change
+// it / set up their own 2FA afterwards). Omitting the password creates a
+// pending "invited" record with an unusable random password.
 export async function POST(req: NextRequest) {
   const ctx = await requireAuth();
   if (!ctx) return error("Not authenticated", 401);
   if (!roleCan(effectiveRole(ctx), ["Admin"])) {
-    return forbidden("Only Admins can invite teammates");
+    return forbidden("Only Admins can create users");
   }
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
@@ -27,8 +31,22 @@ export async function POST(req: NextRequest) {
 
   const name = (parsed.data.name || "").trim() || "New user";
   const email = parsed.data.email.trim().toLowerCase();
+  const password = (parsed.data.password || "").trim();
   const init =
     (name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("") || "NU").toUpperCase();
+
+  // A supplied password activates the account; enforce a minimum length.
+  let status = "invited";
+  let passwordHash: string;
+  if (password) {
+    if (password.length < 8) {
+      return error("Password must be at least 8 characters", 400);
+    }
+    status = "active";
+    passwordHash = await hashPassword(password);
+  } else {
+    passwordHash = await hashPassword(randomBytes(24).toString("hex"));
+  }
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) return error("A user with that email already exists", 409);
@@ -41,12 +59,10 @@ export async function POST(req: NextRequest) {
       init,
       avColor: PALETTE[count % PALETTE.length],
       role: parsed.data.role,
-      status: "invited",
+      status,
       mfaEnabled: false,
       totpSecret: newTotpSecret(),
-      // A random, unusable password — invited users can't sign in until a real
-      // accept-invite / password-set flow is wired up. Never a shared default.
-      passwordHash: await hashPassword(randomBytes(24).toString("hex")),
+      passwordHash,
     },
   });
   return json(toUserDTO(user), 201);

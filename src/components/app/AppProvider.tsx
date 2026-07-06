@@ -74,6 +74,7 @@ interface UiState {
   inviteOpen: boolean;
   invName: string;
   invEmail: string;
+  invPassword: string;
   invRole: Role;
   mfaUserId: string | null;
   mfaCode: string;
@@ -174,6 +175,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     inviteOpen: false,
     invName: "",
     invEmail: "",
+    invPassword: "",
     invRole: "Editor",
     mfaUserId: null,
     mfaCode: "",
@@ -540,14 +542,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         name: ui.invName,
         email: ui.invEmail,
         role: ui.invRole,
+        password: ui.invPassword,
       });
       await reload();
-      patch({ inviteOpen: false, invName: "", invEmail: "" });
+      patch({ inviteOpen: false, invName: "", invEmail: "", invPassword: "" });
       toast(tr(lang).toastInvited);
     } catch (e) {
       toast(e instanceof Error ? e.message : "Failed");
     }
-  }, [ui.invName, ui.invEmail, ui.invRole, reload, patch, toast, lang]);
+  }, [ui.invName, ui.invEmail, ui.invPassword, ui.invRole, reload, patch, toast, lang]);
 
   const approvalAction = useCallback(
     async (action: "save" | "approve" | "decline" | "discard", caption?: string) => {
