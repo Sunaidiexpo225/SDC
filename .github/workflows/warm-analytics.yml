@@ -1,0 +1,35 @@
+name: Warm analytics cache
+
+# Keeps the Instagram analytics snapshots warm so the Analytics screen always
+# loads instantly. Vercel Hobby cron only runs once/day, so we schedule this
+# from GitHub Actions instead (free). It just calls the app's refresh endpoint.
+#
+# Setup (one time):
+#  1. In Vercel → Project → Settings → Environment Variables, add CRON_SECRET
+#     (any long random string), then redeploy.
+#  2. In GitHub → repo → Settings → Secrets and variables → Actions:
+#       - add a secret CRON_SECRET with the SAME value.
+#       - (optional) add a variable APP_URL if your production URL isn't the
+#         default below.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *" # every 15 minutes (GitHub may delay under load)
+  workflow_dispatch: {} # allows manual runs from the Actions tab
+
+jobs:
+  warm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping refresh endpoint
+        env:
+          APP_URL: ${{ vars.APP_URL || 'https://sdc-beryl.vercel.app' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET secret not set — skipping (see workflow header for setup)."
+            exit 0
+          fi
+          curl -sS -X GET "$APP_URL/api/cron/refresh-analytics" \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            --max-time 90 --fail-with-body
