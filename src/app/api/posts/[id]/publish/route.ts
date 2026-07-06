@@ -34,6 +34,12 @@ export async function POST(
   });
   if (!post) return error("Post not found", 404);
 
+  // Approval gate: a post must be approved by a Manager/Admin before it can be
+  // published to any platform.
+  if (post.approval !== "approved") {
+    return error("This post needs approval before it can be published", 403);
+  }
+
   const platforms = post.platformsCsv ? post.platformsCsv.split(",") : [];
   const results: Result[] = [];
 

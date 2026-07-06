@@ -58,6 +58,7 @@ export function toPostDTO(p: Post): PostDTO {
     captionAr: p.captionAr,
     platforms: p.platformsCsv ? p.platformsCsv.split(",") : [],
     status: p.status as PostDTO["status"],
+    approval: (p.approval ?? "pending") as PostDTO["approval"],
     format: p.format ?? null,
     mediaId: p.mediaId ?? null,
     mediaUrl: p.mediaId ? `/api/media/${p.mediaId}` : null,

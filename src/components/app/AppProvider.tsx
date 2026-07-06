@@ -113,6 +113,7 @@ interface AppCtx {
   schedule: () => Promise<void>;
   deletePost: (id: string) => Promise<void>;
   publishPost: (id: string) => Promise<void>;
+  setPostApproval: (id: string, approval: "approved" | "declined") => Promise<void>;
   createEvent: () => Promise<void>;
   renameEvent: (id: string, name: string) => Promise<void>;
   setEventColor: (id: string, color: string) => Promise<void>;
@@ -502,6 +503,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [reload, toast, lang],
   );
 
+  const setPostApproval = useCallback(
+    async (id: string, approval: "approved" | "declined") => {
+      const { tr } = await import("@/lib/i18n");
+      try {
+        await api.patch(`/api/posts/${id}`, { approval });
+        await reload();
+        toast(approval === "approved" ? tr(lang).toastApproved : tr(lang).toastDeclined);
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Failed");
+      }
+    },
+    [reload, toast, lang],
+  );
+
   const disconnectApi = useCallback(
     async (accountId: string) => {
       const { tr } = await import("@/lib/i18n");
@@ -714,6 +729,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     schedule,
     deletePost,
     publishPost,
+    setPostApproval,
     createEvent,
     renameEvent,
     setEventColor,

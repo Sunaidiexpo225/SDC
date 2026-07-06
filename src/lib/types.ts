@@ -38,6 +38,7 @@ export interface PostDTO {
   captionAr: string;
   platforms: string[];
   status: PostStatus;
+  approval: "pending" | "approved" | "declined";
   format: string | null; // Image | Video | Reel
   mediaId: string | null; // media row id when the post has an upload
   mediaUrl: string | null; // /api/media/<id> when the post has an upload

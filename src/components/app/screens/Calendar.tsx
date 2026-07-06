@@ -10,6 +10,14 @@ export default function Calendar() {
   const app = useApp();
   const { t, lang, locale } = useLang();
   const { ui, patch, data, activeEvent, today } = app;
+  const canApprove = app.currentUser?.role === "Admin" || app.currentUser?.role === "Manager";
+  const apStyle: Record<string, [string, string]> = {
+    approved: ["#e7f6f3", "#128d81"],
+    pending: ["#fdf6e7", "#b17a09"],
+    declined: ["#fdf2f2", "#d64545"],
+  };
+  const apLabel = (t2: typeof t, a: string) =>
+    a === "approved" ? t2.apApproved : a === "declined" ? t2.apDeclined : t2.apPending;
 
   const activeName = lang === "ar" ? activeEvent.nameAr : activeEvent.nameEn;
   const weekStartMon = data.settings.weekStartsMonday;
@@ -87,7 +95,12 @@ export default function Calendar() {
       {sel && selDate && (
         <div style={s("position:fixed;inset-inline-end:24px;top:82px;width:320px;background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:22px;box-shadow:0 24px 60px rgba(15,23,42,.18);z-index:20")}>
           <div style={s("display:flex;justify-content:space-between;align-items:center;margin-bottom:14px")}>
-            <span style={s(`font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${sel.status === "posted" ? "#17a99b" : "#2563eb"}`)}>{sel.status === "posted" ? t.posted : t.scheduled}</span>
+            <div style={s("display:flex;align-items:center;gap:8px;flex-wrap:wrap")}>
+              <span style={s(`font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${sel.status === "posted" ? "#17a99b" : "#2563eb"}`)}>{sel.status === "posted" ? t.posted : t.scheduled}</span>
+              {sel.status !== "posted" && (
+                <span style={s(`font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;background:${apStyle[sel.approval][0]};color:${apStyle[sel.approval][1]}`)}>{apLabel(t, sel.approval)}</span>
+              )}
+            </div>
             <button onClick={() => patch({ selectedPostId: null })} style={s("border:none;cursor:pointer;background:#f4f6f9;width:28px;height:28px;border-radius:50%;font-family:inherit;color:#5c6675")}>✕</button>
           </div>
           {sel.mediaUrl && (
@@ -108,8 +121,20 @@ export default function Calendar() {
           {sel.status === "posted" && (
             <Hov tag="button" onClick={() => patch({ stat: { kind: "post", id: sel.id } })} css="width:100%;border:none;cursor:pointer;background:#0f172a;color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:999px;font-family:inherit;margin-bottom:8px" hover="background:#2563eb">{t.viewAnalytics}</Hov>
           )}
+          {sel.status !== "posted" && canApprove && sel.approval !== "approved" && (
+            <div style={s("display:flex;gap:8px;margin-bottom:8px")}>
+              <Hov tag="button" onClick={() => app.setPostApproval(sel.id, "approved")} css="flex:1;border:none;cursor:pointer;background:#17a99b;color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:999px;font-family:inherit" hover="background:#128d81">{t.approveBtn}</Hov>
+              {sel.approval !== "declined" && (
+                <Hov tag="button" onClick={() => app.setPostApproval(sel.id, "declined")} css="flex:1;border:1px solid #f3c1c1;cursor:pointer;background:#fff;color:#d64545;font-weight:700;font-size:13px;padding:10px;border-radius:999px;font-family:inherit" hover="background:#fdf2f2">{t.declineBtn}</Hov>
+              )}
+            </div>
+          )}
           {sel.status !== "posted" && (
-            <Hov tag="button" onClick={() => app.publishPost(sel.id)} css="width:100%;border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:999px;font-family:inherit;margin-bottom:8px" hover="background:#1d4ed8">{t.publishNow}</Hov>
+            sel.approval === "approved" ? (
+              <Hov tag="button" onClick={() => app.publishPost(sel.id)} css="width:100%;border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:999px;font-family:inherit;margin-bottom:8px" hover="background:#1d4ed8">{t.publishNow}</Hov>
+            ) : (
+              <div style={s("font-size:12px;color:#8b93a1;background:#f8fafc;border:1px solid #eef1f5;border-radius:12px;padding:10px 12px;margin-bottom:8px;line-height:1.4")}>{t.needsApprovalNote}</div>
+            )
           )}
           <Hov tag="button" onClick={() => app.deletePost(sel.id)} css="width:100%;border:1px solid #f3c1c1;cursor:pointer;background:#fff;color:#d64545;font-weight:700;font-size:13px;padding:10px;border-radius:999px;font-family:inherit" hover="background:#fdf2f2">{t.deletePost}</Hov>
         </div>

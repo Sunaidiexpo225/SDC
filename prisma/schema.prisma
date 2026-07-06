@@ -49,6 +49,7 @@ model Post {
   captionAr    String
   platformsCsv String // comma-separated platform keys
   status       String   @default("scheduled") // scheduled | posted
+  approval     String   @default("pending") // pending | approved | declined
   format       String? // Image | Video | Reel (content type of the attached media)
   mediaId      String?
   media        Media?   @relation(fields: [mediaId], references: [id], onDelete: SetNull)

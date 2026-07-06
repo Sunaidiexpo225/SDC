@@ -43,6 +43,9 @@ export async function POST(req: NextRequest) {
 
   const titleTxt =
     caption.split(/[.!؟?—]/)[0].slice(0, 40) || mediaFormat || "New post";
+  // Managers/Admins are the approvers, so their own posts are pre-approved;
+  // Editor-created posts start pending and need a Manager/Admin to approve.
+  const approval = roleCan(effectiveRole(ctx), ["Admin", "Manager"]) ? "approved" : "pending";
   const post = await prisma.post.create({
     data: {
       eventId,
@@ -54,6 +57,7 @@ export async function POST(req: NextRequest) {
       captionAr: caption,
       platformsCsv: platforms.join(","),
       status: "scheduled",
+      approval,
       mediaId: mediaId ?? null,
       format: mediaFormat,
     },
