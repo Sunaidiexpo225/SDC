@@ -135,27 +135,3 @@ export function generateCaption(lang: Lang, tone: Tone, index: number) {
 }
 
 export type AssetType = "Video" | "Reel" | "Image";
-
-export interface LibraryAsset {
-  name: string;
-  type: AssetType;
-  dur: string;
-  hintEn: string;
-}
-
-export const LIBRARY: LibraryAsset[] = [
-  { name: "teaser-cut.mp4", type: "Video", dur: "0:32", hintEn: "video · 16:9" },
-  { name: "floor-bts-reel.mp4", type: "Reel", dur: "0:18", hintEn: "reel · 9:16" },
-  { name: "hero-keyvisual.png", type: "Image", dur: "PNG", hintEn: "image · 1:1" },
-  { name: "exhibitor-spotlight.mp4", type: "Reel", dur: "0:41", hintEn: "reel · 9:16" },
-  { name: "howto-60s.mp4", type: "Video", dur: "1:00", hintEn: "video · 16:9" },
-  { name: "lineup-card.png", type: "Image", dur: "PNG", hintEn: "image · 4:5" },
-  { name: "speaker-teaser.mp4", type: "Reel", dur: "0:15", hintEn: "reel · 9:16" },
-  { name: "day1-recap.mp4", type: "Video", dur: "0:29", hintEn: "video · 16:9" },
-];
-
-export function libraryHint(hintEn: string, lang: Lang): string {
-  return lang === "ar"
-    ? hintEn.replace("video", "فيديو").replace("reel", "ريل").replace("image", "صورة")
-    : hintEn;
-}
