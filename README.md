@@ -113,11 +113,28 @@ stored data so they scale when live platform data is plugged in.
 - **i18n** (`src/lib/i18n.ts`): full EN/AR dictionary; `LangProvider` manages
   language + direction.
 
-### Production checklist
+### Going to production (no demo data)
 
-- Set a strong `AUTH_SECRET` and `AUTH_DEMO_BYPASS=0` (the `123456` bypass is
-  for the demo only — real TOTP is enforced when it's off).
-- Swap SQLite for a hosted database (update `datasource` + `DATABASE_URL`).
-- Wire the **Integrations** "Connect" flow to each platform's real OAuth, and
-  the **Generate with AI** route (`/api/ai/caption`) to an LLM (server-side,
-  key kept off the client). Both are stubbed with deterministic mock data today.
+On an **empty** database the app initializes itself once. With `SEED_DEMO`
+**unset** it runs a production bootstrap instead of the demo dataset: it
+creates **one Admin** (from the env below) plus one empty starter event — no
+sample users, posts or accounts.
+
+1. Set env vars (Vercel → Settings → Environment Variables):
+   - `AUTH_SECRET` — long random string (required)
+   - `AUTH_DEMO_BYPASS=0` — turns off the `123456` code, passwordless SSO and
+     the "Acting as" switcher
+   - `ADMIN_EMAIL`, `ADMIN_PASSWORD` (min 8 chars), optionally `ADMIN_NAME`,
+     `STARTER_EVENT_NAME`
+   - leave **`SEED_DEMO` unset** (setting it to `1` loads the demo dataset)
+   - S3 storage vars (see above) if you want large uploads
+2. If the database already holds demo data, clear it once (Neon SQL editor):
+   `DROP SCHEMA public CASCADE; CREATE SCHEMA public;`
+3. **Redeploy.** First load bootstraps the Admin + starter event; sign in with
+   `ADMIN_EMAIL` / `ADMIN_PASSWORD`. 2FA is enrolled per-user *after* login
+   (Admin → Team → Enable MFA), so there's no first-login lock-out.
+
+Still stubbed (deterministic mock data — wire up when you need them): the
+**Integrations "Connect"** flow (real platform OAuth), the **Generate with AI**
+caption route (`/api/ai/caption` → an LLM), analytics numbers, and actually
+**publishing** scheduled posts to the platforms.

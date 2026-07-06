@@ -148,6 +148,55 @@ export async function seedCore(db: Db) {
   }
 }
 
+// Production bootstrap: one real Admin (from ADMIN_EMAIL / ADMIN_PASSWORD) and
+// one empty starter event so the app has something to render (activeEvent is
+// never undefined). No demo users, posts or approvals. Throws if the admin
+// credentials are missing so init rolls back and retries once they're set.
+export async function bootstrapProduction(db: Db) {
+  const email = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  const password = process.env.ADMIN_PASSWORD || "";
+  if (!email || password.length < 8) {
+    throw new Error(
+      "Set ADMIN_EMAIL and ADMIN_PASSWORD (min 8 chars) to initialize production.",
+    );
+  }
+  const adminName = (process.env.ADMIN_NAME || "Admin").trim();
+  const init =
+    adminName.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase() ||
+    "AD";
+  await db.user.create({
+    data: {
+      name: adminName,
+      email,
+      init,
+      avColor: "#2563eb",
+      role: "Admin",
+      status: "active",
+      mfaEnabled: false,
+      totpSecret: authenticator.generateSecret(),
+      passwordHash: await bcrypt.hash(password, 10),
+    },
+  });
+
+  const eventName = (process.env.STARTER_EVENT_NAME || "My first event").trim();
+  await db.event.create({
+    data: {
+      slug: "event",
+      nameEn: eventName,
+      nameAr: eventName,
+      color: "#2563eb",
+      barIx: 0,
+      order: 0,
+      accounts: {
+        create: [
+          { platform: "instagram", handle: "@handle", followers: 0, connected: false },
+          { platform: "tiktok", handle: "@handle", followers: 0, connected: false },
+        ],
+      },
+    },
+  });
+}
+
 // CLI seed (wipe + reseed).
 export async function seedDatabase(db: PrismaClient) {
   await db.post.deleteMany();
@@ -182,7 +231,15 @@ export async function ensureSeeded(): Promise<void> {
         // Run the inserts in a transaction so a mid-seed failure rolls back
         // every row — otherwise partial data (e.g. some users) would remain
         // and the unique-email constraint would make every retry fail.
-        await prisma.$transaction((tx) => seedCore(tx), { timeout: 30_000 });
+        // SEED_DEMO=1 loads the full demo dataset; otherwise bootstrap a real
+        // production workspace (one admin + a starter event).
+        await prisma.$transaction(
+          (tx) =>
+            process.env.SEED_DEMO === "1"
+              ? seedCore(tx)
+              : bootstrapProduction(tx),
+          { timeout: 30_000 },
+        );
       } catch (e) {
         console.error("[seed] failed:", e);
         // Release the lock so a later request can retry from a clean slate.

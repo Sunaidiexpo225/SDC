@@ -38,8 +38,14 @@ export default function Login() {
     setErr("");
     setBusy(true);
     try {
-      await api.post("/api/auth/login", { email, password: pass });
-      setStep("mfa");
+      const res = await api.post<{ mfaRequired: boolean }>("/api/auth/login", {
+        email,
+        password: pass,
+      });
+      // Users with 2FA enrolled go through the code step; everyone else signs
+      // in directly and can enable 2FA later from the app.
+      if (res.mfaRequired) setStep("mfa");
+      else router.push("/app");
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Sign in failed");
     } finally {

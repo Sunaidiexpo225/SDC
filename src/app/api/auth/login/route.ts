@@ -4,8 +4,11 @@ import { prisma } from "@/lib/db";
 import {
   checkPassword,
   signPending,
+  signSession,
   PENDING_COOKIE,
   PENDING_MAX_AGE,
+  SESSION_COOKIE,
+  SESSION_MAX_AGE,
   authCookie,
 } from "@/lib/auth";
 import { json, error } from "@/lib/api";
@@ -40,9 +43,19 @@ export async function POST(req: NextRequest) {
     return error("Invalid credentials", 401);
   }
 
-  // Always route through the 2FA step (mirrors the design's login flow).
-  const pending = await signPending(user.id);
-  const res = json({ mfaRequired: true });
-  res.cookies.set(PENDING_COOKIE, pending, authCookie(PENDING_MAX_AGE));
+  // Users who have enrolled 2FA go through the code step; everyone else signs
+  // in directly and can enable 2FA later in the app. (This avoids a lock-out
+  // when the demo TOTP bypass is off and a new user hasn't set up an
+  // authenticator yet.)
+  if (user.mfaEnabled) {
+    const pending = await signPending(user.id);
+    const res = json({ mfaRequired: true });
+    res.cookies.set(PENDING_COOKIE, pending, authCookie(PENDING_MAX_AGE));
+    return res;
+  }
+
+  const token = await signSession({ uid: user.id, acting: user.id });
+  const res = json({ mfaRequired: false });
+  res.cookies.set(SESSION_COOKIE, token, authCookie(SESSION_MAX_AGE));
   return res;
 }
