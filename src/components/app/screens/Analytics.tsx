@@ -9,11 +9,15 @@ import { fmt, fmt12 } from "@/lib/format";
 import { computeAnalytics, barLabels, type AnalyticsModel } from "@/lib/analytics";
 import { api } from "@/lib/client";
 import { SUFFIX } from "@/lib/content";
+import AnalyticsOverview from "./AnalyticsOverview";
+import AudiencePanel from "./AudiencePanel";
 
 export default function Analytics() {
   const app = useApp();
   const { t, lang } = useLang();
   const { ui, patch, activeEvent } = app;
+
+  const [view, setView] = useState<"event" | "brands">("event");
 
   const activeName = lang === "ar" ? activeEvent.nameAr : activeEvent.nameEn;
   const estimate = computeAnalytics(activeEvent.accounts, activeEvent.barIx, ui.range);
@@ -49,12 +53,41 @@ export default function Analytics() {
 
   const pctDelta = (n: number) => (n >= 0 ? "+" : "") + n + "%";
   const pctColor = (n: number) => (n >= 0 ? "#17a99b" : "#d64545");
+  // In live mode only show a %-delta when there's a real prior period to
+  // compare against — otherwise it's a meaningless "+100%".
+  const liveDelta = (n: number) => (model.hasPrior ? pctDelta(n) : subTxt);
+  const liveDeltaColor = (n: number) => (model.hasPrior ? pctColor(n) : "#8b93a1");
   const kpi = [
-    { label: t.stViewsLabel, value: fmt(Math.round(stat.v)), delta: isLive ? pctDelta(stat.dv) : "+" + stat.dv + dtxt, deltaColor: isLive ? pctColor(stat.dv) : "#17a99b" },
-    { label: t.stEngLabel, value: fmt(Math.round(stat.e)), delta: isLive ? pctDelta(stat.de) : "+" + stat.de + dtxt, deltaColor: isLive ? pctColor(stat.de) : "#17a99b" },
+    { label: t.stViewsLabel, value: fmt(Math.round(stat.v)), delta: isLive ? liveDelta(stat.dv) : "+" + stat.dv + dtxt, deltaColor: isLive ? liveDeltaColor(stat.dv) : "#17a99b" },
+    { label: t.stEngLabel, value: fmt(Math.round(stat.e)), delta: isLive ? liveDelta(stat.de) : "+" + stat.de + dtxt, deltaColor: isLive ? liveDeltaColor(stat.de) : "#17a99b" },
     { label: t.stFollowersLabel, value: fmt(Math.round(stat.f)), delta: isLive ? subTxt : "+" + stat.df + dtxt, deltaColor: isLive ? "#8b93a1" : "#17a99b" },
     { label: t.stPostsLabel, value: String(stat.p), delta: subTxt, deltaColor: "#8b93a1" },
   ];
+
+  const csvCell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const exportCsv = () => {
+    const rows: unknown[][] = [
+      [t.stViewsLabel, Math.round(stat.v)],
+      [t.stEngLabel, Math.round(stat.e)],
+      [t.stFollowersLabel, Math.round(stat.f)],
+      [t.stPostsLabel, stat.p],
+      [t.statSaves, model.saves ?? 0],
+      [t.statShares, model.shares ?? 0],
+      [],
+      [t.colAccount, t.colFollowers, t.colViews, t.colEng, t.colGrowth],
+      ...model.accountPerf.map((a) => [a.handle, a.followers, a.viewsN, a.engN, a.growth]),
+      [],
+      ["#", t.topPostsLabel, t.colViews, t.colEng],
+      ...model.topPosts.map((tp) => [tp.rank, tp.title ?? "", tp.viewsN, tp.rate]),
+    ];
+    const csv = rows.map((r) => r.map(csvCell).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `analytics-${activeName}-${model.range}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const bars = model.bars.map((h, i) => ({
     label: labels[i],
@@ -76,16 +109,24 @@ export default function Analytics() {
     eng: fmt(a.engN),
     growth: a.growth,
   }));
-  const topPosts = model.topPosts.map((tp) => ({
-    rank: tp.rank,
-    ix: tp.rank - 1,
-    title: tp.title ?? activeName + " · " + SUFFIX[tp.suffixKey][lang],
-    permalink: tp.permalink,
-    platName: app.pname(tp.platformKey),
-    color: app.pcolor(tp.platformKey),
-    views: fmt(tp.viewsN),
-    rate: tp.rate,
-  }));
+  const topPosts = model.topPosts.map((tp) => {
+    const parts: string[] = [];
+    if (tp.likes != null) parts.push(`♥ ${fmt(tp.likes)}`);
+    if (tp.comments != null) parts.push(`💬 ${fmt(tp.comments)}`);
+    if (tp.saves != null) parts.push(`🔖 ${fmt(tp.saves)}`);
+    if (tp.shares != null) parts.push(`↗ ${fmt(tp.shares)}`);
+    return {
+      rank: tp.rank,
+      ix: tp.rank - 1,
+      title: tp.title ?? activeName + " · " + SUFFIX[tp.suffixKey][lang],
+      permalink: tp.permalink,
+      platName: app.pname(tp.platformKey),
+      color: app.pcolor(tp.platformKey),
+      views: fmt(tp.viewsN),
+      rate: tp.rate,
+      metrics: isLive ? parts.join("   ") : "",
+    };
+  });
   const fmtSplit = model.fmtSplit.map((f) => ({
     name: t[f.typeKey],
     color: f.color,
@@ -119,20 +160,36 @@ export default function Analytics() {
             </span>
           </p>
         </div>
-        <div style={s("position:relative")}>
-          <Hov tag="button" onClick={() => patch({ rangeMenuOpen: !ui.rangeMenuOpen })} css="display:flex;align-items:center;gap:10px;border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:9px 16px;border-radius:999px;font-family:inherit;font-weight:700;font-size:13px;color:#0f172a" hover="border-color:#c8d0dc">
-            <span>{rangeLabel}</span>
-            <span style={s("font-size:9px;color:#8b93a1")}>▼</span>
-          </Hov>
-          {ui.rangeMenuOpen && (
-            <div style={s("position:absolute;top:calc(100% + 6px);inset-inline-end:0;width:180px;background:#fff;border:1px solid #e3e8ef;border-radius:14px;box-shadow:0 16px 40px rgba(15,23,42,.18);padding:6px;z-index:40")}>
-              {rangeDefs.map(([k, l]) => (
-                <Hov key={k} tag="button" onClick={() => patch({ range: k, rangeMenuOpen: false })} css={`width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;border:none;cursor:pointer;background:${k === model.range ? "#f4f6f9" : "transparent"};padding:9px 12px;border-radius:10px;font-family:inherit;text-align:start;font-size:13px;font-weight:600;color:#0f172a`} hover="background:#f4f6f9">{l}</Hov>
-              ))}
-            </div>
+        <div style={s("display:flex;align-items:center;gap:10px;flex-wrap:wrap")}>
+          <div style={s("display:flex;gap:4px;background:#eef1f5;border-radius:999px;padding:3px")}>
+            {([["event", t.viewThisEvent], ["brands", t.viewAllBrands]] as const).map(([k, label]) => (
+              <button key={k} onClick={() => setView(k)} style={s(`border:none;cursor:pointer;background:${view === k ? "#fff" : "transparent"};color:${view === k ? "#0f172a" : "#5c6675"};font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;font-family:inherit;box-shadow:${view === k ? "0 1px 3px rgba(15,23,42,.12)" : "none"}`)}>{label}</button>
+            ))}
+          </div>
+          {view === "event" && (
+            <>
+              <Hov tag="button" onClick={exportCsv} css="border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:9px 14px;border-radius:999px;font-family:inherit;font-weight:700;font-size:13px;color:#0f172a" hover="border-color:#c8d0dc">{t.exportReport}</Hov>
+              <div style={s("position:relative")}>
+                <Hov tag="button" onClick={() => patch({ rangeMenuOpen: !ui.rangeMenuOpen })} css="display:flex;align-items:center;gap:10px;border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:9px 16px;border-radius:999px;font-family:inherit;font-weight:700;font-size:13px;color:#0f172a" hover="border-color:#c8d0dc">
+                  <span>{rangeLabel}</span>
+                  <span style={s("font-size:9px;color:#8b93a1")}>▼</span>
+                </Hov>
+                {ui.rangeMenuOpen && (
+                  <div style={s("position:absolute;top:calc(100% + 6px);inset-inline-end:0;width:180px;background:#fff;border:1px solid #e3e8ef;border-radius:14px;box-shadow:0 16px 40px rgba(15,23,42,.18);padding:6px;z-index:40")}>
+                    {rangeDefs.map(([k, l]) => (
+                      <Hov key={k} tag="button" onClick={() => patch({ range: k, rangeMenuOpen: false })} css={`width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:8px;border:none;cursor:pointer;background:${k === model.range ? "#f4f6f9" : "transparent"};padding:9px 12px;border-radius:10px;font-family:inherit;text-align:start;font-size:13px;font-weight:600;color:#0f172a`} hover="background:#f4f6f9">{l}</Hov>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </div>
       </div>
+
+      {view === "brands" && <AnalyticsOverview />}
+      {view === "event" && (
+      <>
 
       {/* KPI cards */}
       <div style={s("display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:20px")}>
@@ -211,6 +268,7 @@ export default function Analytics() {
               <div style={s("flex:1;min-width:0")}>
                 <div style={s("font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{tp.title}</div>
                 <div style={s("display:flex;align-items:center;gap:6px;margin-top:3px")}><span style={s(`width:7px;height:7px;border-radius:50%;background:${tp.color}`)} /><span style={s("font-size:11px;color:#8b93a1")}>{tp.platName}</span></div>
+                {tp.metrics && <div dir="ltr" style={s("font-size:11px;color:#8b93a1;margin-top:3px;text-align:start;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{tp.metrics}</div>}
               </div>
               <div style={s("text-align:end;flex:none")}>
                 <div style={s("font-size:13px;font-weight:700")}>{tp.views}</div>
@@ -238,18 +296,59 @@ export default function Analytics() {
               ))}
             </div>
           </div>
-          <div style={s("display:flex;gap:16px")}>
-            <div style={s("flex:1;background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px")}>
+          <div style={s("display:flex;gap:16px;flex-wrap:wrap")}>
+            <div style={s("flex:1;min-width:120px;background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px")}>
               <div style={s(th + ";margin-bottom:8px")}>{t.engRateLabel}</div>
               <div style={s("font-family:var(--grotesk);font-weight:700;font-size:24px")}>{model.engRateOverall}</div>
             </div>
-            <div style={s("flex:1;background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px")}>
+            <div style={s("flex:1;min-width:120px;background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px")}>
               <div style={s(th + ";margin-bottom:8px")}>{t.bestTimeLabel}</div>
               <div style={s("font-family:var(--grotesk);font-weight:700;font-size:24px")}>{bestTime}</div>
             </div>
+            {isLive && (
+              <>
+                <div style={s("flex:1;min-width:120px;background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px")}>
+                  <div style={s(th + ";margin-bottom:8px")}>{t.statSaves}</div>
+                  <div style={s("font-family:var(--grotesk);font-weight:700;font-size:24px")}>{fmt(model.saves ?? 0)}</div>
+                </div>
+                <div style={s("flex:1;min-width:120px;background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px")}>
+                  <div style={s(th + ";margin-bottom:8px")}>{t.statShares}</div>
+                  <div style={s("font-family:var(--grotesk);font-weight:700;font-size:24px")}>{fmt(model.shares ?? 0)}</div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      {isLive && model.followerGrowth && model.followerGrowth.length > 0 && (
+        <div style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px;margin-top:16px")}>
+          <div style={s("display:flex;justify-content:space-between;align-items:center;margin-bottom:18px")}>
+            <span style={s("font-size:13px;font-weight:700")}>{t.secGrowth}</span>
+            <span style={s("font-size:12px;color:#8b93a1;font-weight:600")}>{t.growthWindow}</span>
+          </div>
+          <div style={s("display:flex;align-items:flex-end;gap:3px;height:120px")}>
+            {(() => {
+              const g = model.followerGrowth!;
+              const maxAbs = Math.max(1, ...g.map((d) => Math.abs(d.value)));
+              return g.map((d, i) => {
+                const h = Math.max(2, Math.round((Math.abs(d.value) / maxAbs) * 100));
+                return (
+                  <div
+                    key={i}
+                    title={`${d.date}: ${d.value >= 0 ? "+" : ""}${d.value}`}
+                    style={s(`flex:1;min-width:0;height:${h}%;border-radius:4px;background:${d.value >= 0 ? "#17a99b" : "#d64545"}`)}
+                  />
+                );
+              });
+            })()}
+          </div>
+        </div>
+      )}
+
+      {isLive && model.audience && <AudiencePanel audience={model.audience} />}
+      </>
+      )}
     </div>
   );
 }

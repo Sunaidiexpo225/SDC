@@ -98,13 +98,24 @@ export interface AnalyticsModel {
     platformKey: string;
     viewsN: number;
     rate: string;
-    // Present only for live posts — the real caption + link to the post.
+    // Present only for live posts — the real caption + link + per-post metrics.
     title?: string;
     permalink?: string;
+    likes?: number;
+    comments?: number;
+    saves?: number | null;
+    shares?: number | null;
+    mediaType?: string;
   }[];
   fmtSplit: { typeKey: "typeReel" | "typeVideo" | "typeImage"; pct: number; color: string }[];
   bestTimeRaw: string;
   engRateOverall: string;
+  // Live-only extras.
+  saves?: number;
+  shares?: number;
+  followerGrowth?: { date: string; value: number }[];
+  audience?: IgAudience | null;
+  hasPrior?: boolean; // was there a previous period to compare against?
 }
 
 export function computeAnalytics(
@@ -189,13 +200,15 @@ export function computeAnalytics(
 
 // ── Live analytics from real Instagram data ────────────────────────────────
 
-import type { IgMedia } from "./publishers/instagramInsights";
+import type { IgMedia, IgAudience } from "./publishers/instagramInsights";
 
 export interface LiveAccount {
   platform: string;
   handle: string;
   followers: number;
   media: IgMedia[];
+  followerGrowth?: { date: string; value: number }[];
+  audience?: IgAudience | null;
 }
 
 const RANGE_DAYS: Record<RangeKey, number> = {
@@ -238,12 +251,17 @@ export function computeLiveAnalytics(
   const prev = all.filter((x) => inPrev(tsOf(x.md)));
 
   const reachOf = (x: { md: IgMedia }) => x.md.reach ?? 0;
-  const engOf = (x: { md: IgMedia }) => x.md.likes + x.md.comments;
+  // Engagement counts every real interaction: likes + comments + saves + shares
+  // (saves/shares are null without the insights permission → treated as 0).
+  const engOf = (x: { md: IgMedia }) =>
+    x.md.likes + x.md.comments + (x.md.saves ?? 0) + (x.md.shares ?? 0);
   const sum = (xs: typeof curr, f: (x: (typeof curr)[number]) => number) =>
     xs.reduce((s, x) => s + f(x), 0);
 
   const vCurr = sum(curr, reachOf), vPrev = sum(prev, reachOf);
   const eCurr = sum(curr, engOf), ePrev = sum(prev, engOf);
+  const savesTotal = sum(curr, (x) => x.md.saves ?? 0);
+  const sharesTotal = sum(curr, (x) => x.md.shares ?? 0);
   const followers = accounts.reduce((s, a) => s + a.followers, 0);
 
   const stat = {
@@ -304,6 +322,11 @@ export function computeLiveAnalytics(
         rate: (denom > 0 ? (eng / denom) * 100 : 0).toFixed(1) + "%",
         title: x.md.caption ? truncate(x.md.caption, 60) : "(no caption)",
         permalink: x.md.permalink || undefined,
+        likes: x.md.likes,
+        comments: x.md.comments,
+        saves: x.md.saves,
+        shares: x.md.shares,
+        mediaType: x.md.mediaType,
       };
     });
 
@@ -320,19 +343,43 @@ export function computeLiveAnalytics(
     { typeKey: "typeImage" as const, pct: Math.round((image / totM) * 100), color: "#f59e0b" },
   ];
 
-  const hourEng = new Array(24).fill(0);
-  for (const x of curr) {
-    const t = tsOf(x.md);
-    if (t) hourEng[new Date(t).getHours()] += engOf(x);
+  // Merge audience across accounts (sum per label; average the online curve).
+  const audience = mergeAudience(accounts);
+
+  // Best time: prefer the real "when followers are online" curve; otherwise
+  // fall back to the hour that historically drew the most engagement.
+  let bestH = 18;
+  if (audience?.onlineByHour && audience.onlineByHour.some((v) => v > 0)) {
+    let bestV = -1;
+    audience.onlineByHour.forEach((v, h) => {
+      if (v > bestV) { bestV = v; bestH = h; }
+    });
+  } else {
+    const hourEng = new Array(24).fill(0);
+    for (const x of curr) {
+      const t = tsOf(x.md);
+      if (t) hourEng[new Date(t).getHours()] += engOf(x);
+    }
+    let bestV = -1;
+    hourEng.forEach((v, h) => {
+      if (v > bestV) { bestV = v; bestH = h; }
+    });
   }
-  let bestH = 18, bestV = -1;
-  hourEng.forEach((v, h) => {
-    if (v > bestV) { bestV = v; bestH = h; }
-  });
   const bestTimeRaw = String(bestH).padStart(2, "0") + ":00";
 
   const denomOverall = vCurr > 0 ? vCurr : followers > 0 ? followers : 1;
   const engRateOverall = ((eCurr / denomOverall) * 100).toFixed(1) + "%";
+
+  // Merge follower-growth series across accounts by date.
+  const growthMap = new Map<string, number>();
+  for (const a of accounts) {
+    for (const g of a.followerGrowth || []) {
+      if (g.date) growthMap.set(g.date, (growthMap.get(g.date) || 0) + g.value);
+    }
+  }
+  const followerGrowth = [...growthMap.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, value]) => ({ date, value }));
 
   return {
     range: rk,
@@ -347,6 +394,35 @@ export function computeLiveAnalytics(
     fmtSplit,
     bestTimeRaw,
     engRateOverall,
+    saves: savesTotal,
+    shares: sharesTotal,
+    followerGrowth,
+    audience,
+    hasPrior: prev.length > 0,
+  };
+}
+
+// Combine several accounts' audience breakdowns into one (sum values per label,
+// average the hourly online curve). Returns null if no account has audience.
+function mergeAudience(accounts: LiveAccount[]): IgAudience | null {
+  const withAud = accounts.map((a) => a.audience).filter(Boolean) as IgAudience[];
+  if (!withAud.length) return null;
+  const mergeDim = (pick: (a: IgAudience) => { label: string; value: number }[]) => {
+    const map = new Map<string, number>();
+    for (const a of withAud) for (const d of pick(a)) map.set(d.label, (map.get(d.label) || 0) + d.value);
+    return [...map.entries()].map(([label, value]) => ({ label, value })).sort((x, y) => y.value - x.value).slice(0, 6);
+  };
+  let onlineByHour: number[] | null = null;
+  const curves = withAud.map((a) => a.onlineByHour).filter(Boolean) as number[][];
+  if (curves.length) {
+    onlineByHour = new Array(24).fill(0).map((_, h) => curves.reduce((s, c) => s + (c[h] || 0), 0));
+  }
+  return {
+    countries: mergeDim((a) => a.countries),
+    cities: mergeDim((a) => a.cities),
+    gender: mergeDim((a) => a.gender),
+    ages: mergeDim((a) => a.ages),
+    onlineByHour,
   };
 }
 

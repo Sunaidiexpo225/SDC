@@ -69,12 +69,29 @@ export interface IgMedia {
   likes: number;
   comments: number;
   reach: number | null; // needs instagram_manage_insights
+  saves: number | null; // needs instagram_manage_insights
+  shares: number | null; // needs instagram_manage_insights
+}
+
+export interface IgDemographic {
+  label: string;
+  value: number;
+}
+
+export interface IgAudience {
+  countries: IgDemographic[];
+  cities: IgDemographic[];
+  gender: IgDemographic[];
+  ages: IgDemographic[];
+  onlineByHour: number[] | null; // 24 values, when followers are online
 }
 
 export interface IgAccountData {
   followersCount: number;
   mediaCount: number;
   media: IgMedia[];
+  followerGrowth: { date: string; value: number }[]; // daily new-follower counts
+  audience: IgAudience | null;
 }
 
 function normType(mediaType: unknown, productType: unknown): IgMedia["mediaType"] {
@@ -119,29 +136,147 @@ export async function fetchInstagramAccountData(
     likes: typeof it.like_count === "number" ? it.like_count : 0,
     comments: typeof it.comments_count === "number" ? it.comments_count : 0,
     reach: null,
+    saves: null,
+    shares: null,
   }));
 
-  // Best-effort reach for the most recent posts (needs manage_insights).
+  // Best-effort reach/saves/shares for the most recent posts (needs
+  // manage_insights). One insights call per post, run in parallel.
   await Promise.all(
     media.slice(0, insightsFor).map(async (m) => {
       if (!m.id) return;
-      const ins = await ig(`${m.id}/insights`, { metric: "reach", access_token: token }, 6000);
+      const ins = await ig(
+        `${m.id}/insights`,
+        { metric: "reach,saved,shares", access_token: token },
+        6000,
+      );
       const arr = Array.isArray((ins as { data?: unknown })?.data)
         ? ((ins as { data: Record<string, unknown>[] }).data)
         : [];
       for (const metric of arr) {
-        if (metric?.name !== "reach") continue;
         const values = metric.values as { value?: unknown }[] | undefined;
         const totalValue = (metric.total_value as { value?: unknown } | undefined)?.value;
         const v = values?.[0]?.value ?? totalValue;
-        if (typeof v === "number") m.reach = v;
+        if (typeof v !== "number") continue;
+        if (metric.name === "reach") m.reach = v;
+        else if (metric.name === "saved") m.saves = v;
+        else if (metric.name === "shares") m.shares = v;
       }
     }),
   );
+
+  const [followerGrowth, audience] = await Promise.all([
+    fetchFollowerGrowth(igId, token),
+    fetchAudience(igId, token),
+  ]);
 
   return {
     followersCount: typeof profile.followers_count === "number" ? profile.followers_count : 0,
     mediaCount: typeof profile.media_count === "number" ? profile.media_count : 0,
     media,
+    followerGrowth,
+    audience,
   };
+}
+
+// Daily new-follower counts for the last ~30 days (needs manage_insights).
+// Returns [] on any failure.
+async function fetchFollowerGrowth(
+  igId: string,
+  token: string,
+): Promise<{ date: string; value: number }[]> {
+  const ins = await ig(`${igId}/insights`, {
+    metric: "follower_count",
+    period: "day",
+    access_token: token,
+  });
+  const arr = Array.isArray((ins as { data?: unknown })?.data)
+    ? ((ins as { data: Record<string, unknown>[] }).data)
+    : [];
+  const series = arr.find((m) => m.name === "follower_count");
+  const values = (series?.values as { value?: unknown; end_time?: unknown }[]) || [];
+  return values
+    .filter((v) => typeof v.value === "number")
+    .map((v) => ({
+      date: typeof v.end_time === "string" ? v.end_time.slice(0, 10) : "",
+      value: v.value as number,
+    }));
+}
+
+// Parse a follower_demographics breakdown response into label/value pairs.
+function parseBreakdown(resp: Record<string, unknown> | null): IgDemographic[] {
+  const arr = Array.isArray((resp as { data?: unknown })?.data)
+    ? ((resp as { data: Record<string, unknown>[] }).data)
+    : [];
+  const metric = arr[0];
+  const totalValue = metric?.total_value as { breakdowns?: unknown } | undefined;
+  const breakdowns = Array.isArray(totalValue?.breakdowns)
+    ? (totalValue!.breakdowns as Record<string, unknown>[])
+    : [];
+  const results = Array.isArray(breakdowns[0]?.results)
+    ? (breakdowns[0].results as Record<string, unknown>[])
+    : [];
+  return results
+    .map((r) => {
+      const dims = r.dimension_values as unknown[] | undefined;
+      return {
+        label: Array.isArray(dims) ? String(dims.join(" · ")) : "",
+        value: typeof r.value === "number" ? r.value : 0,
+      };
+    })
+    .filter((d) => d.label && d.value > 0)
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 6);
+}
+
+// Audience demographics + when-online. All best-effort; a failed breakdown is
+// simply omitted, and if nothing comes back the whole audience is null.
+async function fetchAudience(igId: string, token: string): Promise<IgAudience | null> {
+  const demo = (breakdown: string) =>
+    ig(`${igId}/insights`, {
+      metric: "follower_demographics",
+      period: "lifetime",
+      metric_type: "total_value",
+      breakdown,
+      access_token: token,
+    });
+
+  const [country, city, gender, age, online] = await Promise.all([
+    demo("country"),
+    demo("city"),
+    demo("gender"),
+    demo("age"),
+    ig(`${igId}/insights`, { metric: "online_followers", period: "lifetime", access_token: token }),
+  ]);
+
+  const countries = parseBreakdown(country);
+  const cities = parseBreakdown(city);
+  const genderD = parseBreakdown(gender);
+  const ages = parseBreakdown(age);
+
+  // online_followers → 24 hourly buckets (average across the returned days).
+  let onlineByHour: number[] | null = null;
+  const onArr = Array.isArray((online as { data?: unknown })?.data)
+    ? ((online as { data: Record<string, unknown>[] }).data)
+    : [];
+  const onValues = (onArr.find((m) => m.name === "online_followers")?.values as
+    | { value?: unknown }[]
+    | undefined) || [];
+  if (onValues.length) {
+    const hours = new Array(24).fill(0);
+    let counted = 0;
+    for (const v of onValues) {
+      const map = v.value as Record<string, number> | undefined;
+      if (map && typeof map === "object") {
+        for (let h = 0; h < 24; h++) hours[h] += map[String(h)] || 0;
+        counted++;
+      }
+    }
+    if (counted > 0) onlineByHour = hours.map((s) => Math.round(s / counted));
+  }
+
+  if (!countries.length && !cities.length && !genderD.length && !ages.length && !onlineByHour) {
+    return null;
+  }
+  return { countries, cities, gender: genderD, ages, onlineByHour };
 }
