@@ -56,11 +56,26 @@ supports, so an account can eventually **publish** from Sunaidi Design Central.
    token**, then exchange it for a **long-lived Page access token**. Also fetch
    your **Instagram Business Account ID** (`/me/accounts` → the page →
    `instagram_business_account`).
-7. **Submit for App Review** requesting the permissions:
-   - `instagram_basic`
-   - `instagram_content_publish`
-   - `pages_read_engagement`
+7. **Submit for App Review** requesting the content-publishing permission.
    You'll also need **Business Verification** for the Meta business.
+
+**Two setup flows — pick the one you used:**
+
+- **Instagram API with Instagram Login** (newer; separate *Instagram* app
+  ID/secret; permissions named `instagram_business_*`). The app defaults to
+  this — base host `https://graph.instagram.com`. **You must add the
+  `instagram_business_content_publish` permission** — the "required messaging
+  permissions" (`instagram_business_basic`, `..._manage_comments`,
+  `..._manage_messages`) are for DMs/comments and do **not** include posting.
+  The token is an **Instagram user access token** (generate it after assigning
+  your account the *Instagram Tester* role); the account ID is your Instagram
+  **user_id** (`GET /me?fields=user_id`).
+
+- **Instagram API with Facebook Login** (classic Graph API; uses the Facebook
+  app + a linked Page). Permissions `instagram_basic`,
+  `instagram_content_publish`, `pages_read_engagement`. Set the env var
+  `IG_API_BASE=https://graph.facebook.com/v21.0`. The token is a **Page access
+  token**; the account ID is the **IG Business Account ID**.
 
 **What you collect:** App ID, App Secret, long-lived Page access token,
 Instagram Business Account ID.

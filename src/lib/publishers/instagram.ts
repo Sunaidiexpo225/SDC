@@ -1,15 +1,17 @@
-// Instagram publishing via the Meta Graph API (Content Publishing).
+// Instagram publishing via the Instagram Content Publishing API.
 //
-// Flow for an Instagram Business/Creator account linked to a Facebook Page:
 //   1. POST /{ig-user-id}/media        → create a media container (image_url or
 //      video_url + caption). Video uses media_type=REELS.
 //   2. (video only) poll /{container}?fields=status_code until FINISHED.
 //   3. POST /{ig-user-id}/media_publish → publish the container.
 //
-// The media URL must be publicly fetchable by Meta — our Cloudinary delivery
-// URLs are public, so they work directly.
+// The base host depends on how the app was set up in Meta:
+//   • "Instagram API with Facebook Login"    → https://graph.facebook.com  (default)
+//   • "Instagram API with Instagram Login"   → https://graph.instagram.com
+// Override with IG_API_BASE if needed. The endpoint paths are identical either
+// way. The media URL must be publicly fetchable — our Cloudinary URLs are.
 
-const GRAPH = "https://graph.facebook.com/v21.0";
+const GRAPH = process.env.IG_API_BASE || "https://graph.facebook.com/v21.0";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export interface IgPublishInput {
