@@ -38,10 +38,29 @@ export const MEDIA_DRIVER: "cloudinary" | "s3" | "db" = cloudinaryEnabled()
     : "db";
 
 // db is bounded by the serverless body limit; cloudinary/s3 upload direct.
-const MAX_MB =
+const OVERALL_MAX_MB =
   Number(process.env.MEDIA_MAX_MB) || (MEDIA_DRIVER === "db" ? 4 : 100);
-export const MAX_UPLOAD_BYTES = MAX_MB * 1024 * 1024;
-export const MAX_UPLOAD_LABEL = `${MAX_MB} MB`;
+
+// Cloudinary plan caps: image files ~10 MB, and video *transformations* ~40 MB.
+// Because we resize every video, keep video uploads within the transform cap so
+// the per-platform crops always render. Bump these via env if you upgrade.
+const CLD_IMAGE_MB = Number(process.env.MEDIA_IMAGE_MAX_MB) || 10;
+const CLD_VIDEO_MB = Number(process.env.MEDIA_VIDEO_MAX_MB) || 40;
+
+export function maxUploadMb(contentType: string): number {
+  if (MEDIA_DRIVER === "cloudinary") {
+    const cap = contentType.startsWith("video/") ? CLD_VIDEO_MB : CLD_IMAGE_MB;
+    return Math.min(OVERALL_MAX_MB, cap);
+  }
+  return OVERALL_MAX_MB;
+}
+export function maxUploadBytes(contentType: string): number {
+  return maxUploadMb(contentType) * 1024 * 1024;
+}
+
+// Overall cap (used by the db multipart route, which is type-agnostic).
+export const MAX_UPLOAD_BYTES = OVERALL_MAX_MB * 1024 * 1024;
+export const MAX_UPLOAD_LABEL = `${OVERALL_MAX_MB} MB`;
 
 let _s3: S3Client | null = null;
 function s3(): S3Client {

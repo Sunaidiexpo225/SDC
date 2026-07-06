@@ -4,10 +4,10 @@ import { prisma } from "@/lib/db";
 import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/lib/api";
 import {
   ALLOWED_MIME,
-  MAX_UPLOAD_BYTES,
-  MAX_UPLOAD_LABEL,
   MEDIA_DRIVER,
   kindFromMime,
+  maxUploadBytes,
+  maxUploadMb,
   objectKey,
   presignUpload,
 } from "@/lib/media";
@@ -41,8 +41,8 @@ export async function POST(req: NextRequest) {
     return error("Unsupported file type — upload an image or video", 415);
   }
   if (size <= 0) return error("That file is empty", 400);
-  if (size > MAX_UPLOAD_BYTES) {
-    return error(`File is too large (max ${MAX_UPLOAD_LABEL})`, 413);
+  if (size > maxUploadBytes(contentType)) {
+    return error(`File is too large (max ${maxUploadMb(contentType)} MB)`, 413);
   }
 
   if (MEDIA_DRIVER === "db") return json({ mode: "db" });
