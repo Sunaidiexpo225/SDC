@@ -60,7 +60,7 @@ export default function Analytics() {
   const kpi = [
     { label: t.stViewsLabel, value: fmt(Math.round(stat.v)), delta: isLive ? liveDelta(stat.dv) : "+" + stat.dv + dtxt, deltaColor: isLive ? liveDeltaColor(stat.dv) : "#17a99b" },
     { label: t.stEngLabel, value: fmt(Math.round(stat.e)), delta: isLive ? liveDelta(stat.de) : "+" + stat.de + dtxt, deltaColor: isLive ? liveDeltaColor(stat.de) : "#17a99b" },
-    { label: t.stFollowersLabel, value: fmt(Math.round(isLive ? (model.newFollowers ?? 0) : stat.f)), delta: isLive ? subTxt : "+" + stat.df + dtxt, deltaColor: isLive ? "#8b93a1" : "#17a99b" },
+    { label: t.stFollowersLabel, value: fmt(Math.round(isLive ? (model.newFollowers ?? 0) : stat.f)), delta: isLive ? t.growthWindow : "+" + stat.df + dtxt, deltaColor: isLive ? "#8b93a1" : "#17a99b" },
     { label: t.stPostsLabel, value: String(stat.p), delta: subTxt, deltaColor: "#8b93a1" },
   ];
 
