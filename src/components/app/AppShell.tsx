@@ -31,8 +31,8 @@ export default function AppShell() {
 
   const pendingByEvent: Record<string, number> = {};
   events.forEach((e) => {
-    pendingByEvent[e.id] = data.approvals.filter(
-      (a) => a.eventId === e.id && a.status === "pending",
+    pendingByEvent[e.id] = data.posts.filter(
+      (p) => p.eventId === e.id && p.status !== "posted" && p.approval === "pending",
     ).length;
   });
 
