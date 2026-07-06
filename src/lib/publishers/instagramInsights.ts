@@ -15,6 +15,18 @@
 
 const GRAPH = process.env.IG_API_BASE || "https://graph.facebook.com/v21.0";
 
+// Run an async fn over items with a fixed concurrency cap.
+async function pool<T>(items: T[], size: number, fn: (t: T) => Promise<void>): Promise<void> {
+  let i = 0;
+  const workers = new Array(Math.min(size, items.length || 1)).fill(0).map(async () => {
+    while (i < items.length) {
+      const idx = i++;
+      await fn(items[idx]);
+    }
+  });
+  await Promise.all(workers);
+}
+
 async function ig(
   path: string,
   params: Record<string, string>,
@@ -140,30 +152,29 @@ export async function fetchInstagramAccountData(
     shares: null,
   }));
 
-  // Best-effort reach/saves/shares for the most recent posts (needs
-  // manage_insights). One insights call per post, run in parallel.
-  await Promise.all(
-    media.slice(0, insightsFor).map(async (m) => {
-      if (!m.id) return;
-      const ins = await ig(
-        `${m.id}/insights`,
-        { metric: "reach,saved,shares", access_token: token },
-        6000,
-      );
-      const arr = Array.isArray((ins as { data?: unknown })?.data)
-        ? ((ins as { data: Record<string, unknown>[] }).data)
-        : [];
-      for (const metric of arr) {
-        const values = metric.values as { value?: unknown }[] | undefined;
-        const totalValue = (metric.total_value as { value?: unknown } | undefined)?.value;
-        const v = values?.[0]?.value ?? totalValue;
-        if (typeof v !== "number") continue;
-        if (metric.name === "reach") m.reach = v;
-        else if (metric.name === "saved") m.saves = v;
-        else if (metric.name === "shares") m.shares = v;
-      }
-    }),
-  );
+  // Best-effort reach/saves/shares per post (needs manage_insights). Run with a
+  // small concurrency cap so a burst of requests doesn't trip Instagram's rate
+  // limit (which would also fail the follower_count / audience calls below).
+  await pool(media.slice(0, insightsFor), 6, async (m) => {
+    if (!m.id) return;
+    const ins = await ig(
+      `${m.id}/insights`,
+      { metric: "reach,saved,shares", access_token: token },
+      6000,
+    );
+    const arr = Array.isArray((ins as { data?: unknown })?.data)
+      ? ((ins as { data: Record<string, unknown>[] }).data)
+      : [];
+    for (const metric of arr) {
+      const values = metric.values as { value?: unknown }[] | undefined;
+      const totalValue = (metric.total_value as { value?: unknown } | undefined)?.value;
+      const v = values?.[0]?.value ?? totalValue;
+      if (typeof v !== "number") continue;
+      if (metric.name === "reach") m.reach = v;
+      else if (metric.name === "saved") m.saves = v;
+      else if (metric.name === "shares") m.shares = v;
+    }
+  });
 
   const [followerGrowth, audience] = await Promise.all([
     fetchFollowerGrowth(igId, token),
