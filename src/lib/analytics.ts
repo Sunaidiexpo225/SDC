@@ -117,6 +117,7 @@ export interface AnalyticsModel {
   followerGrowth?: { date: string; value: number }[];
   audience?: IgAudience | null;
   hasPrior?: boolean; // was there a previous period to compare against?
+  barTimes?: number[]; // ms start time of each bar bucket (live labels)
 }
 
 export function computeAnalytics(
@@ -287,19 +288,24 @@ export function computeLiveAnalytics(
   }
   const maxBar = Math.max(1, ...vals);
   const bars = vals.map((v) => Math.round((v / maxBar) * 100));
+  // Real start time of each bucket, so the client can label bars to match the
+  // actual slices instead of static weekday/hour names.
+  const barTimes = Array.from({ length: nB }, (_, i) => Math.round(start + i * slice));
 
+  const engMd = (md: IgMedia) => md.likes + md.comments + (md.saves ?? 0) + (md.shares ?? 0);
   const accountPerf = accounts.map((a) => {
     const mine = a.media.filter((md) => inWindow(tsOf(md)));
     const minePrev = a.media.filter((md) => inPrev(tsOf(md)));
-    const engC = mine.reduce((s, md) => s + md.likes + md.comments, 0);
-    const engP = minePrev.reduce((s, md) => s + md.likes + md.comments, 0);
+    const engC = mine.reduce((s, md) => s + engMd(md), 0);
+    const engP = minePrev.reduce((s, md) => s + engMd(md), 0);
     return {
       platform: a.platform,
       handle: a.handle,
       followers: a.followers,
       viewsN: mine.reduce((s, md) => s + (md.reach ?? 0), 0),
       engN: engC,
-      growth: (pctNum(engC, engP) >= 0 ? "+" : "") + pctNum(engC, engP) + "%",
+      // No prior posts → no baseline to compute growth against.
+      growth: minePrev.length === 0 ? "—" : (pctNum(engC, engP) >= 0 ? "+" : "") + pctNum(engC, engP) + "%",
     };
   });
 
@@ -412,6 +418,7 @@ export function computeLiveAnalytics(
     followerGrowth,
     audience,
     hasPrior: prev.length > 0,
+    barTimes,
   };
 }
 
@@ -428,7 +435,9 @@ function mergeAudience(accounts: LiveAccount[]): IgAudience | null {
   let onlineByHour: number[] | null = null;
   const curves = withAud.map((a) => a.onlineByHour).filter(Boolean) as number[][];
   if (curves.length) {
-    onlineByHour = new Array(24).fill(0).map((_, h) => curves.reduce((s, c) => s + (c[h] || 0), 0));
+    onlineByHour = new Array(24)
+      .fill(0)
+      .map((_, h) => Math.round(curves.reduce((s, c) => s + (c[h] || 0), 0) / curves.length));
   }
   return {
     countries: mergeDim((a) => a.countries),

@@ -53,7 +53,7 @@ export async function GET(req: NextRequest) {
       const rawKey = `igraw:${a.externalId}`;
       let data = cacheGet<IgAccountData>(rawKey, RAW_TTL);
       if (!data) {
-        data = await fetchInstagramAccountData(a.externalId as string, a.apiKey as string, 50, 50);
+        data = await fetchInstagramAccountData(a.externalId as string, a.apiKey as string, 200, 60);
         if (data) cacheSet(rawKey, data);
       }
       if (data) {

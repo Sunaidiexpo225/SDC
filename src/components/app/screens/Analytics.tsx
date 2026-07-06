@@ -14,7 +14,7 @@ import AudiencePanel from "./AudiencePanel";
 
 export default function Analytics() {
   const app = useApp();
-  const { t, lang } = useLang();
+  const { t, lang, locale } = useLang();
   const { ui, patch, activeEvent } = app;
 
   const [view, setView] = useState<"event" | "brands">("event");
@@ -69,7 +69,7 @@ export default function Analytics() {
     const rows: unknown[][] = [
       [t.stViewsLabel, Math.round(stat.v)],
       [t.stEngLabel, Math.round(stat.e)],
-      [t.stFollowersLabel, Math.round(stat.f)],
+      [t.stFollowersLabel, Math.round(isLive ? (model.newFollowers ?? 0) : stat.f)],
       [t.stPostsLabel, stat.p],
       [t.statSaves, model.saves ?? 0],
       [t.statShares, model.shares ?? 0],
@@ -89,8 +89,20 @@ export default function Analytics() {
     URL.revokeObjectURL(url);
   };
 
+  // In live mode, label each bar from its real bucket start time so the axis
+  // matches the actual slices (static weekday/hour names would be wrong).
+  const liveLabels =
+    isLive && model.barTimes
+      ? model.barTimes.map((ms) => {
+          const d = new Date(ms);
+          if (model.range === "1d") return d.toLocaleTimeString(locale, { hour: "numeric" });
+          if (model.range === "7d") return d.toLocaleDateString(locale, { weekday: "short" });
+          return d.toLocaleDateString(locale, { month: "short", day: "numeric" });
+        })
+      : null;
+  const barLbls = liveLabels ?? labels;
   const bars = model.bars.map((h, i) => ({
-    label: labels[i],
+    label: barLbls[i],
     h,
     color: h === 100 ? activeEvent.color : "#c7d7f8",
   }));

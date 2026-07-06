@@ -113,15 +113,15 @@ function normType(mediaType: unknown, productType: unknown): IgMedia["mediaType"
   return "IMAGE";
 }
 
-// Full account pull: profile + recent media (with real likes/comments) + a
-// best-effort reach number per recent post. `mediaLimit` caps the media page;
-// `insightsFor` caps how many recent posts we ask reach for (each is one API
-// call, run in parallel).
+// Full account pull: profile + media (with real likes/comments) + a best-effort
+// reach/saves/shares per recent post. `mediaLimit` is the max total posts to
+// pull (paginated 50 at a time) so longer ranges aren't truncated; `insightsFor`
+// caps how many recent posts we ask reach/saves/shares for.
 export async function fetchInstagramAccountData(
   igId: string,
   token: string,
-  mediaLimit = 50,
-  insightsFor = 25,
+  mediaLimit = 200,
+  insightsFor = 60,
 ): Promise<IgAccountData | null> {
   const profile = await ig(igId, {
     fields: "followers_count,media_count",
@@ -129,17 +129,30 @@ export async function fetchInstagramAccountData(
   });
   if (!profile) return null;
 
-  const mediaResp = await ig(`${igId}/media`, {
-    fields:
-      "id,caption,media_type,media_product_type,timestamp,permalink,like_count,comments_count",
-    limit: String(mediaLimit),
-    access_token: token,
-  });
-  const items = Array.isArray((mediaResp as { data?: unknown })?.data)
-    ? ((mediaResp as { data: Record<string, unknown>[] }).data)
-    : [];
+  // Page through /media until we reach mediaLimit or run out — otherwise active
+  // accounts undercount Posts/Engagement/format on 30d+ ranges.
+  const items: Record<string, unknown>[] = [];
+  let after: string | undefined;
+  for (let page = 0; page < 8 && items.length < mediaLimit; page++) {
+    const params: Record<string, string> = {
+      fields:
+        "id,caption,media_type,media_product_type,timestamp,permalink,like_count,comments_count",
+      limit: "50",
+      access_token: token,
+    };
+    if (after) params.after = after;
+    const resp = await ig(`${igId}/media`, params);
+    const batch = Array.isArray((resp as { data?: unknown })?.data)
+      ? ((resp as { data: Record<string, unknown>[] }).data)
+      : [];
+    if (!batch.length) break;
+    items.push(...batch);
+    const cursor = (resp as { paging?: { cursors?: { after?: unknown } } })?.paging?.cursors?.after;
+    after = typeof cursor === "string" ? cursor : undefined;
+    if (!after) break;
+  }
 
-  const media: IgMedia[] = items.map((it) => ({
+  const media: IgMedia[] = items.slice(0, mediaLimit).map((it) => ({
     id: String(it.id ?? ""),
     caption: typeof it.caption === "string" ? it.caption : "",
     mediaType: normType(it.media_type, it.media_product_type),
@@ -155,16 +168,7 @@ export async function fetchInstagramAccountData(
   // Best-effort reach/saves/shares per post (needs manage_insights). Run with a
   // small concurrency cap so a burst of requests doesn't trip Instagram's rate
   // limit (which would also fail the follower_count / audience calls below).
-  await pool(media.slice(0, insightsFor), 6, async (m) => {
-    if (!m.id) return;
-    const ins = await ig(
-      `${m.id}/insights`,
-      { metric: "reach,saved,shares", access_token: token },
-      6000,
-    );
-    const arr = Array.isArray((ins as { data?: unknown })?.data)
-      ? ((ins as { data: Record<string, unknown>[] }).data)
-      : [];
+  const applyInsights = (m: IgMedia, arr: Record<string, unknown>[]) => {
     for (const metric of arr) {
       const values = metric.values as { value?: unknown }[] | undefined;
       const totalValue = (metric.total_value as { value?: unknown } | undefined)?.value;
@@ -174,6 +178,18 @@ export async function fetchInstagramAccountData(
       else if (metric.name === "saved") m.saves = v;
       else if (metric.name === "shares") m.shares = v;
     }
+  };
+  await pool(media.slice(0, insightsFor), 6, async (m) => {
+    if (!m.id) return;
+    const dataOf = (r: unknown) =>
+      Array.isArray((r as { data?: unknown })?.data)
+        ? ((r as { data: Record<string, unknown>[] }).data)
+        : [];
+    let ins = await ig(`${m.id}/insights`, { metric: "reach,saved,shares", access_token: token }, 6000);
+    // A single insights call fails wholesale if any requested metric is invalid
+    // for that media type — retry with just reach so Views aren't lost.
+    if (!ins) ins = await ig(`${m.id}/insights`, { metric: "reach", access_token: token }, 6000);
+    applyInsights(m, dataOf(ins));
   });
 
   const [followerGrowth, audience] = await Promise.all([

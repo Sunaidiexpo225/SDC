@@ -36,7 +36,8 @@ export async function GET(_req: NextRequest) {
         .map(async (a) => {
           // Keep the overview light: skip per-post insight calls (insightsFor=0),
           // so engagement here is likes + comments only across many accounts.
-          const data = await fetchInstagramAccountData(a.externalId as string, a.apiKey as string, 40, 0);
+          // Pull enough posts to cover the 30-day comparison windows.
+          const data = await fetchInstagramAccountData(a.externalId as string, a.apiKey as string, 120, 0);
           if (!data) return null;
           const eng = (m: { likes: number; comments: number; saves: number | null; shares: number | null }) =>
             m.likes + m.comments + (m.saves ?? 0) + (m.shares ?? 0);
