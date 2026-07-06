@@ -65,7 +65,9 @@ export async function PATCH(
 
   const updated = await prisma.socialAccount.update({
     where: { id: account.id },
-    data: { connected: false },
+    // Clear the stored access token on disconnect — a disconnected integration
+    // shouldn't keep a live token at rest.
+    data: { connected: false, apiKey: null },
   });
   await audit({
     action: "account.disconnect",

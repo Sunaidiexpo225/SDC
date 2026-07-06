@@ -50,6 +50,7 @@ export default function Library() {
       id: p.id,
       name: (lang === "ar" ? p.titleAr : p.titleEn) || "—",
       url: p.mediaUrl as string,
+      mediaId: p.mediaId,
       type: p.format as AssetType,
     }));
 
@@ -83,7 +84,7 @@ export default function Library() {
                   <div dir="ltr" style={s("font-size:13px;font-weight:600;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:start")}>{a.name}</div>
                   <div style={s("display:flex;align-items:center;justify-content:space-between;gap:8px")}>
                     <span style={s(`background:${tagBg};color:${tagColor};font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px`)}>{typeLabel[a.type]}</span>
-                    <Hov tag="button" onClick={() => reuseAsset({ name: a.name, dur: "", type: a.type })} css="border:none;cursor:pointer;background:#eef2f8;color:#2563eb;font-weight:700;font-size:12px;padding:6px 12px;border-radius:999px;font-family:inherit;white-space:nowrap" hover="background:#2563eb;color:#fff">{t.reuseBtn}</Hov>
+                    <Hov tag="button" onClick={() => reuseAsset({ name: a.name, dur: "", type: a.type, mediaId: a.mediaId ?? undefined, url: a.url })} css="border:none;cursor:pointer;background:#eef2f8;color:#2563eb;font-weight:700;font-size:12px;padding:6px 12px;border-radius:999px;font-family:inherit;white-space:nowrap" hover="background:#2563eb;color:#fff">{t.reuseBtn}</Hov>
                   </div>
                 </div>
               </Hov>

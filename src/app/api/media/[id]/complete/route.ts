@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAuth, json, error } from "@/lib/api";
+import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/lib/api";
 import { CLOUDINARY_CLOUD } from "@/lib/cloudinary";
 
 export const runtime = "nodejs";
@@ -21,9 +21,16 @@ export async function POST(
 ) {
   const ctx = await requireAuth();
   if (!ctx) return error("Not authenticated", 401);
+  // Same gate as presign — Viewers can't upload, and this finalizes an upload.
+  if (!roleCan(effectiveRole(ctx), ["Admin", "Manager", "Editor"])) {
+    return forbidden("Viewers can't upload media");
+  }
 
   const media = await prisma.media.findUnique({ where: { id: params.id } });
   if (!media) return error("Upload not found", 404);
+  // Only a freshly-presigned, still-pending upload can be completed — this stops
+  // anyone repointing an already-ready media's storage key to a different asset.
+  if (media.status !== "pending") return error("Upload already finalized", 409);
 
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   const data = parsed.success ? parsed.data : {};
@@ -32,7 +39,9 @@ export async function POST(
     where: { id: media.id },
     data: {
       status: "ready",
-      ...(data.publicId ? { storageKey: data.publicId } : {}),
+      // The storage key only comes from Cloudinary's returned public_id; for S3
+      // it was fixed at presign time and must not be overwritten by the client.
+      ...(media.driver === "cloudinary" && data.publicId ? { storageKey: data.publicId } : {}),
       ...(data.width ? { width: data.width } : {}),
       ...(data.height ? { height: data.height } : {}),
     },

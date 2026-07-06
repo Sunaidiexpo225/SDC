@@ -25,7 +25,17 @@ export function rateLimit(key: string, max: number, windowMs: number): boolean {
 }
 
 export function clientIp(req: NextRequest): string {
+  // Prefer the platform-set x-real-ip (Vercel sets this to the true client IP
+  // and a client can't forge it past the proxy). Fall back to the LAST hop of
+  // x-forwarded-for — the entry appended by the trusted proxy — rather than the
+  // first, which is attacker-controlled and would let them rotate the rate-limit
+  // key on every request.
+  const real = req.headers.get("x-real-ip");
+  if (real) return real.trim();
   const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim();
-  return req.headers.get("x-real-ip") || "unknown";
+  if (fwd) {
+    const parts = fwd.split(",").map((p) => p.trim()).filter(Boolean);
+    if (parts.length) return parts[parts.length - 1];
+  }
+  return "unknown";
 }

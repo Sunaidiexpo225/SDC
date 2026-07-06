@@ -132,7 +132,7 @@ interface AppCtx {
   ) => Promise<void>;
   actingAs: (userId: string) => Promise<void>;
   updateSettings: (patch: Partial<AppData["settings"]>) => Promise<void>;
-  reuseAsset: (asset: { name: string; dur: string; type: AssetType }) => void;
+  reuseAsset: (asset: { name: string; dur: string; type: AssetType; mediaId?: string; url?: string }) => void;
   logout: () => Promise<void>;
 }
 
@@ -154,6 +154,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const today = useMemo(() => todayMidnight(), []);
   const adoptedLang = useRef(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout>>();
+  // Guards mutating submit actions against double-fire (double-click / slow net).
+  const busyRef = useRef(false);
+  // Debounce timers per event so renaming doesn't PATCH on every keystroke.
+  const renameTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const [ui, setUi] = useState<UiState>({
     tab: "dashboard",
@@ -309,6 +313,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       .map((a) => a.platform)
       .filter((k) => ui.platforms[k] !== false);
     if ((!ui.caption.trim() && !ui.composeAsset) || !keys.length) return;
+    if (busyRef.current) return;
+    busyRef.current = true;
     const d = new Date(ui.schedDay + "T00:00:00");
     const offset =
       (d.getFullYear() - today.getFullYear()) * 12 + (d.getMonth() - today.getMonth());
@@ -336,6 +342,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toast(tr(lang).toastSched(keys.length));
     } catch (e) {
       toast(e instanceof Error ? e.message : "Failed to schedule");
+    } finally {
+      busyRef.current = false;
     }
   }, [data, ev, ui, today, reload, patch, toast, lang]);
 
@@ -355,6 +363,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const createEvent = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     const { tr } = await import("@/lib/i18n");
     try {
       const created = await api.post<EventDTO>("/api/events", {
@@ -376,6 +386,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toast(tr(lang).toastEventAdded);
     } catch (e) {
       toast(e instanceof Error ? e.message : "Failed");
+    } finally {
+      busyRef.current = false;
     }
   }, [ui.newName, ui.newColor, lang, reload, patch, toast]);
 
@@ -392,11 +404,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             }
           : d,
       );
-      try {
-        await api.patch(`/api/events/${id}`, { name });
-      } catch {
-        reload();
-      }
+      // Debounce the persist so rapid typing sends one PATCH, not one per key.
+      const timers = renameTimers.current;
+      if (timers[id]) clearTimeout(timers[id]);
+      if (!name.trim()) return; // don't persist an empty name
+      timers[id] = setTimeout(() => {
+        api.patch(`/api/events/${id}`, { name: name.trim() }).catch(() => reload());
+      }, 400);
     },
     [reload],
   );
@@ -462,6 +476,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const publishPost = useCallback(
     async (id: string) => {
+      if (busyRef.current) return;
+      busyRef.current = true;
       const { tr } = await import("@/lib/i18n");
       try {
         const res = await api.post<{
@@ -479,6 +495,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (e) {
         toast(e instanceof Error ? e.message : "Failed");
+      } finally {
+        busyRef.current = false;
       }
     },
     [reload, toast, lang],
@@ -570,6 +588,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const sendInvite = useCallback(async () => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     const { tr } = await import("@/lib/i18n");
     try {
       await api.post("/api/users", {
@@ -583,6 +603,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toast(tr(lang).toastInvited);
     } catch (e) {
       toast(e instanceof Error ? e.message : "Failed");
+    } finally {
+      busyRef.current = false;
     }
   }, [ui.invName, ui.invEmail, ui.invPassword, ui.invRole, reload, patch, toast, lang]);
 
@@ -637,7 +659,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const reuseAsset = useCallback(
-    (asset: { name: string; dur: string; type: AssetType }) => {
+    (asset: { name: string; dur: string; type: AssetType; mediaId?: string; url?: string }) => {
       import("@/lib/i18n").then(({ tr }) => {
         patch({ composeAsset: asset, tab: "compose", selectedPostId: null });
         toast(tr(lang).toastAdded);

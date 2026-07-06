@@ -31,10 +31,11 @@ export const PENDING_MAX_AGE = 600; // 10 minutes
 // data: the "123456" TOTP bypass, the passwordless SSO shortcut, and the
 // "acting as" role switcher. On by default off-production; set
 // AUTH_DEMO_BYPASS=0 (or run in production without it) to turn them all off.
+// Demo conveniences are NEVER enabled in production, regardless of
+// AUTH_DEMO_BYPASS, so the "123456" TOTP bypass / passwordless SSO / acting-as
+// can't be switched on against real data by a stray env var.
 export const DEMO_MODE =
-  process.env.AUTH_DEMO_BYPASS === "1" ||
-  (process.env.AUTH_DEMO_BYPASS !== "0" &&
-    process.env.NODE_ENV !== "production");
+  process.env.NODE_ENV !== "production" && process.env.AUTH_DEMO_BYPASS !== "0";
 
 // Shared cookie options — Secure in production so the session never travels
 // over plaintext HTTP.
@@ -51,14 +52,16 @@ export function authCookie(maxAge: number) {
 export interface SessionPayload {
   uid: string; // authenticated user
   acting?: string; // "acting as" user for permission demos (defaults to uid)
+  typ?: string; // token purpose — "session" for a fully authenticated session
 }
 export interface PendingPayload {
   uid: string;
   step: "mfa";
+  typ?: string; // "pending" — pre-2FA, must NOT be accepted as a session
 }
 
 export async function signSession(p: SessionPayload): Promise<string> {
-  return new SignJWT({ uid: p.uid, acting: p.acting ?? p.uid })
+  return new SignJWT({ uid: p.uid, acting: p.acting ?? p.uid, typ: "session" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
@@ -66,7 +69,7 @@ export async function signSession(p: SessionPayload): Promise<string> {
 }
 
 export async function signPending(uid: string): Promise<string> {
-  return new SignJWT({ uid, step: "mfa" })
+  return new SignJWT({ uid, step: "mfa", typ: "pending" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("10m")
@@ -118,7 +121,12 @@ export function verifyTotp(
 
 export async function readSession(): Promise<SessionPayload | null> {
   const token = cookies().get(SESSION_COOKIE)?.value;
-  return verify<SessionPayload>(token);
+  const payload = await verify<SessionPayload>(token);
+  // Only a fully authenticated session token counts. A pre-2FA "pending" token
+  // is signed with the same secret but must never be accepted as a session,
+  // otherwise the TOTP step could be skipped by replaying it as sdc_session.
+  if (!payload || payload.typ !== "session") return null;
+  return payload;
 }
 
 export async function requireSession(): Promise<SessionPayload | null> {

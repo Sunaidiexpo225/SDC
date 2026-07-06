@@ -14,6 +14,18 @@
 const GRAPH = process.env.IG_API_BASE || "https://graph.facebook.com/v21.0";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// fetch with a hard timeout so a hung Graph connection can't block a publish
+// past the function's time budget.
+async function fetchT(url: string, init?: RequestInit, timeoutMs = 10000): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export interface IgPublishInput {
   igUserId: string;
   accessToken: string;
@@ -23,7 +35,7 @@ export interface IgPublishInput {
 }
 
 async function graphPost(path: string, params: Record<string, string>) {
-  const res = await fetch(`${GRAPH}/${path}`, {
+  const res = await fetchT(`${GRAPH}/${path}`, {
     method: "POST",
     body: new URLSearchParams(params),
   });
@@ -61,10 +73,10 @@ export async function publishToInstagram(
     let ready = false;
     for (let i = 0; i < 18; i++) {
       await sleep(3000);
-      const res = await fetch(
+      const res = await fetchT(
         `${GRAPH}/${creationId}?fields=status_code&access_token=${encodeURIComponent(accessToken)}`,
-      );
-      const st = await res.json().catch(() => null);
+      ).catch(() => null);
+      const st = res ? await res.json().catch(() => null) : null;
       if (st?.status_code === "FINISHED") {
         ready = true;
         break;

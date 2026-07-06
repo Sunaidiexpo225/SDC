@@ -35,7 +35,12 @@ export async function POST(req: NextRequest) {
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return error("Invalid upload request", 400);
-  const { filename, contentType, size, eventId } = parsed.data;
+  const { filename, contentType, size } = parsed.data;
+  // eventId flows into S3 object keys / Cloudinary folder names — strip anything
+  // that isn't a safe id char so a value like "../x" can't escape the prefix.
+  const eventId = parsed.data.eventId
+    ? parsed.data.eventId.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 40) || null
+    : null;
 
   if (!ALLOWED_MIME.test(contentType)) {
     return error("Unsupported file type — upload an image or video", 415);

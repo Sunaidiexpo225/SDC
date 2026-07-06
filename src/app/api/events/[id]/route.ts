@@ -24,8 +24,10 @@ export async function PATCH(
 
   const data: { nameEn?: string; nameAr?: string; color?: string } = {};
   if (parsed.data.name != null) {
-    data.nameEn = parsed.data.name;
-    data.nameAr = parsed.data.name;
+    const name = parsed.data.name.trim();
+    if (!name) return error("Event name can't be empty", 400);
+    data.nameEn = name;
+    data.nameAr = name;
   }
   if (parsed.data.color != null) data.color = parsed.data.color;
 

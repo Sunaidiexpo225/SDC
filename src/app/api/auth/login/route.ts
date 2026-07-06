@@ -16,9 +16,10 @@ import { ensureSeeded } from "@/lib/seedData";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
 import { audit } from "@/lib/audit";
 
-// A fixed bcrypt hash of a random value, compared against when no user matches
-// so response timing doesn't reveal whether an email exists.
-const DUMMY_HASH = "$2a$10$CwTycUXWue0Thq9StjUM0uJ8p8i3sN2h9nB4Xk9m5Zr1c2d3e4f6";
+// A VALID fixed bcrypt hash of a random value, compared against when no user
+// matches so response timing doesn't reveal whether an email exists. Must be a
+// well-formed hash or bcrypt.compare returns instantly and defeats the purpose.
+const DUMMY_HASH = "$2a$10$JDyoCwlUOhbSiRqLWDmceeqP/n4MWNWueUiwLPO7hZ9f9bkTW85lu";
 
 const Body = z.object({
   email: z.string().email(),

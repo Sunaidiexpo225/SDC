@@ -59,6 +59,7 @@ export function toPostDTO(p: Post): PostDTO {
     platforms: p.platformsCsv ? p.platformsCsv.split(",") : [],
     status: p.status as PostDTO["status"],
     format: p.format ?? null,
+    mediaId: p.mediaId ?? null,
     mediaUrl: p.mediaId ? `/api/media/${p.mediaId}` : null,
   };
 }
