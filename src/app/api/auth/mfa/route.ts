@@ -14,6 +14,7 @@ import {
 } from "@/lib/auth";
 import { json, error } from "@/lib/api";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
+import { audit } from "@/lib/audit";
 
 const Body = z.object({ code: z.string().min(1) });
 
@@ -33,10 +34,22 @@ export async function POST(req: NextRequest) {
   if (!user) return error("Account not found", 404);
 
   if (!verifyTotp(user.totpSecret, parsed.data.code)) {
+    await audit({
+      action: "auth.mfa_failed",
+      actor: { id: user.id, email: user.email, role: user.role },
+      level: "warning",
+      ip: clientIp(req),
+    });
     return error("That code didn't match. Try again.", 401);
   }
 
   const token = await signSession({ uid: user.id, acting: user.id });
+  await audit({
+    action: "auth.login",
+    actor: { id: user.id, email: user.email, role: user.role },
+    detail: "2FA verified",
+    ip: clientIp(req),
+  });
   const res = json({ ok: true });
   res.cookies.set(SESSION_COOKIE, token, authCookie(SESSION_MAX_AGE));
   res.cookies.set(PENDING_COOKIE, "", { path: "/", maxAge: 0 });

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireAuth, json, error, getSetting, forbidden, effectiveRole, roleCan } from "@/lib/api";
 import { toSettingDTO } from "@/lib/serialize";
+import { audit, actorOf, clientIp } from "@/lib/audit";
 
 const Body = z.object({
   requireMfa: z.boolean().optional(),
@@ -32,6 +33,12 @@ export async function PATCH(req: NextRequest) {
   const updated = await prisma.setting.update({
     where: { id: 1 },
     data: parsed.data,
+  });
+  await audit({
+    action: "settings.update",
+    actor: actorOf(ctx),
+    detail: Object.entries(parsed.data).map(([k, v]) => `${k}=${v}`).join(", "),
+    ip: clientIp(req),
   });
   return json(toSettingDTO(updated));
 }

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth, json, error, forbidden, effectiveRole, effectiveUserId, roleCan } from "@/lib/api";
 import { toUserDTO } from "@/lib/serialize";
 import { verifyTotp } from "@/lib/auth";
+import { audit, actorOf, clientIp } from "@/lib/audit";
 
 const Body = z.object({
   role: z.enum(["Admin", "Manager", "Editor", "Viewer"]).optional(),
@@ -39,6 +40,14 @@ export async function PATCH(
       where: { id: user.id },
       data: { role: parsed.data.role },
     });
+    await audit({
+      action: "user.role_change",
+      actor: actorOf(ctx),
+      target: user.email,
+      detail: `${user.role} → ${parsed.data.role}`,
+      level: "warning",
+      ip: clientIp(req),
+    });
     return json(toUserDTO(updated));
   }
 
@@ -47,6 +56,13 @@ export async function PATCH(
     const updated = await prisma.user.update({
       where: { id: user.id },
       data: { mfaEnabled: false },
+    });
+    await audit({
+      action: "user.mfa_reset",
+      actor: actorOf(ctx),
+      target: user.email,
+      level: "warning",
+      ip: clientIp(req),
     });
     return json(toUserDTO(updated));
   }
@@ -69,7 +85,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } },
 ) {
   const ctx = await requireAuth();
@@ -85,5 +101,13 @@ export async function DELETE(
     if (admins <= 1) return error("There must be at least one Admin", 400);
   }
   await prisma.user.delete({ where: { id: target.id } });
+  await audit({
+    action: "user.delete",
+    actor: actorOf(ctx),
+    target: target.email,
+    detail: `role=${target.role}`,
+    level: "warning",
+    ip: clientIp(req),
+  });
   return json({ ok: true });
 }

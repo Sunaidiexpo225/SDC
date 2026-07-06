@@ -75,7 +75,7 @@ interface UiState {
   libFilter: string;
   range: "1d" | "7d" | "30d" | "90d" | "365d";
   toast: string | null;
-  adminSection: "users" | "events" | "integrations" | "settings";
+  adminSection: "users" | "events" | "integrations" | "settings" | "audit";
   inviteOpen: boolean;
   invName: string;
   invEmail: string;

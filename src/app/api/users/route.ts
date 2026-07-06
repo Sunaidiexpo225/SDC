@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/lib/api";
 import { toUserDTO } from "@/lib/serialize";
 import { hashPassword, newTotpSecret } from "@/lib/auth";
+import { audit, actorOf, clientIp } from "@/lib/audit";
 
 const PALETTE = ["#e0457b", "#17a99b", "#7c5cf0", "#2563eb", "#f59e0b", "#0ea5a3"];
 
@@ -64,6 +65,13 @@ export async function POST(req: NextRequest) {
       totpSecret: newTotpSecret(),
       passwordHash,
     },
+  });
+  await audit({
+    action: "user.create",
+    actor: actorOf(ctx),
+    target: user.email,
+    detail: `role=${user.role}, status=${status}`,
+    ip: clientIp(req),
   });
   return json(toUserDTO(user), 201);
 }

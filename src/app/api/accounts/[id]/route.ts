@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/lib/api";
 import { toAccountDTO } from "@/lib/serialize";
 import { fetchInstagramProfile } from "@/lib/publishers/instagramInsights";
+import { audit, actorOf, clientIp } from "@/lib/audit";
 
 const Body = z.object({
   action: z.enum(["connect", "disconnect"]),
@@ -52,6 +53,13 @@ export async function PATCH(
       where: { id: account.id },
       data,
     });
+    await audit({
+      action: "account.connect",
+      actor: actorOf(ctx),
+      target: `${account.platform} ${updated.handle}`,
+      detail: externalId ? `id=${externalId}` : undefined,
+      ip: clientIp(req),
+    });
     return json(toAccountDTO(updated));
   }
 
@@ -59,12 +67,18 @@ export async function PATCH(
     where: { id: account.id },
     data: { connected: false },
   });
+  await audit({
+    action: "account.disconnect",
+    actor: actorOf(ctx),
+    target: `${account.platform} ${account.handle}`,
+    ip: clientIp(req),
+  });
   return json(toAccountDTO(updated));
 }
 
 // Remove an account from its event (design's removeSocial) — clears its token too.
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } },
 ) {
   const ctx = await requireAuth();
@@ -73,7 +87,13 @@ export async function DELETE(
     return forbidden("Only Admins and Managers can manage integrations");
   }
   try {
-    await prisma.socialAccount.delete({ where: { id: params.id } });
+    const removed = await prisma.socialAccount.delete({ where: { id: params.id } });
+    await audit({
+      action: "account.remove",
+      actor: actorOf(ctx),
+      target: `${removed.platform} ${removed.handle}`,
+      ip: clientIp(req),
+    });
     return json({ ok: true });
   } catch {
     return error("Account not found", 404);

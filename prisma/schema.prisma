@@ -118,3 +118,20 @@ model Setting {
   tone             String  @default("punchy")
   lang             String  @default("en")
 }
+
+// Security audit trail + captured server errors. Written best-effort so a
+// logging failure never breaks the action being logged.
+model AuditLog {
+  id         String   @id @default(cuid())
+  at         DateTime @default(now())
+  actorId    String? // user id that performed the action (null for anonymous)
+  actorEmail String?
+  actorRole  String?
+  action     String // e.g. auth.login, user.create, account.connect, post.publish, error
+  target     String? // subject of the action (email, event/post, endpoint)
+  detail     String? // extra context or error message
+  level      String   @default("info") // info | warning | error
+  ip         String?
+
+  @@index([at])
+}

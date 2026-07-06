@@ -14,6 +14,7 @@ import {
 import { json, error } from "@/lib/api";
 import { ensureSeeded } from "@/lib/seedData";
 import { rateLimit, clientIp } from "@/lib/ratelimit";
+import { audit } from "@/lib/audit";
 
 // A fixed bcrypt hash of a random value, compared against when no user matches
 // so response timing doesn't reveal whether an email exists.
@@ -40,6 +41,13 @@ export async function POST(req: NextRequest) {
   // account exists; invited accounts can't sign in yet.
   const ok = await checkPassword(password, user?.passwordHash ?? DUMMY_HASH);
   if (!user || user.status === "invited" || !ok) {
+    await audit({
+      action: "auth.login_failed",
+      target: email.toLowerCase(),
+      detail: !user ? "no such user" : user.status === "invited" ? "account not activated" : "bad password",
+      level: "warning",
+      ip: clientIp(req),
+    });
     return error("Invalid credentials", 401);
   }
 
@@ -55,6 +63,11 @@ export async function POST(req: NextRequest) {
   }
 
   const token = await signSession({ uid: user.id, acting: user.id });
+  await audit({
+    action: "auth.login",
+    actor: { id: user.id, email: user.email, role: user.role },
+    ip: clientIp(req),
+  });
   const res = json({ mfaRequired: false });
   res.cookies.set(SESSION_COOKIE, token, authCookie(SESSION_MAX_AGE));
   return res;

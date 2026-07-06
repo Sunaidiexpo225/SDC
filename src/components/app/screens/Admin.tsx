@@ -8,6 +8,7 @@ import { s } from "@/lib/style";
 import { segStyle, roleLabelOf } from "../helpers";
 import { PLATFORMS } from "@/lib/platforms";
 import type { Role } from "@/lib/types";
+import AuditLog from "./AuditLog";
 
 const ADMIN_PALETTE = ["#e0457b", "#17a99b", "#7c5cf0", "#2563eb", "#f59e0b", "#0ea5a3"];
 const ROLES: Role[] = ["Admin", "Manager", "Editor", "Viewer"];
@@ -26,6 +27,7 @@ export default function Admin() {
     ["events", t.secEvents],
     ["integrations", t.secIntegrations],
     ["settings", t.secSettings],
+    ["audit", t.secAudit],
   ];
 
   const mfaCount = data.users.filter((u) => u.mfaEnabled).length;
@@ -232,6 +234,9 @@ export default function Admin() {
           </div>
         </div>
       )}
+
+      {/* AUDIT LOG */}
+      {section === "audit" && <AuditLog />}
     </div>
   );
 }

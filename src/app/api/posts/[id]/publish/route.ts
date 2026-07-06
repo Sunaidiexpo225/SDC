@@ -4,6 +4,7 @@ import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/l
 import { publishToInstagram } from "@/lib/publishers/instagram";
 import { platformPublishUrl } from "@/lib/cloudinaryUrl";
 import { CLOUDINARY_CLOUD } from "@/lib/cloudinary";
+import { audit, actorOf, clientIp } from "@/lib/audit";
 
 export const runtime = "nodejs";
 // Allow time for Instagram video (Reel) processing before publish.
@@ -18,7 +19,7 @@ interface Result {
 // Publish a scheduled post to its connected platforms. Instagram is wired to
 // the real Graph API; other platforms are reported as not-yet-supported.
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { id: string } },
 ) {
   const ctx = await requireAuth();
@@ -79,11 +80,23 @@ export async function POST(
         isVideo,
       });
       results.push({ platform, ok: true, detail: `Published (id ${res.id})` });
+      await audit({
+        action: "post.publish",
+        actor: actorOf(ctx),
+        target: `${platform} · ${post.event.nameEn}`,
+        detail: `post ${post.id} → id ${res.id}`,
+        ip: clientIp(req),
+      });
     } catch (e) {
-      results.push({
-        platform,
-        ok: false,
-        detail: e instanceof Error ? e.message : "Publish failed",
+      const msg = e instanceof Error ? e.message : "Publish failed";
+      results.push({ platform, ok: false, detail: msg });
+      await audit({
+        action: "post.publish_failed",
+        actor: actorOf(ctx),
+        target: `${platform} · ${post.event.nameEn}`,
+        detail: msg,
+        level: "error",
+        ip: clientIp(req),
       });
     }
   }
