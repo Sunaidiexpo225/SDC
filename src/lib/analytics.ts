@@ -113,6 +113,7 @@ export interface AnalyticsModel {
   // Live-only extras.
   saves?: number;
   shares?: number;
+  newFollowers?: number; // followers gained in the window (not total)
   followerGrowth?: { date: string; value: number }[];
   audience?: IgAudience | null;
   hasPrior?: boolean; // was there a previous period to compare against?
@@ -383,6 +384,15 @@ export function computeLiveAnalytics(
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([date, value]) => ({ date, value }));
 
+  // New followers gained within the window (Instagram's follower_count metric
+  // covers ~the last 30 days, so longer ranges reflect that available window).
+  const newFollowers = followerGrowth
+    .filter((g) => {
+      const t = Date.parse(g.date);
+      return !Number.isNaN(t) && t >= start;
+    })
+    .reduce((s, g) => s + g.value, 0);
+
   return {
     range: rk,
     source: "live",
@@ -398,6 +408,7 @@ export function computeLiveAnalytics(
     engRateOverall,
     saves: savesTotal,
     shares: sharesTotal,
+    newFollowers,
     followerGrowth,
     audience,
     hasPrior: prev.length > 0,
