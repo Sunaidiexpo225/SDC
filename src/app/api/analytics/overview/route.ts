@@ -1,11 +1,9 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth, json, error } from "@/lib/api";
-import { fetchInstagramAccountData } from "@/lib/publishers/instagramInsights";
-import { cacheGet, cacheSet } from "@/lib/cache";
+import { getAccountData } from "@/lib/insightsStore";
 
 export const maxDuration = 60;
-const TTL = 300_000; // 5 min — heavier (all accounts)
 
 // GET /api/analytics/overview — one row per connected Instagram account across
 // every event, so the team can compare brands side by side (followers,
@@ -13,9 +11,6 @@ const TTL = 300_000; // 5 min — heavier (all accounts)
 export async function GET(_req: NextRequest) {
   const ctx = await requireAuth();
   if (!ctx) return error("Not authenticated", 401);
-
-  const cached = cacheGet<unknown>("overview", TTL);
-  if (cached) return json(cached);
 
   const events = await prisma.event.findMany({
     orderBy: { order: "asc" },
@@ -34,10 +29,9 @@ export async function GET(_req: NextRequest) {
       e.accounts
         .filter((a) => a.platform === "instagram" && a.connected && a.apiKey && a.externalId)
         .map(async (a) => {
-          // Keep the overview light: skip per-post insight calls (insightsFor=0),
-          // so engagement here is likes + comments only across many accounts.
-          // Pull enough posts to cover the 30-day comparison windows.
-          const data = await fetchInstagramAccountData(a.externalId as string, a.apiKey as string, 120, 0);
+          // Reuse the shared per-account snapshot (same data the Analytics
+          // screen uses), so the overview is fast once snapshots are warm.
+          const data = await getAccountData(a.externalId as string, a.apiKey as string);
           if (!data) return null;
           const eng = (m: { likes: number; comments: number; saves: number | null; shares: number | null }) =>
             m.likes + m.comments + (m.saves ?? 0) + (m.shares ?? 0);
@@ -64,6 +58,5 @@ export async function GET(_req: NextRequest) {
   );
 
   const payload = { accounts: rows.filter(Boolean) };
-  cacheSet("overview", payload);
   return json(payload);
 }

@@ -27,9 +27,11 @@ export default function Analytics() {
   // estimate until (or unless) it arrives. The server returns { source:
   // "estimated" } when no Instagram account is connected.
   const [live, setLive] = useState<AnalyticsModel | null>(null);
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     let cancelled = false;
     setLive(null);
+    setLoading(true);
     api
       .get<AnalyticsModel | { source: "estimated" }>(
         `/api/analytics?eventId=${encodeURIComponent(activeEvent.id)}&range=${ui.range}`,
@@ -39,6 +41,9 @@ export default function Analytics() {
       })
       .catch(() => {
         /* keep the estimate */
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
@@ -167,9 +172,9 @@ export default function Analytics() {
           <h2 style={s("font-family:var(--grotesk);font-weight:700;font-size:28px;letter-spacing:-1px;margin:0 0 4px")}>{t.analyticsH2}</h2>
           <p style={s("display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:#5c6675;margin:0")}>
             <span><span style={s(`color:${activeEvent.color};font-weight:700`)}>{activeName}</span> · {t.analyticsSub}</span>
-            <span style={s(`display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:${isLive ? "#e7f6f3" : "#f0f3f7"};color:${isLive ? "#128d81" : "#8b93a1"}`)}>
-              <span style={s(`width:6px;height:6px;border-radius:50%;background:${isLive ? "#17a99b" : "#c8d0dc"}`)} />
-              {isLive ? t.liveBadge : t.estimatedBadge}
+            <span style={s(`display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;background:${isLive ? "#e7f6f3" : loading ? "#eef2f8" : "#f0f3f7"};color:${isLive ? "#128d81" : loading ? "#2563eb" : "#8b93a1"}`)}>
+              <span style={s(`width:6px;height:6px;border-radius:50%;background:${isLive ? "#17a99b" : loading ? "#2563eb" : "#c8d0dc"}`)} />
+              {loading && !isLive ? t.analyticsLoading : isLive ? t.liveBadge : t.estimatedBadge}
             </span>
           </p>
         </div>

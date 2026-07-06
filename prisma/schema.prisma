@@ -120,6 +120,15 @@ model Setting {
   lang             String  @default("en")
 }
 
+// Cached Instagram analytics per account (raw IgAccountData JSON), so the
+// Analytics screen reads a ready snapshot instead of calling the Graph API on
+// every request. Refreshed on read when stale and by the cron endpoint.
+model InsightSnapshot {
+  externalId String   @id // IG business account id
+  data       Json
+  fetchedAt  DateTime @default(now())
+}
+
 // Security audit trail + captured server errors. Written best-effort so a
 // logging failure never breaks the action being logged.
 model AuditLog {
