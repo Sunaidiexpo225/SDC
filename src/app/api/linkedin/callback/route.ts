@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth } from "@/lib/api";
 import { verifyOAuthState } from "@/lib/auth";
+import { listAdminOrganizations } from "@/lib/publishers/linkedin";
 import { audit, actorOf, clientIp } from "@/lib/audit";
 
 export const runtime = "nodejs";
@@ -52,18 +53,28 @@ export async function GET(req: NextRequest) {
     }
     const accessToken: string = token.access_token;
 
-    // 2. Resolve the member's URN + name from OpenID userinfo.
-    const meRes = await fetch("https://api.linkedin.com/v2/userinfo", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const me = await meRes.json().catch(() => null);
-    if (!meRes.ok || !me?.sub) {
-      return back("nomember");
+    // 2. Resolve the identity to post as.
+    let authorUrn: string;
+    let name: string;
+    if (process.env.LINKEDIN_ORG_POSTING === "1") {
+      // Org mode: no OpenID here — pick a Company Page the member administers
+      // as the default target (they can switch Pages later via "Post as").
+      const orgs = await listAdminOrganizations(accessToken);
+      if (orgs.length === 0) return back("noorg");
+      authorUrn = orgs[0].urn;
+      name = orgs[0].name;
+    } else {
+      // Member mode: resolve the member's URN + name from OpenID userinfo.
+      const meRes = await fetch("https://api.linkedin.com/v2/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const me = await meRes.json().catch(() => null);
+      if (!meRes.ok || !me?.sub) return back("nomember");
+      authorUrn = `urn:li:person:${me.sub}`;
+      name = me.name || me.given_name || "LinkedIn member";
     }
-    const authorUrn = `urn:li:person:${me.sub}`;
-    const name: string = me.name || me.given_name || "LinkedIn member";
 
-    // 3. Store the token + member URN on the account. apiKey (masked in DTOs)
+    // 3. Store the token + target URN on the account. apiKey (masked in DTOs)
     //    holds the token; externalId holds the author URN used to publish.
     const updated = await prisma.socialAccount.update({
       where: { id: account.id },

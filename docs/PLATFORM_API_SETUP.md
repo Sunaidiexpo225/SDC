@@ -267,22 +267,37 @@ then posts to the member's feed.
 
 **Posting as a Company Page (organization)**
 
-The app supports publishing to a **Company Page you administer** — it's gated
-so it stays off until you enable it:
+LinkedIn requires the **Community Management API** to be the **only product on
+its app** — so Company-Page posting needs a **separate, dedicated LinkedIn
+app** (you can't add it to the member app that already has "Share on LinkedIn"
++ "Sign In with OpenID Connect"). The app supports this; it's gated by env so
+member-only posting keeps working until you switch.
 
-1. In the LinkedIn app → **Products**, add **"Community Management API"** (the
-   **Development Tier** is self-serve and covers Pages you personally admin — no
-   long review). Confirm it appears under **Added products**.
-2. In the environment, set **`LINKEDIN_ORG_POSTING=1`** and redeploy. This makes
-   the connect flow also request `r_organization_admin` + `w_organization_social`.
-   (Leave it unset and LinkedIn stays member-only — requesting these scopes
-   *before* the product is added would break the whole sign-in, hence the gate.)
-3. Admin → Integrations → the LinkedIn account → **Connect with LinkedIn** again
-   (so the new scopes are granted) → then use the **Post as** dropdown that
-   appears to pick the Company Page. "Publish now" then posts to that Page.
+1. **Create a new LinkedIn app** (developer.linkedin.com → Create app).
+   Associate it with the **Company Page** you post from and **verify** it
+   (Settings tab → verify, a Page admin approves — instant).
+2. In that new app → **Products**, add **only** the **Community Management
+   API** (Development Tier covers Pages you administer). It must be the sole
+   product, or LinkedIn greys out the request.
+3. Set the **Authorized redirect URL** to
+   `https://<your-domain>/api/linkedin/callback` (same as before).
+4. In the environment, point the LinkedIn vars at the **new** app and turn on
+   org mode, then redeploy:
+   - `LINKEDIN_CLIENT_ID` / `LINKEDIN_CLIENT_SECRET` → the new app's values
+   - `LINKEDIN_ORG_POSTING=1`
+
+   In org mode the connect flow requests `r_organization_admin` +
+   `w_organization_social` (and skips OpenID — the CMA app identifies your
+   Pages via the admin scope instead of a person URN).
+5. Admin → Integrations → each event's LinkedIn account → **Connect with
+   LinkedIn** → approve → the account defaults to a Page you admin, and the
+   **Post as** dropdown lets you pick the exact Company Page for that event.
+   "Publish now" then posts to the Page.
 
 The chosen target is validated against LinkedIn on every change, so an account
-can only ever post as a Page you actually administer.
+can only ever post as a Page you actually administer. (Switching to org mode
+replaces member-feed posting; keep the member app's credentials if you ever
+want personal posting back.)
 
 ---
 

@@ -36,14 +36,20 @@ export async function GET(req: NextRequest) {
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("state", state);
-  // openid + profile → member identity (person URN); w_member_social → post as
-  // the member. When Company-Page posting is enabled (Community Management API
-  // granted), also request the organization scopes so the member can pick a
-  // Page to post as. Gated by env so it stays off until the product is added —
-  // requesting these scopes without the product breaks the whole sign-in.
-  const orgScopes =
-    process.env.LINKEDIN_ORG_POSTING === "1" ? " r_organization_admin w_organization_social" : "";
-  url.searchParams.set("scope", "openid profile w_member_social" + orgScopes);
+  // Two modes, chosen by env:
+  //  • Member mode (default): openid + profile → member identity (person URN);
+  //    w_member_social → post to the member's own feed.
+  //  • Org mode (LINKEDIN_ORG_POSTING=1, a dedicated Community Management API
+  //    app — that product must be the ONLY product on its LinkedIn app):
+  //    r_organization_admin lists the Pages the member administers,
+  //    w_organization_social posts as a Page. No openid here — the CMA app
+  //    doesn't carry the Sign-In product, so we identify Pages via the admin
+  //    scope instead of a person URN.
+  const scope =
+    process.env.LINKEDIN_ORG_POSTING === "1"
+      ? "r_organization_admin w_organization_social"
+      : "openid profile w_member_social";
+  url.searchParams.set("scope", scope);
 
   return NextResponse.redirect(url);
 }
