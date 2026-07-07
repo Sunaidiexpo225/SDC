@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/lib/api";
 import { publishToInstagram } from "@/lib/publishers/instagram";
 import { publishToX } from "@/lib/publishers/x";
+import { publishToFacebook } from "@/lib/publishers/facebook";
 import { platformPublishUrl } from "@/lib/cloudinaryUrl";
 import { CLOUDINARY_CLOUD } from "@/lib/cloudinary";
 import { audit, actorOf, clientIp } from "@/lib/audit";
@@ -112,6 +113,33 @@ export async function POST(
           caption: post.captionEn || "",
           mediaUrl: mediaFor("x"),
           mimeType: post.media?.mimeType,
+          isVideo,
+        });
+        results.push({ platform, ok: true, detail: `Posted (id ${res.id})` });
+        await logOk(platform, res.id);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Publish failed";
+        results.push({ platform, ok: false, detail: msg });
+        await logFail(platform, msg);
+      }
+      continue;
+    }
+
+    if (platform === "facebook") {
+      if (!account?.apiKey || !account.externalId) {
+        results.push({ platform, ok: false, detail: "Not connected (needs Page token + Page ID)" });
+        continue;
+      }
+      if (!post.captionEn && !hasCloudMedia) {
+        results.push({ platform, ok: false, detail: "Add a caption or media to post to Facebook" });
+        continue;
+      }
+      try {
+        const res = await publishToFacebook({
+          pageId: account.externalId,
+          accessToken: account.apiKey,
+          message: post.captionEn || "",
+          mediaUrl: mediaFor("facebook"),
           isVideo,
         });
         results.push({ platform, ok: true, detail: `Posted (id ${res.id})` });

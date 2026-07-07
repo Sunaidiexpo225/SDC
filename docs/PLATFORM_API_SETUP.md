@@ -14,9 +14,13 @@ supports, so an account can eventually **publish** from Sunaidi Design Central.
 >   **Admin → Integrations** with its **Access Token** (field 1) + **Access
 >   Token Secret** (field 2). "Publish now" then posts the caption (and image/
 >   video) to X. Needs the X app set to **Read and write**.
-> - **Facebook, TikTok, LinkedIn publishers are not built yet** — the app
->   stores their token but "Publish now" reports them as not-yet-supported. Get
->   their credentials (below) and we'll wire each publisher.
+> - **Facebook publishing is LIVE.** Connect a Facebook Page in **Admin →
+>   Integrations** with its **Page access token** (field 1) + **Page ID**
+>   (field 2) — same token type as Instagram, but it must carry the
+>   `pages_manage_posts` permission. "Publish now" then posts to the Page.
+> - **TikTok, LinkedIn publishers are not built yet** — the app stores their
+>   token but "Publish now" reports them as not-yet-supported. Get their
+>   credentials (below) and we'll wire each publisher.
 >
 > **Every platform below requires an app review / approval and a business or
 > creator account before it will allow posting.** Budget days-to-weeks for
@@ -120,24 +124,33 @@ If no Instagram account is connected for an event, Analytics falls back to
 
 ---
 
-## 2. Facebook Pages (via Meta Graph API)
+## 2. Facebook Pages (via Meta Graph API) — LIVE
 
-Facebook uses the **same Meta app** you created for Instagram.
+Facebook uses the **same Meta app** you created for Instagram, and the **same
+kind of Page token** — you may already have both values from the Instagram
+`me/accounts` step.
 
 **Steps**
-1. In the same app, add the **Facebook Login** product (if not already).
-2. Add the permissions **`pages_manage_posts`**, **`pages_read_engagement`**,
-   and **`pages_show_list`**.
-3. Generate a **long-lived Page access token** for the Page you'll post to
-   (Graph API Explorer → select the Page → generate token → exchange for
-   long-lived).
-4. Note the **Page ID** (Page → About, or `/me/accounts`).
-5. **Submit for App Review** for the `pages_manage_posts` permission.
+1. In the Graph API Explorer, generate a token that includes **`pages_manage_posts`**
+   (add it to the permissions alongside `pages_read_engagement`, `pages_show_list`)
+   → **Generate Access Token** → allow → select your Page.
+2. Run `me/accounts?fields=name,access_token,id` → for your Page copy the
+   **`access_token`** (Page token) and the **`id`** (Page ID). *(This is the same
+   call you ran for Instagram — the token is the same; you just use the Page's
+   `id` here, not the `instagram_business_account` id.)*
+3. For a **non-expiring** Page token, first extend the user token (Access Token
+   Debugger → Extend), then re-run `me/accounts` — see the Instagram section.
 
-**What you collect:** App ID, App Secret, Page access token, Page ID.
+**What you collect:** Page access token (with `pages_manage_posts`), Page ID.
 
 **In the app:** Admin → Integrations → the Facebook account → **Connect** →
-paste the Page access token.
+paste the **Page access token** in field 1 and the **Page ID** in field 2.
+Then a scheduled + approved post with Facebook selected posts via **Publish now**
+(text, image, or video).
+
+> **App Review:** posting to Pages you don't own needs `pages_manage_posts`
+> approved. For your own Pages in development mode it works once the permission
+> is added and your account is an admin/tester.
 
 ---
 
