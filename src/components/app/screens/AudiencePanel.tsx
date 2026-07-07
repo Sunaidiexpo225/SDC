@@ -43,7 +43,8 @@ export default function AudiencePanel({ audience }: { audience: Audience }) {
   const { t } = useLang();
   return (
     <div style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:22px;margin-top:16px")}>
-      <div style={s("font-size:13px;font-weight:700;margin-bottom:18px")}>{t.secAudience}</div>
+      <div style={s("font-size:13px;font-weight:700;margin-bottom:2px")}>{t.secAudience}</div>
+      <div style={s("font-size:12px;color:#8b93a1;margin-bottom:18px")}>{t.audienceSub}</div>
       <div style={s("display:flex;gap:28px;flex-wrap:wrap")}>
         <DemoList title={t.audCountries} items={audience.countries} color="#2563eb" />
         <DemoList title={t.audCities} items={audience.cities} color="#17a99b" />
