@@ -167,6 +167,8 @@ export default function Admin() {
                             <div dir="ltr" style={s("flex:1;min-width:120px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#5c6675;background:#f4f6f9;border-radius:8px;padding:9px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:start")}>{a.apiKey}</div>
                             <Hov tag="button" onClick={() => app.disconnectApi(a.id)} css="border:1px solid #f3c1c1;cursor:pointer;background:#fff;color:#d64545;font-weight:700;font-size:12px;padding:9px 16px;border-radius:999px;font-family:inherit;flex:none" hover="background:#fdf2f2">{t.disconnect}</Hov>
                           </>
+                        ) : a.platform === "linkedin" ? (
+                          <Hov tag="a" href={`/api/linkedin/start?accountId=${a.id}`} css="border:none;cursor:pointer;background:#0a66c2;color:#fff;font-weight:700;font-size:12px;padding:9px 18px;border-radius:999px;font-family:inherit;flex:none;text-decoration:none;display:inline-flex;align-items:center" hover="background:#004182">{t.connectLinkedIn}</Hov>
                         ) : (
                           <>
                             <input dir="ltr" value={keys[a.id] || ""} onChange={(ev) => setKeys((p) => ({ ...p, [a.id]: ev.target.value }))} placeholder={t.apiKeyPh} style={s("flex:1;min-width:150px;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:8px;padding:9px 12px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#0f172a;background:#fbfcfe;text-align:start")} />

@@ -4,6 +4,7 @@ import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/l
 import { publishToInstagram } from "@/lib/publishers/instagram";
 import { publishToX } from "@/lib/publishers/x";
 import { publishToFacebook } from "@/lib/publishers/facebook";
+import { publishToLinkedIn } from "@/lib/publishers/linkedin";
 import { platformPublishUrl } from "@/lib/cloudinaryUrl";
 import { CLOUDINARY_CLOUD } from "@/lib/cloudinary";
 import { audit, actorOf, clientIp } from "@/lib/audit";
@@ -140,6 +141,33 @@ export async function POST(
           accessToken: account.apiKey,
           message: post.captionEn || "",
           mediaUrl: mediaFor("facebook"),
+          isVideo,
+        });
+        results.push({ platform, ok: true, detail: `Posted (id ${res.id})` });
+        await logOk(platform, res.id);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Publish failed";
+        results.push({ platform, ok: false, detail: msg });
+        await logFail(platform, msg);
+      }
+      continue;
+    }
+
+    if (platform === "linkedin") {
+      if (!account?.apiKey || !account.externalId) {
+        results.push({ platform, ok: false, detail: "Not connected — use Connect with LinkedIn in Integrations" });
+        continue;
+      }
+      if (!post.captionEn && !hasCloudMedia) {
+        results.push({ platform, ok: false, detail: "Add a caption or media to post to LinkedIn" });
+        continue;
+      }
+      try {
+        const res = await publishToLinkedIn({
+          accessToken: account.apiKey,
+          authorUrn: account.externalId,
+          text: post.captionEn || "",
+          mediaUrl: mediaFor("linkedin"),
           isVideo,
         });
         results.push({ platform, ok: true, detail: `Posted (id ${res.id})` });

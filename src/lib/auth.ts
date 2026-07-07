@@ -76,6 +76,29 @@ export async function signPending(uid: string): Promise<string> {
     .sign(sessionSecret());
 }
 
+// Short-lived signed state for OAuth round-trips (e.g. LinkedIn connect). The
+// state carries the account being connected + the initiating user, and is
+// verified on the callback to defeat CSRF and stop a stray callback from
+// writing a token onto someone else's account.
+export async function signOAuthState(
+  claims: Record<string, unknown>,
+  ttlSeconds = 600,
+): Promise<string> {
+  return new SignJWT({ ...claims, typ: "oauth" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(`${ttlSeconds}s`)
+    .sign(sessionSecret());
+}
+
+export async function verifyOAuthState(
+  token?: string,
+): Promise<Record<string, unknown> | null> {
+  const payload = await verify<Record<string, unknown>>(token);
+  if (!payload || payload.typ !== "oauth") return null;
+  return payload;
+}
+
 export async function verify<T>(token?: string): Promise<T | null> {
   if (!token) return null;
   try {

@@ -18,9 +18,14 @@ supports, so an account can eventually **publish** from Sunaidi Design Central.
 >   Integrations** with its **Page access token** (field 1) + **Page ID**
 >   (field 2) — same token type as Instagram, but it must carry the
 >   `pages_manage_posts` permission. "Publish now" then posts to the Page.
-> - **TikTok, LinkedIn publishers are not built yet** — the app stores their
->   token but "Publish now" reports them as not-yet-supported. Get their
->   credentials (below) and we'll wire each publisher.
+> - **LinkedIn publishing is LIVE.** Set `LINKEDIN_CLIENT_ID` /
+>   `LINKEDIN_CLIENT_SECRET` in the environment, then connect a LinkedIn
+>   account in **Admin → Integrations** with the one-click **Connect with
+>   LinkedIn** button (an OAuth sign-in — no manual token entry). "Publish now"
+>   then posts the caption (and image/video) to the member's LinkedIn feed.
+> - **TikTok publisher is not built yet** — the app stores its token but
+>   "Publish now" reports it as not-yet-supported. Get its credentials (below)
+>   and we'll wire the publisher.
 >
 > **Every platform below requires an app review / approval and a business or
 > creator account before it will allow posting.** Budget days-to-weeks for
@@ -224,34 +229,44 @@ the access token.
 
 ---
 
-## 5. LinkedIn
+## 5. LinkedIn — LIVE
 
-**Prerequisites**
-- A **LinkedIn Company Page** for the brand (to post as the organization) and an
-  admin of that Page.
+Connecting LinkedIn is a **one-click OAuth sign-in** — you don't paste tokens.
+The app runs the OAuth flow, resolves your member identity, and stores the
+access token for you.
 
 **Steps**
 1. Go to **https://developer.linkedin.com/** → **Create app**. Associate it
-   with your **Company Page** and verify the association.
-2. From the app's **Auth** tab, copy the **Client ID** and **Client Secret**,
-   and set the **Authorized redirect URL**.
-3. Under **Products**, request access to **"Share on LinkedIn"** and, for
-   posting as the company, the **"Community Management API"** (a.k.a. Marketing
-   Developer Platform). These require approval.
-4. Scopes you'll request: **`w_member_social`** (post as a person) and/or the
-   organization posting scopes (`w_organization_social`) for Page posts.
-5. Run the OAuth 2.0 flow to get an **access token**. Note the **Person URN**
-   (`/me`) or **Organization URN** you'll post as.
+   with a **Company Page** you administer and verify the association.
+2. Under **Products**, request/add:
+   - **"Share on LinkedIn"** → gives the **`w_member_social`** scope (post to
+     the member's feed). Usually granted instantly.
+   - **"Sign In with LinkedIn using OpenID Connect"** → gives **`openid`** and
+     **`profile`** so the app can read your member URN. Also self-serve/instant.
+3. From the app's **Auth** tab, copy the **Client ID** and **Client Secret**,
+   and set the **Authorized redirect URL** to **exactly**:
 
-**What you collect:** Client ID, Client Secret, access token, Person/Org URN.
+   ```
+   https://<your-domain>/api/linkedin/callback
+   ```
 
-**In the app:** Admin → Integrations → the LinkedIn account → **Connect** →
-paste the access token.
+   (For this deployment: `https://sdc-beryl.vercel.app/api/linkedin/callback` —
+   with **no** trailing characters. A stray `.` or `)` will break the flow.)
+4. In the environment, set `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET`
+   (Vercel → Project → Settings → Environment Variables), then redeploy.
+
+**In the app:** Admin → Integrations → the LinkedIn account → **Connect with
+LinkedIn** → approve on LinkedIn → you're returned connected. "Publish now"
+then posts to the member's feed.
 
 **Gotchas**
-- LinkedIn tokens are typically ~60 days; you'll refresh.
-- Organization posting requires the Community Management API approval, which is
-  stricter than personal sharing.
+- The redirect URL must match the registered one **character-for-character**.
+- Access tokens last ~2 months; reconnect (one click) when a post fails with an
+  auth error. (Refresh tokens require extra LinkedIn approval.)
+- This posts to the **signed-in member's feed** (`w_member_social`). Posting
+  **as the Company Page** needs the **Community Management API**
+  (`w_organization_social`), which is a stricter, separate LinkedIn approval —
+  ask and we'll extend the publisher to organization URNs once you have it.
 
 ---
 
