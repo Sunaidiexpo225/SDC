@@ -18,12 +18,17 @@ export async function GET(req: NextRequest) {
   }
 
   const accounts = await prisma.socialAccount.findMany({
-    where: { platform: "instagram", connected: true, apiKey: { not: null }, externalId: { not: null } },
+    where: {
+      platform: { in: ["instagram", "facebook"] },
+      connected: true,
+      apiKey: { not: null },
+      externalId: { not: null },
+    },
   });
 
   const results = await Promise.all(
     accounts.map(async (a) => ({
-      ok: await refreshAccount(a.externalId as string, a.apiKey as string),
+      ok: await refreshAccount(a.externalId as string, a.apiKey as string, a.platform),
     })),
   );
   return json({ refreshed: results.filter((r) => r.ok).length, total: results.length });

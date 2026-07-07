@@ -12,6 +12,7 @@ interface OverviewRow {
   eventNameEn: string;
   eventNameAr: string;
   color: string;
+  platform: string;
   handle: string;
   followers: number;
   posts: number;
@@ -69,7 +70,11 @@ export default function AnalyticsOverview() {
                 <span style={s(`width:10px;height:10px;border-radius:50%;background:${r.color};flex:none`)} />
                 <div style={s("min-width:0")}>
                   <div style={s("font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{lang === "ar" ? r.eventNameAr : r.eventNameEn}</div>
-                  <div dir="ltr" style={s("font-size:11px;color:#8b93a1;text-align:start")}>{r.handle}</div>
+                  <div style={s("display:flex;align-items:center;gap:6px")}>
+                    <span style={s(`width:6px;height:6px;border-radius:50%;background:${app.pcolor(r.platform)};flex:none`)} />
+                    <span style={s("font-size:11px;color:#8b93a1")}>{app.pname(r.platform)}</span>
+                    <span dir="ltr" style={s("font-size:11px;color:#8b93a1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{r.handle}</span>
+                  </div>
                 </div>
               </div>
               <div style={s("font-size:13px;font-weight:700;text-align:end")}>{fmt(r.followers)}</div>

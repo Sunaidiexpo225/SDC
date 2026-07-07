@@ -27,11 +27,17 @@ export async function GET(_req: NextRequest) {
   const rows = await Promise.all(
     events.flatMap((e) =>
       e.accounts
-        .filter((a) => a.platform === "instagram" && a.connected && a.apiKey && a.externalId)
+        .filter(
+          (a) =>
+            (a.platform === "instagram" || a.platform === "facebook") &&
+            a.connected &&
+            a.apiKey &&
+            a.externalId,
+        )
         .map(async (a) => {
           // Reuse the shared per-account snapshot (same data the Analytics
           // screen uses), so the overview is fast once snapshots are warm.
-          const data = await getAccountData(a.externalId as string, a.apiKey as string);
+          const data = await getAccountData(a.externalId as string, a.apiKey as string, a.platform);
           if (!data) return null;
           const eng = (m: { likes: number; comments: number; saves: number | null; shares: number | null }) =>
             m.likes + m.comments + (m.saves ?? 0) + (m.shares ?? 0);
@@ -47,6 +53,7 @@ export async function GET(_req: NextRequest) {
             eventNameEn: e.nameEn,
             eventNameAr: e.nameAr,
             color: e.color,
+            platform: a.platform,
             handle: a.handle,
             followers: data.followersCount,
             posts: curr.length,

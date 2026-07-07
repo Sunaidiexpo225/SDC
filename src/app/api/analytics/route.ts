@@ -32,15 +32,19 @@ export async function GET(req: NextRequest) {
   });
   if (!event) return error("Event not found", 404);
 
-  const igAccounts = event.accounts.filter(
-    (a) => a.platform === "instagram" && a.connected && a.apiKey && a.externalId,
+  const conn = event.accounts.filter(
+    (a) =>
+      (a.platform === "instagram" || a.platform === "facebook") &&
+      a.connected &&
+      a.apiKey &&
+      a.externalId,
   );
-  if (igAccounts.length === 0) return json({ source: "estimated" });
+  if (conn.length === 0) return json({ source: "estimated" });
 
   const live: LiveAccount[] = [];
   await Promise.all(
-    igAccounts.map(async (a) => {
-      const data = await getAccountData(a.externalId as string, a.apiKey as string);
+    conn.map(async (a) => {
+      const data = await getAccountData(a.externalId as string, a.apiKey as string, a.platform);
       if (data) {
         live.push({
           platform: a.platform,
