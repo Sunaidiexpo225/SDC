@@ -141,37 +141,44 @@ paste the Page access token.
 
 ---
 
-## 3. X / Twitter (API v2)
+## 3. X / Twitter (API v2) — LIVE
+
+**The app's X publisher uses OAuth 1.0a** (user-context), because its tokens
+don't expire and media (image/video) upload is reliable — the right fit for a
+server-side auto-poster. You need **four** values, all from one page.
 
 **Prerequisites**
 - An X account for the brand.
-- A card on file may be required depending on the access tier.
+- A paid/pay-as-you-go API tier (the **Free** tier barely allows posting).
 
 **Steps**
-1. Go to **https://developer.x.com/** → **Sign up** for a developer account
-   (answer the use-case questions honestly — automated posting for your events).
-2. In the **Developer Portal**, create a **Project**, then an **App** inside it.
-3. From the app's **Keys and tokens**, copy:
-   - **API Key** and **API Key Secret**
-   - **Bearer Token**
-   - Under **User authentication settings**, enable **OAuth 2.0**, set the
-     app to **Read and write**, and copy the **Client ID** and **Client Secret**.
-4. Set a **callback / redirect URL** (your app's domain) for OAuth 2.0.
-5. Authorize the brand account via OAuth 2.0 with scopes
-   **`tweet.read tweet.write users.read offline.access`** to get a user
-   **access token + refresh token**.
+1. Go to **https://developer.x.com/** → create a **Project**, then an **App**.
+2. In the app → **Settings → User authentication settings → Edit**: turn **ON
+   OAuth 1.0a** and set **App permissions = Read and write**. Save.
+3. In the app → **Keys and tokens** tab, copy all four values:
+   - Under **Consumer Keys**: **API Key** and **API Key Secret**
+   - Under **Authentication Tokens → "Access Token and Secret"** → **Generate**:
+     **Access Token** and **Access Token Secret**
+   > ⚠️ Generate the Access Token & Secret **after** setting Read and write — if
+   > you change the permission later, regenerate them.
 
-**What you collect:** API Key/Secret, Client ID/Secret, access token, refresh
-token.
+**What you collect:** API Key, API Key Secret, Access Token, Access Token Secret.
+*(Ignore the Bearer Token / Client ID / Refresh Token — those are OAuth 2.0,
+which this publisher does not use.)*
 
-**In the app:** Admin → Integrations → the X account → **Connect** → paste the
-access token.
+**In the app / env:**
+- Set env vars **`X_API_KEY`** = API Key and **`X_API_SECRET`** = API Key Secret
+  (Vercel → Settings → Environment Variables → redeploy).
+- **Admin → Integrations → the X account → Connect**: paste the **Access Token**
+  in field 1 and the **Access Token Secret** in field 2.
+
+Then a scheduled + approved post with X selected can be sent via **Publish now**
+(text, image, or video; caption is trimmed to X's 280-char limit).
 
 **Gotchas / cost**
-- X has tiers: **Free** (very limited posting), **Basic** and **Pro** (paid,
-  higher limits). Check current limits/pricing — posting volume may require a
-  paid tier.
-- `offline.access` is required to get a refresh token (tokens are short-lived).
+- X tiers: **Free** (almost no posting), **Basic**/**Pro** (paid). Posting needs
+  a paid or pay-as-you-go tier.
+- OAuth 1.0a Access Tokens **don't expire** — no refresh needed (unlike OAuth 2.0).
 
 ---
 
