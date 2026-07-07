@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 };
 
 const UPDATED = "July 7, 2026";
-const CONTACT = "privacy@sunaidiexpo.com";
+const CONTACT = "info@sunaidiexpo.com";
 
 const wrap: React.CSSProperties = {
   maxWidth: 760,
