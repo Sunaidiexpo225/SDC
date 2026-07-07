@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/lib/api";
 import { publishToInstagram } from "@/lib/publishers/instagram";
+import { publishToX } from "@/lib/publishers/x";
 import { platformPublishUrl } from "@/lib/cloudinaryUrl";
 import { CLOUDINARY_CLOUD } from "@/lib/cloudinary";
 import { audit, actorOf, clientIp } from "@/lib/audit";
@@ -43,68 +44,87 @@ export async function POST(
   const platforms = post.platformsCsv ? post.platformsCsv.split(",") : [];
   const results: Result[] = [];
 
+  const hasCloudMedia = !!(post.media && post.media.driver === "cloudinary" && post.media.storageKey);
+  const isVideo = post.media?.mimeType.startsWith("video/") ?? false;
+  const mediaFor = (platform: string) =>
+    hasCloudMedia
+      ? platformPublishUrl(CLOUDINARY_CLOUD, isVideo ? "video" : "image", post.media!.storageKey as string, platform, post.format)
+      : null;
+
+  const logOk = (platform: string, id: string) =>
+    audit({ action: "post.publish", actor: actorOf(ctx), target: `${platform} · ${post.event.nameEn}`, detail: `post ${post.id} → id ${id}`, ip: clientIp(req) });
+  const logFail = (platform: string, msg: string) =>
+    audit({ action: "post.publish_failed", actor: actorOf(ctx), target: `${platform} · ${post.event.nameEn}`, detail: msg, level: "error", ip: clientIp(req) });
+
   for (const platform of platforms) {
-    const account = post.event.accounts.find(
-      (a) => a.platform === platform && a.connected,
-    );
+    const account = post.event.accounts.find((a) => a.platform === platform && a.connected);
 
-    if (platform !== "instagram") {
-      results.push({ platform, ok: false, detail: "Publisher not available yet" });
-      continue;
-    }
-    if (!account?.apiKey || !account.externalId) {
-      results.push({
-        platform,
-        ok: false,
-        detail: "Not connected (needs access token + IG account ID)",
-      });
-      continue;
-    }
-    if (!post.media || post.media.driver !== "cloudinary" || !post.media.storageKey) {
-      results.push({
-        platform,
-        ok: false,
-        detail: "Instagram needs Cloudinary-hosted media on the post",
-      });
+    if (platform === "instagram") {
+      if (!account?.apiKey || !account.externalId) {
+        results.push({ platform, ok: false, detail: "Not connected (needs access token + IG account ID)" });
+        continue;
+      }
+      if (!hasCloudMedia) {
+        results.push({ platform, ok: false, detail: "Instagram needs Cloudinary-hosted media on the post" });
+        continue;
+      }
+      try {
+        const res = await publishToInstagram({
+          igUserId: account.externalId,
+          accessToken: account.apiKey,
+          caption: post.captionEn || "",
+          mediaUrl: mediaFor("instagram") as string,
+          isVideo,
+        });
+        results.push({ platform, ok: true, detail: `Published (id ${res.id})` });
+        await logOk(platform, res.id);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Publish failed";
+        results.push({ platform, ok: false, detail: msg });
+        await logFail(platform, msg);
+      }
       continue;
     }
 
-    const isVideo = post.media.mimeType.startsWith("video/");
-    const mediaUrl = platformPublishUrl(
-      CLOUDINARY_CLOUD,
-      isVideo ? "video" : "image",
-      post.media.storageKey,
-      "instagram",
-      post.format,
-    );
-    try {
-      const res = await publishToInstagram({
-        igUserId: account.externalId,
-        accessToken: account.apiKey,
-        caption: post.captionEn || "",
-        mediaUrl,
-        isVideo,
-      });
-      results.push({ platform, ok: true, detail: `Published (id ${res.id})` });
-      await audit({
-        action: "post.publish",
-        actor: actorOf(ctx),
-        target: `${platform} · ${post.event.nameEn}`,
-        detail: `post ${post.id} → id ${res.id}`,
-        ip: clientIp(req),
-      });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : "Publish failed";
-      results.push({ platform, ok: false, detail: msg });
-      await audit({
-        action: "post.publish_failed",
-        actor: actorOf(ctx),
-        target: `${platform} · ${post.event.nameEn}`,
-        detail: msg,
-        level: "error",
-        ip: clientIp(req),
-      });
+    if (platform === "x") {
+      if (!account?.apiKey) {
+        results.push({ platform, ok: false, detail: "Not connected (needs X access token + secret)" });
+        continue;
+      }
+      const [accessToken, accessTokenSecret] = account.apiKey.split("\n");
+      const consumerKey = process.env.X_API_KEY || "";
+      const consumerSecret = process.env.X_API_SECRET || "";
+      if (!consumerKey || !consumerSecret) {
+        results.push({ platform, ok: false, detail: "X app keys not set (X_API_KEY / X_API_SECRET)" });
+        continue;
+      }
+      if (!accessToken || !accessTokenSecret) {
+        results.push({ platform, ok: false, detail: "X credentials incomplete — reconnect the account" });
+        continue;
+      }
+      if (!post.captionEn && !hasCloudMedia) {
+        results.push({ platform, ok: false, detail: "Add a caption or media to post to X" });
+        continue;
+      }
+      try {
+        const res = await publishToX({
+          creds: { consumerKey, consumerSecret, accessToken, accessTokenSecret },
+          caption: post.captionEn || "",
+          mediaUrl: mediaFor("x"),
+          mimeType: post.media?.mimeType,
+          isVideo,
+        });
+        results.push({ platform, ok: true, detail: `Posted (id ${res.id})` });
+        await logOk(platform, res.id);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Publish failed";
+        results.push({ platform, ok: false, detail: msg });
+        await logFail(platform, msg);
+      }
+      continue;
     }
+
+    results.push({ platform, ok: false, detail: "Publisher not available yet" });
   }
 
   const anyOk = results.some((r) => r.ok);

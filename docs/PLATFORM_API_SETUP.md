@@ -9,7 +9,12 @@ supports, so an account can eventually **publish** from Sunaidi Design Central.
 >   scheduled post with Cloudinary media can be published to Instagram via the
 >   **Publish now** button (Calendar → open the post). This is the flow to
 >   demonstrate for Meta App Review.
-> - **Facebook, X, TikTok, LinkedIn publishers are not built yet** — the app
+> - **X (Twitter) publishing is LIVE.** Set `X_API_KEY` / `X_API_SECRET` (the
+>   app's consumer key/secret) in the environment, then connect an X account in
+>   **Admin → Integrations** with its **Access Token** (field 1) + **Access
+>   Token Secret** (field 2). "Publish now" then posts the caption (and image/
+>   video) to X. Needs the X app set to **Read and write**.
+> - **Facebook, TikTok, LinkedIn publishers are not built yet** — the app
 >   stores their token but "Publish now" reports them as not-yet-supported. Get
 >   their credentials (below) and we'll wire each publisher.
 >

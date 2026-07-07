@@ -40,11 +40,18 @@ export async function PATCH(
       handle?: string;
       followers?: number;
     } = { connected: true, apiKey: key, externalId };
-    // Pull the account's real @username and follower count so the Compose /
-    // Integrations / Analytics screens show who's actually connected and their
-    // true audience. Best-effort: if the lookup fails, the connection still
-    // succeeds with the existing handle/followers.
-    if (account.platform === "instagram" && externalId) {
+
+    if (account.platform === "x") {
+      // X needs two secrets (access token + access token secret). Store BOTH in
+      // the apiKey field (which is masked in responses) so the secret is never
+      // exposed via the un-masked externalId. Field 1 = token, field 2 = secret.
+      if (!externalId) return error("X needs both the access token and access token secret", 400);
+      data.apiKey = `${key}\n${externalId}`;
+      data.externalId = null;
+    } else if (account.platform === "instagram" && externalId) {
+      // Pull the account's real @username + follower count so the Compose /
+      // Integrations / Analytics screens show who's connected and their true
+      // audience. Best-effort: connection still succeeds if the lookup fails.
       const profile = await fetchInstagramProfile(externalId, key);
       if (profile?.username) data.handle = `@${profile.username}`;
       if (profile && profile.followersCount > 0) data.followers = profile.followersCount;
