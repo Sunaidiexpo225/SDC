@@ -9,6 +9,7 @@ import { segStyle, roleLabelOf } from "../helpers";
 import { PLATFORMS } from "@/lib/platforms";
 import type { Role } from "@/lib/types";
 import AuditLog from "./AuditLog";
+import LinkedInTarget from "./LinkedInTarget";
 
 const ADMIN_PALETTE = ["#e0457b", "#17a99b", "#7c5cf0", "#2563eb", "#f59e0b", "#0ea5a3"];
 const ROLES: Role[] = ["Admin", "Manager", "Editor", "Viewer"];
@@ -164,7 +165,11 @@ export default function Admin() {
                         <span style={s(`background:${a.connected ? "#e7f6f3" : "#f0f3f7"};color:${a.connected ? "#128d81" : "#8b93a1"};font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;flex:none`)}>{a.connected ? t.apiConnected : t.apiNotConnected}</span>
                         {a.connected ? (
                           <>
-                            <div dir="ltr" style={s("flex:1;min-width:120px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#5c6675;background:#f4f6f9;border-radius:8px;padding:9px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:start")}>{a.apiKey}</div>
+                            {a.platform === "linkedin" ? (
+                              <LinkedInTarget accountId={a.id} onSaved={app.reload} postAsLabel={t.liPostAs} personLabel={t.liPersonal} savingLabel={t.liSaving} />
+                            ) : (
+                              <div dir="ltr" style={s("flex:1;min-width:120px;font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#5c6675;background:#f4f6f9;border-radius:8px;padding:9px 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:start")}>{a.apiKey}</div>
+                            )}
                             <Hov tag="button" onClick={() => app.disconnectApi(a.id)} css="border:1px solid #f3c1c1;cursor:pointer;background:#fff;color:#d64545;font-weight:700;font-size:12px;padding:9px 16px;border-radius:999px;font-family:inherit;flex:none" hover="background:#fdf2f2">{t.disconnect}</Hov>
                           </>
                         ) : a.platform === "linkedin" ? (

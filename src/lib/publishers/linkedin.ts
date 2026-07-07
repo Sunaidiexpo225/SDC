@@ -109,6 +109,30 @@ async function uploadVideo(owner: string, token: string, mediaUrl: string): Prom
   return videoUrn;
 }
 
+// List the organizations (Company Pages) the authenticated member administers,
+// so the operator can choose which Page an event posts as. Requires the
+// Community Management API product + r_organization_admin scope. Best-effort:
+// returns [] if the scope/product isn't granted.
+export async function listAdminOrganizations(
+  token: string,
+): Promise<Array<{ urn: string; name: string }>> {
+  const url =
+    `${REST}/organizationAcls?q=roleAssignee&role=ADMINISTRATOR&state=APPROVED` +
+    `&projection=(elements*(*,organization~(localizedName)))`;
+  const res = await fetch(url, { headers: headers(token) });
+  if (!res.ok) return [];
+  const body = await res.json().catch(() => null);
+  const elements: unknown[] = body?.elements || [];
+  const out: Array<{ urn: string; name: string }> = [];
+  for (const el of elements as Array<Record<string, unknown>>) {
+    const urn = typeof el.organization === "string" ? el.organization : "";
+    if (!urn) continue;
+    const decorated = el["organization~"] as { localizedName?: string } | undefined;
+    out.push({ urn, name: decorated?.localizedName || urn.replace("urn:li:organization:", "Page ") });
+  }
+  return out;
+}
+
 export async function publishToLinkedIn(input: {
   accessToken: string;
   authorUrn: string; // urn:li:person:xxx (or urn:li:organization:xxx)

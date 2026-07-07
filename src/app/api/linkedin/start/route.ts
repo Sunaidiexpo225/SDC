@@ -36,8 +36,14 @@ export async function GET(req: NextRequest) {
   url.searchParams.set("client_id", clientId);
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("state", state);
-  // openid + profile → member identity (person URN); w_member_social → post.
-  url.searchParams.set("scope", "openid profile w_member_social");
+  // openid + profile → member identity (person URN); w_member_social → post as
+  // the member. When Company-Page posting is enabled (Community Management API
+  // granted), also request the organization scopes so the member can pick a
+  // Page to post as. Gated by env so it stays off until the product is added —
+  // requesting these scopes without the product breaks the whole sign-in.
+  const orgScopes =
+    process.env.LINKEDIN_ORG_POSTING === "1" ? " r_organization_admin w_organization_social" : "";
+  url.searchParams.set("scope", "openid profile w_member_social" + orgScopes);
 
   return NextResponse.redirect(url);
 }

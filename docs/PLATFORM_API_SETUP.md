@@ -263,10 +263,26 @@ then posts to the member's feed.
 - The redirect URL must match the registered one **character-for-character**.
 - Access tokens last ~2 months; reconnect (one click) when a post fails with an
   auth error. (Refresh tokens require extra LinkedIn approval.)
-- This posts to the **signed-in member's feed** (`w_member_social`). Posting
-  **as the Company Page** needs the **Community Management API**
-  (`w_organization_social`), which is a stricter, separate LinkedIn approval —
-  ask and we'll extend the publisher to organization URNs once you have it.
+- By default this posts to the **signed-in member's feed** (`w_member_social`).
+
+**Posting as a Company Page (organization)**
+
+The app supports publishing to a **Company Page you administer** — it's gated
+so it stays off until you enable it:
+
+1. In the LinkedIn app → **Products**, add **"Community Management API"** (the
+   **Development Tier** is self-serve and covers Pages you personally admin — no
+   long review). Confirm it appears under **Added products**.
+2. In the environment, set **`LINKEDIN_ORG_POSTING=1`** and redeploy. This makes
+   the connect flow also request `r_organization_admin` + `w_organization_social`.
+   (Leave it unset and LinkedIn stays member-only — requesting these scopes
+   *before* the product is added would break the whole sign-in, hence the gate.)
+3. Admin → Integrations → the LinkedIn account → **Connect with LinkedIn** again
+   (so the new scopes are granted) → then use the **Post as** dropdown that
+   appears to pick the Company Page. "Publish now" then posts to that Page.
+
+The chosen target is validated against LinkedIn on every change, so an account
+can only ever post as a Page you actually administer.
 
 ---
 
