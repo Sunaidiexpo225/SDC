@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "../LangProvider";
-import { api } from "@/lib/client";
+import { api, reportClientError } from "@/lib/client";
 import {
   addDays,
   isoDate,
@@ -159,6 +159,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const busyRef = useRef(false);
   // Debounce timers per event so renaming doesn't PATCH on every keystroke.
   const renameTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  // Capture uncaught browser errors into the server audit log.
+  useEffect(() => {
+    const onErr = (e: ErrorEvent) =>
+      reportClientError("window.error", e.message || String(e.error || "error"));
+    const onRej = (e: PromiseRejectionEvent) => {
+      const r = e.reason as { message?: string } | undefined;
+      reportClientError("unhandledrejection", r?.message || String(r));
+    };
+    window.addEventListener("error", onErr);
+    window.addEventListener("unhandledrejection", onRej);
+    return () => {
+      window.removeEventListener("error", onErr);
+      window.removeEventListener("unhandledrejection", onRej);
+    };
+  }, []);
 
   const [ui, setUi] = useState<UiState>({
     tab: "dashboard",

@@ -1,5 +1,20 @@
 // Thin fetch wrappers for the REST API (browser side).
 
+// Fire-and-forget: report a browser-side error to the server audit log. Never
+// throws, never blocks the caller.
+export function reportClientError(context: string, message: string): void {
+  try {
+    fetch("/api/log/client", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ context, message: String(message).slice(0, 1000) }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {
+    /* ignore */
+  }
+}
+
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...init,
@@ -9,7 +24,11 @@ async function req<T>(url: string, init?: RequestInit): Promise<T> {
   const text = await res.text();
   const data = text ? JSON.parse(text) : null;
   if (!res.ok) {
-    throw new Error((data && data.error) || `Request failed (${res.status})`);
+    const msg = (data && data.error) || `Request failed (${res.status})`;
+    // Report unexpected server failures (5xx) to the audit log; skip routine
+    // 4xx (validation / permission) which are expected user-facing responses.
+    if (res.status >= 500) reportClientError(`${init?.method || "GET"} ${url}`, msg);
+    throw new Error(msg);
   }
   return data as T;
 }
@@ -43,7 +62,18 @@ export interface UploadedMedia {
 //   function body limit), then confirm.
 // - "db": post the file as multipart to /api/media.
 // The server validates type/size in the presign step before any bytes move.
-export async function uploadMedia(
+// Uploads a file, reporting any failure (including browser-side ones like a
+// rejected Cloudinary/S3 upload) to the audit log before rethrowing.
+export async function uploadMedia(file: File, eventId?: string): Promise<UploadedMedia> {
+  try {
+    return await uploadMediaInner(file, eventId);
+  } catch (e) {
+    reportClientError("media.upload", e instanceof Error ? e.message : String(e));
+    throw e;
+  }
+}
+
+async function uploadMediaInner(
   file: File,
   eventId?: string,
 ): Promise<UploadedMedia> {
