@@ -21,7 +21,7 @@ const Body = z.object({
   assigneeId: z.string().nullable().optional(),
   dueDate: z.string().max(10).nullable().optional(),
   priority: z.enum(["low", "normal", "high"]).optional(),
-  status: z.enum(["open", "completed"]).optional(),
+  status: z.enum(["open", "in_progress", "completed"]).optional(),
 });
 
 // PATCH /api/tasks/[id] — edit fields or toggle completion. Editing details is

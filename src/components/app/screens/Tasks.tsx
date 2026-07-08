@@ -27,16 +27,16 @@ export default function Tasks() {
   const locale = lang === "ar" ? "ar" : "en";
 
   const [view, setView] = useState<"list" | "report">("list");
-  const [filter, setFilter] = useState<"all" | "open" | "done" | "mine">("all");
+  const [filter, setFilter] = useState<"all" | "mine">("all");
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overCol, setOverCol] = useState<string | null>(null);
 
-  // new-task form state
+  // new-task form state — a single open box IS the task
   const [fTitle, setFTitle] = useState("");
-  const [fNotes, setFNotes] = useState("");
   const [fAssignee, setFAssignee] = useState("");
   const [fEvent, setFEvent] = useState("");
   const [fDue, setFDue] = useState("");
   const [fPrio, setFPrio] = useState<"low" | "normal" | "high">("normal");
-  const [notesOpen, setNotesOpen] = useState(false);
 
   const role = currentUser?.role ?? "Viewer";
   const isManager = MANAGER_ROLES.includes(role);
@@ -55,58 +55,54 @@ export default function Tasks() {
   };
   const eventColor = (id: string | null) => events.find((ev) => ev.id === id)?.color ?? "#c8d0dc";
 
-  // Smart quick-add: parse @mentions + date words out of the title as you type.
-  const smartUsers: SmartUser[] = data.users.map((u) => ({ id: u.id, name: u.name, init: u.init }));
+  // Assignable teammates — exclude Admins (they run the workspace, they're not
+  // on the marketing task list). Display lookups still use the full user map.
+  const assignable = data.users.filter((u) => u.role !== "Admin");
+  // Smart quick-add: parse @mentions + date words out of the open box as you type.
+  const smartUsers: SmartUser[] = assignable.map((u) => ({ id: u.id, name: u.name, init: u.init }));
   const parsed = useMemo(() => parseSmartTask(fTitle, smartUsers, app.today), [fTitle, smartUsers, app.today]);
   const mentionFrag = trailingMention(fTitle);
   const candidates = mentionFrag !== null ? mentionCandidates(mentionFrag, smartUsers) : [];
-  const titleRef = useRef<HTMLInputElement>(null);
+  const boxRef = useRef<HTMLTextAreaElement>(null);
   const pickMention = (u: SmartUser) => {
     setFTitle((prev) => prev.replace(/@([^\s@]*)$/, `@${u.init} `));
-    setTimeout(() => titleRef.current?.focus(), 0);
+    setTimeout(() => boxRef.current?.focus(), 0);
   };
 
-  // The details field also supports @mentions — same picker, and it feeds the
-  // assignee/due detection so typing "@AH tomorrow" works there too.
-  const notesRef = useRef<HTMLTextAreaElement>(null);
-  const parsedNotes = useMemo(() => parseSmartTask(fNotes, smartUsers, app.today), [fNotes, smartUsers, app.today]);
-  const notesFrag = trailingMention(fNotes);
-  const notesCandidates = notesFrag !== null ? mentionCandidates(notesFrag, smartUsers) : [];
-  const pickNotesMention = (u: SmartUser) => {
-    setFNotes((prev) => prev.replace(/@([^\s@]*)$/, `@${u.init} `));
-    setTimeout(() => notesRef.current?.focus(), 0);
-  };
-
-  const effAssignee = fAssignee || parsed.assigneeId || parsedNotes.assigneeId || null;
-  const effDue = fDue || parsed.dueDate || parsedNotes.dueDate || null;
+  const effAssignee = fAssignee || parsed.assigneeId || null;
+  const effDue = fDue || parsed.dueDate || null;
   const effTitle = parsed.cleanTitle || fTitle.trim();
-  const detAssigneeName = parsed.assigneeName || parsedNotes.assigneeName;
-  const detDueLabel = parsed.dueLabel || parsedNotes.dueLabel;
-  const detDueDate = parsed.dueDate || parsedNotes.dueDate;
+  const detAssigneeName = parsed.assigneeName;
+  const detDueLabel = parsed.dueLabel;
+  const detDueDate = parsed.dueDate;
 
   const tasks = data.tasks;
-  const filtered = tasks.filter((tk) => {
-    if (filter === "open") return tk.status === "open";
-    if (filter === "done") return tk.status === "completed";
-    if (filter === "mine") return tk.assigneeId === meId;
-    return true;
-  });
-  const openTasks = filtered.filter((tk) => tk.status === "open");
-  const doneTasks = filtered.filter((tk) => tk.status === "completed");
+  const filtered = tasks.filter((tk) => (filter === "mine" ? tk.assigneeId === meId : true));
+  // Kanban columns. Legacy tasks are only open/completed; in_progress is new.
+  const COLUMNS: { key: "open" | "in_progress" | "completed"; label: string; color: string }[] = [
+    { key: "open", label: t.boardToDo, color: "#2563eb" },
+    { key: "in_progress", label: t.boardDoing, color: "#f59e0b" },
+    { key: "completed", label: t.boardDone, color: "#17a99b" },
+  ];
+  const colTasks = (k: string) => filtered.filter((tk) => (tk.status || "open") === k);
+  const moveTask = (id: string, status: "open" | "in_progress" | "completed") => {
+    const tk = tasks.find((x) => x.id === id);
+    if (!tk || tk.status === status) return;
+    if (!(isManager || tk.assigneeId === meId)) return;
+    app.updateTask(id, { status });
+  };
 
   const submit = async () => {
     if (!effTitle) return;
     const ok = await app.createTask({
       title: effTitle,
-      notes: fNotes.trim() || undefined,
       assigneeId: effAssignee,
       eventId: fEvent || null,
       dueDate: effDue,
       priority: fPrio,
     });
     if (ok) {
-      setFTitle(""); setFNotes(""); setFAssignee(""); setFEvent(""); setFDue(""); setFPrio("normal");
-      setNotesOpen(false);
+      setFTitle(""); setFAssignee(""); setFEvent(""); setFDue(""); setFPrio("normal");
     }
   };
 
@@ -180,18 +176,19 @@ export default function Tasks() {
               </div>
 
               <div style={s("position:relative;margin-bottom:8px")}>
-                <input
-                  ref={titleRef}
+                <textarea
+                  ref={boxRef}
                   value={fTitle}
                   onChange={(e) => setFTitle(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+                    if (e.key === "Enter" && !e.shiftKey) {
                       if (candidates.length && mentionFrag !== null) { e.preventDefault(); pickMention(candidates[0]); }
                       else if (effTitle) { e.preventDefault(); submit(); }
                     }
                   }}
                   placeholder={t.taskTitlePh}
-                  style={s("box-sizing:border-box;width:100%;border:1.5px solid #e3e8ef;border-radius:14px;padding:14px 16px;font-family:inherit;font-size:16px;font-weight:600;color:#0f172a;background:#fbfcfe;outline:none")}
+                  rows={2}
+                  style={s("box-sizing:border-box;width:100%;resize:none;min-height:62px;border:1.5px solid #e3e8ef;border-radius:14px;padding:14px 16px;font-family:inherit;font-size:16px;font-weight:600;line-height:1.4;color:#0f172a;background:#fbfcfe;outline:none")}
                 />
                 {mentionFrag !== null && candidates.length > 0 && (
                   <div style={s("position:absolute;top:calc(100% + 4px);inset-inline-start:0;z-index:30;min-width:230px;background:#fff;border:1px solid #e3e8ef;border-radius:14px;box-shadow:0 16px 40px rgba(15,23,42,.18);padding:6px")}>
@@ -218,7 +215,7 @@ export default function Tasks() {
               <div style={s("display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:12px")}>
                 <span style={s("font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;flex:none;padding-top:7px")}>{t.assignToLabel}</span>
                 <div style={s("display:flex;gap:7px;flex-wrap:wrap")}>
-                  {data.users.map((u) => {
+                  {assignable.map((u) => {
                     const on = effAssignee === u.id;
                     const first = u.name.split(/\s+/)[0];
                     return (
@@ -264,72 +261,51 @@ export default function Tasks() {
                 )}
               </div>
 
-              {notesOpen ? (
-                <div style={s("position:relative;margin-bottom:12px")}>
-                  <textarea
-                    ref={notesRef}
-                    value={fNotes}
-                    onChange={(e) => setFNotes(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && notesFrag !== null && notesCandidates.length) {
-                        e.preventDefault();
-                        pickNotesMention(notesCandidates[0]);
-                      }
-                    }}
-                    placeholder={t.taskNotesPh}
-                    autoFocus
-                    style={s("box-sizing:border-box;width:100%;height:60px;resize:none;border:1px solid #e3e8ef;border-radius:12px;padding:10px 13px;font-family:inherit;font-size:13px;color:#0f172a;background:#fbfcfe")}
-                  />
-                  {notesFrag !== null && notesCandidates.length > 0 && (
-                    <div style={s("position:absolute;bottom:calc(100% + 4px);inset-inline-start:0;z-index:30;min-width:230px;background:#fff;border:1px solid #e3e8ef;border-radius:14px;box-shadow:0 -16px 40px rgba(15,23,42,.18);padding:6px")}>
-                      {notesCandidates.map((u) => (
-                        <Hov key={u.id} tag="button" onClick={() => pickNotesMention(u)} css="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:9px;border:none;cursor:pointer;background:transparent;padding:8px;border-radius:10px;font-family:inherit;text-align:start" hover="background:#f4f6f9">
-                          <Avatar u={userById[u.id]} />
-                          <span style={s("flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{u.name}</span>
-                          <span dir="ltr" style={s("font-size:11px;color:#8b93a1;font-family:ui-monospace,Menlo,monospace")}>@{u.init}</span>
-                        </Hov>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : null}
-
               <div style={s("display:flex;align-items:center;gap:10px")}>
-                {!notesOpen && (
-                  <button onClick={() => setNotesOpen(true)} style={s("border:1px dashed #c8d0dc;cursor:pointer;background:#fff;color:#5c6675;font-weight:700;font-size:12px;padding:8px 14px;border-radius:999px;font-family:inherit")}>+ {t.taskAddDetails}</button>
-                )}
                 <span style={s("font-size:11px;color:#a3abb8;flex:1;min-width:0")}>{t.taskSmartHint}</span>
                 <Hov tag="button" onClick={submit} css={`border:none;cursor:pointer;background:linear-gradient(135deg,#2563eb,#7c5cf0);color:#fff;font-weight:700;font-size:14px;padding:11px 22px;border-radius:999px;font-family:inherit;flex:none;opacity:${effTitle ? 1 : 0.5};box-shadow:0 8px 20px rgba(37,99,235,.28)`} hover={effTitle ? "filter:brightness(1.08)" : ""}>{t.taskCreate}</Hov>
               </div>
             </div>
           )}
 
-          {/* Filters */}
-          <div style={s("display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:16px")}>
-            {([["all", t.fltAll], ["open", t.fltOpen], ["done", t.fltDone], ["mine", t.fltMine]] as const).map(([k, lb]) => (
-              <button key={k} onClick={() => setFilter(k)} style={s(`border:1px solid ${filter === k ? "#2563eb" : "#e3e8ef"};cursor:pointer;background:${filter === k ? "#eef2f8" : "#fff"};color:${filter === k ? "#2563eb" : "#5c6675"};font-weight:700;font-size:12px;padding:7px 15px;border-radius:999px;font-family:inherit`)}>{lb}</button>
-            ))}
+          {/* Filters + kanban hint */}
+          <div style={s("display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px")}>
+            <div style={s("display:flex;gap:6px")}>
+              {([["all", t.fltAll], ["mine", t.fltMine]] as const).map(([k, lb]) => (
+                <button key={k} onClick={() => setFilter(k)} style={s(`border:1px solid ${filter === k ? "#2563eb" : "#e3e8ef"};cursor:pointer;background:${filter === k ? "#eef2f8" : "#fff"};color:${filter === k ? "#2563eb" : "#5c6675"};font-weight:700;font-size:12px;padding:7px 15px;border-radius:999px;font-family:inherit`)}>{lb}</button>
+              ))}
+            </div>
+            <span style={s("font-size:11px;color:#a3abb8")}>{t.kanbanHint}</span>
           </div>
 
-          {filtered.length === 0 ? (
-            <div style={s("background:#fff;border:1.5px dashed #dbe1ea;border-radius:20px;padding:52px 20px;text-align:center")}>
-              <div style={s("font-size:34px;margin-bottom:8px")}>🎯</div>
-              <div style={s("color:#8b93a1;font-size:14px;font-weight:600")}>{t.tasksEmpty}</div>
-            </div>
-          ) : (
-            <div style={s("display:flex;flex-direction:column;gap:20px")}>
-              {openTasks.length > 0 && (
-                <Section label={t.boardToDo} count={openTasks.length} color="#2563eb">
-                  {openTasks.map((tk) => <TaskCard key={tk.id} tk={tk} />)}
-                </Section>
-              )}
-              {doneTasks.length > 0 && (
-                <Section label={t.boardDone} count={doneTasks.length} color="#17a99b">
-                  {doneTasks.map((tk) => <TaskCard key={tk.id} tk={tk} />)}
-                </Section>
-              )}
-            </div>
-          )}
+          {/* Kanban board */}
+          <div style={s("display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;align-items:flex-start")}>
+            {COLUMNS.map((col) => {
+              const items = colTasks(col.key);
+              const over = overCol === col.key;
+              return (
+                <div
+                  key={col.key}
+                  onDragOver={(e) => { e.preventDefault(); if (overCol !== col.key) setOverCol(col.key); }}
+                  onDragLeave={() => setOverCol((o) => (o === col.key ? null : o))}
+                  onDrop={(e) => { e.preventDefault(); if (dragId) moveTask(dragId, col.key); setDragId(null); setOverCol(null); }}
+                  style={s(`flex:1;min-width:270px;max-width:360px;background:${over ? "#eef4ff" : "#f4f6f9"};border:1.5px ${over ? "dashed #2563eb" : "solid #eaeef3"};border-radius:18px;padding:12px 12px 16px;transition:background .12s`)}
+                >
+                  <div style={s("display:flex;align-items:center;gap:8px;margin:2px 4px 12px")}>
+                    <span style={s(`width:9px;height:9px;border-radius:50%;background:${col.color}`)} />
+                    <span style={s("font-family:var(--grotesk);font-weight:700;font-size:14px")}>{col.label}</span>
+                    <span style={s("background:#fff;color:#5c6675;font-size:11px;font-weight:700;min-width:20px;height:20px;padding:0 6px;border-radius:999px;display:grid;place-items:center;border:1px solid #e7ebf2")}>{items.length}</span>
+                  </div>
+                  <div style={s("display:flex;flex-direction:column;gap:10px;min-height:60px")}>
+                    {items.map((tk) => <TaskCard key={tk.id} tk={tk} />)}
+                    {items.length === 0 && (
+                      <div style={s("border:1.5px dashed #dbe1ea;border-radius:12px;padding:20px;text-align:center;color:#b3bac6;font-size:12px;font-weight:600")}>—</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </>
       ) : (
         <div>
@@ -368,46 +344,47 @@ export default function Tasks() {
     </div>
   );
 
-  function Section({ label, count, color, children }: { label: string; count: number; color: string; children: React.ReactNode }) {
-    return (
-      <div>
-        <div style={s("display:flex;align-items:center;gap:8px;margin-bottom:12px")}>
-          <span style={s(`width:9px;height:9px;border-radius:50%;background:${color}`)} />
-          <span style={s("font-family:var(--grotesk);font-weight:700;font-size:15px")}>{label}</span>
-          <span style={s("background:#eef1f5;color:#5c6675;font-size:11px;font-weight:700;min-width:20px;height:20px;padding:0 6px;border-radius:999px;display:grid;place-items:center")}>{count}</span>
-        </div>
-        <div style={s("display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px")}>{children}</div>
-      </div>
-    );
-  }
-
   function TaskCard({ tk }: { tk: TaskDTO }) {
-    const done = tk.status === "completed";
+    const status = (tk.status || "open") as "open" | "in_progress" | "completed";
+    const done = status === "completed";
     const assignee = tk.assigneeId ? userById[tk.assigneeId] : undefined;
     const canToggle = isManager || tk.assigneeId === meId;
     const canDelete = isManager || tk.createdById === meId;
     const evName = eventName(tk.eventId);
     const pr = PRIO[tk.priority] ?? PRIO.normal;
+    const dragging = dragId === tk.id;
     return (
-      <div style={s(`position:relative;background:#fff;border:1px solid #e7ebf2;border-radius:16px;padding:16px 16px 14px;box-shadow:0 6px 18px rgba(15,23,42,.05);overflow:hidden;${done ? "opacity:.72" : ""}`)}>
-        <span style={s(`position:absolute;inset-inline-start:0;top:0;bottom:0;width:5px;background:${done ? "#17a99b" : pr.accent}`)} />
+      <div
+        draggable={canToggle}
+        onDragStart={() => setDragId(tk.id)}
+        onDragEnd={() => { setDragId(null); setOverCol(null); }}
+        style={s(`position:relative;background:#fff;border:1px solid #e7ebf2;border-radius:16px;padding:14px 14px 12px;box-shadow:0 4px 14px rgba(15,23,42,.05);overflow:hidden;${canToggle ? "cursor:grab;" : ""}${done ? "opacity:.72;" : ""}${dragging ? "opacity:.4;" : ""}`)}
+      >
+        <span style={s(`position:absolute;inset-inline-start:0;top:0;bottom:0;width:5px;background:${done ? "#17a99b" : status === "in_progress" ? "#f59e0b" : pr.accent}`)} />
         <div style={s("display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;padding-inline-start:6px")}>
           <span style={s(`display:inline-flex;align-items:center;gap:5px;background:${pr.tint};color:${pr.accent};font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em`)}><span style={s(`width:6px;height:6px;border-radius:50%;background:${pr.accent}`)} />{pr.label(t)}</span>
           {canDelete && (
             <Hov tag="button" onClick={() => { if (confirm(t.taskDeleteConfirm)) app.deleteTask(tk.id); }} title={t.taskDelete} css="border:none;cursor:pointer;background:transparent;color:#c0c7d2;font-weight:700;font-size:14px;width:24px;height:24px;border-radius:50%;font-family:inherit;flex:none" hover="background:#fdf2f2;color:#d64545">✕</Hov>
           )}
         </div>
-        <div style={s(`font-size:14.5px;font-weight:700;color:#0f172a;line-height:1.35;padding-inline-start:6px;${done ? "text-decoration:line-through" : ""}`)}>{tk.title}</div>
+        <div style={s(`font-size:14px;font-weight:700;color:#0f172a;line-height:1.35;padding-inline-start:6px;${done ? "text-decoration:line-through" : ""}`)}>{tk.title}</div>
         {tk.notes && <div style={s("font-size:12px;color:#8b93a1;margin-top:5px;padding-inline-start:6px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden")}>{tk.notes}</div>}
-        <div style={s("display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0 12px;padding-inline-start:6px")}>
+        <div style={s("display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:11px 0;padding-inline-start:6px")}>
           {evName && <span style={s("display:inline-flex;align-items:center;gap:5px;background:#f4f6f9;font-size:11px;font-weight:600;color:#5c6675;padding:4px 9px;border-radius:999px")}><span style={s(`width:7px;height:7px;border-radius:50%;background:${eventColor(tk.eventId)}`)} />{evName}</span>}
           {tk.dueDate && <span style={s("display:inline-flex;align-items:center;gap:4px;background:#f4f6f9;font-size:11px;font-weight:600;color:#5c6675;padding:4px 9px;border-radius:999px")}>📅 {tk.dueDate}</span>}
         </div>
-        <div style={s("display:flex;align-items:center;gap:10px;padding-inline-start:6px;border-top:1px solid #f2f4f7;padding-top:11px")}>
+        <div style={s("display:flex;align-items:center;gap:10px;padding-inline-start:6px;border-top:1px solid #f2f4f7;padding-top:10px")}>
           <Avatar u={assignee} />
           <span style={s("flex:1;min-width:0;font-size:12px;font-weight:600;color:#5c6675;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{assignee?.name || t.taskUnassigned}</span>
           {canToggle && (
-            <Hov tag="button" onClick={() => app.updateTask(tk.id, { status: done ? "open" : "completed" })} css={`border:1px solid ${done ? "#e3e8ef" : "#b7e3d8"};cursor:pointer;background:${done ? "#fff" : "#e7f6f3"};color:${done ? "#5c6675" : "#128d81"};font-weight:700;font-size:12px;padding:7px 13px;border-radius:999px;font-family:inherit;flex:none;white-space:nowrap`} hover={done ? "border-color:#c8d0dc" : "background:#d9efe9"}>{done ? t.taskReopen : `✓ ${t.taskMarkDone}`}</Hov>
+            <div style={s("display:flex;align-items:center;gap:4px;flex:none")}>
+              {COLUMNS.map((c) => {
+                const active = status === c.key;
+                return (
+                  <button key={c.key} title={c.label} onClick={() => moveTask(tk.id, c.key)} style={s(`height:14px;width:${active ? 22 : 14}px;border-radius:999px;border:none;cursor:pointer;background:${active ? c.color : "#dfe4ea"};padding:0;transition:width .12s`)} />
+                );
+              })}
+            </div>
           )}
         </div>
         {done && tk.completedAt && (

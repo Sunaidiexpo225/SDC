@@ -135,7 +135,7 @@ interface AppCtx {
       assigneeId: string | null;
       dueDate: string | null;
       priority: "low" | "normal" | "high";
-      status: "open" | "completed";
+      status: "open" | "in_progress" | "completed";
     }>,
   ) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
@@ -641,7 +641,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         assigneeId: string | null;
         dueDate: string | null;
         priority: "low" | "normal" | "high";
-        status: "open" | "completed";
+        status: "open" | "in_progress" | "completed";
       }>,
     ) => {
       try {

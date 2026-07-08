@@ -4,7 +4,7 @@ export type Role = "Admin" | "Manager" | "AsstManager" | "Editor" | "Viewer";
 export type PostStatus = "scheduled" | "posted";
 export type ApprovalStatus = "pending" | "approved" | "declined";
 export type UserStatus = "active" | "invited";
-export type TaskStatus = "open" | "completed";
+export type TaskStatus = "open" | "in_progress" | "completed";
 export type TaskPriority = "low" | "normal" | "high";
 export type RangeKey = "1d" | "7d" | "30d" | "90d" | "365d";
 

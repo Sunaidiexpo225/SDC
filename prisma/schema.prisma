@@ -50,7 +50,7 @@ model Task {
   assigneeId    String? // user id (resolved to a name client-side)
   dueDate       String? // YYYY-MM-DD
   priority      String    @default("normal") // low | normal | high
-  status        String    @default("open") // open | completed
+  status        String    @default("open") // open | in_progress | completed
   completedAt   DateTime?
   completedById String?
   createdById   String?
