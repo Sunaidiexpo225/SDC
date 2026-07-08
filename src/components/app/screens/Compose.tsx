@@ -230,7 +230,12 @@ export default function Compose() {
                 );
               })}
             </div>
-            <Hov tag="button" onClick={app.schedule} disabled={!canSched} css={`width:100%;border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:15px;padding:14px;border-radius:999px;font-family:inherit;opacity:${canSched ? 1 : 0.45}`} hover={canSched ? "background:#1d4ed8" : ""}>{t.schedulePost}</Hov>
+            <div style={s("display:flex;gap:8px")}>
+              <Hov tag="button" onClick={() => app.schedule(false)} disabled={!canSched} css={`flex:1;border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:15px;padding:14px;border-radius:999px;font-family:inherit;opacity:${canSched ? 1 : 0.45}`} hover={canSched ? "background:#1d4ed8" : ""}>{t.schedulePost}</Hov>
+              {app.canApprove && (
+                <Hov tag="button" onClick={() => app.schedule(true)} disabled={!canSched} title={t.publishNow} css={`flex:none;border:none;cursor:pointer;background:#0f172a;color:#fff;font-weight:700;font-size:15px;padding:14px 18px;border-radius:999px;font-family:inherit;opacity:${canSched ? 1 : 0.45};display:inline-flex;align-items:center;gap:6px`} hover={canSched ? "background:#1e293b" : ""}>▸ {t.publishNow}</Hov>
+              )}
+            </div>
           </div>
         </div>
       </div>

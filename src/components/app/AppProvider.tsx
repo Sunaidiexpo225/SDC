@@ -112,7 +112,7 @@ interface AppCtx {
   // actions
   selectEvent: (id: string) => void;
   generate: () => void;
-  schedule: () => Promise<void>;
+  schedule: (publishAfter?: boolean) => Promise<void>;
   deletePost: (id: string) => Promise<void>;
   publishPost: (id: string) => Promise<void>;
   setPostApproval: (id: string, approval: "approved" | "declined") => Promise<void>;
@@ -371,7 +371,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     })();
   }, [data, lang, ui.genIdx]);
 
-  const schedule = useCallback(async () => {
+  const schedule = useCallback(async (publishAfter = false) => {
     if (!data) return;
     const evt = ev(ui.activeEventId);
     const keys = evt.accounts
@@ -405,7 +405,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         selectedPostId: post.id,
       });
       const { tr } = await import("@/lib/i18n");
-      toast(tr(lang).toastSched(keys.length));
+      // Optionally publish immediately after creating (Compose "Publish now").
+      if (publishAfter) {
+        try {
+          const res = await api.post<{ ok: boolean; results: { platform: string; ok: boolean; detail: string }[] }>(`/api/posts/${post.id}/publish`);
+          await reload();
+          toast(res.ok ? tr(lang).toastPublished : (res.results.map((r) => `${r.platform}: ${r.detail}`).join(" · ") || "Nothing published"));
+        } catch (e) {
+          toast(e instanceof Error ? e.message : "Publish failed");
+        }
+      } else {
+        toast(tr(lang).toastSched(keys.length));
+      }
     } catch (e) {
       toast(e instanceof Error ? e.message : "Failed to schedule");
     } finally {
