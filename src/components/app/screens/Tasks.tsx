@@ -241,7 +241,10 @@ export default function Tasks() {
                     <button key={lb} onClick={() => setFDue(on ? "" : iso)} style={s(`border:1px solid ${on ? "#128d81" : "#e3e8ef"};cursor:pointer;background:${on ? "#e7f6f3" : "#fff"};color:${on ? "#128d81" : "#5c6675"};font-weight:700;font-size:12px;padding:7px 13px;border-radius:999px;font-family:inherit`)}>{lb}</button>
                   );
                 })}
-                <input type="date" value={dueVal} onChange={(e) => setFDue(e.target.value)} style={s("border:1px solid #e3e8ef;border-radius:999px;padding:6px 12px;font-family:inherit;font-size:12px;color:#0f172a;background:#fbfcfe")} />
+                <label style={s(`display:inline-flex;align-items:center;gap:6px;border:1px solid ${dueVal && !quickDates.some(([, iso]) => iso === dueVal) ? "#128d81" : "#e3e8ef"};background:${dueVal && !quickDates.some(([, iso]) => iso === dueVal) ? "#e7f6f3" : "#fbfcfe"};border-radius:999px;padding:6px 12px;cursor:pointer`)}>
+                  <span style={s("font-size:12px")}>📅</span>
+                  <input type="date" value={dueVal} onChange={(e) => setFDue(e.target.value)} style={s("border:none;background:transparent;font-family:inherit;font-size:12px;color:#0f172a;outline:none;padding:0;min-width:16px")} />
+                </label>
               </div>
 
               {/* Priority + event pills */}
@@ -278,7 +281,7 @@ export default function Tasks() {
                     style={s("box-sizing:border-box;width:100%;height:60px;resize:none;border:1px solid #e3e8ef;border-radius:12px;padding:10px 13px;font-family:inherit;font-size:13px;color:#0f172a;background:#fbfcfe")}
                   />
                   {notesFrag !== null && notesCandidates.length > 0 && (
-                    <div style={s("position:absolute;top:calc(100% + 4px);inset-inline-start:0;z-index:30;min-width:230px;background:#fff;border:1px solid #e3e8ef;border-radius:14px;box-shadow:0 16px 40px rgba(15,23,42,.18);padding:6px")}>
+                    <div style={s("position:absolute;bottom:calc(100% + 4px);inset-inline-start:0;z-index:30;min-width:230px;background:#fff;border:1px solid #e3e8ef;border-radius:14px;box-shadow:0 -16px 40px rgba(15,23,42,.18);padding:6px")}>
                       {notesCandidates.map((u) => (
                         <Hov key={u.id} tag="button" onClick={() => pickNotesMention(u)} css="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:9px;border:none;cursor:pointer;background:transparent;padding:8px;border-radius:10px;font-family:inherit;text-align:start" hover="background:#f4f6f9">
                           <Avatar u={userById[u.id]} />
