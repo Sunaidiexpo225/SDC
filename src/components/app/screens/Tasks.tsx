@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "../AppProvider";
 import { useLang } from "../../LangProvider";
 import { Hov } from "../../ui";
@@ -19,6 +19,37 @@ const PRIO: Record<string, { accent: string; tint: string; label: (t: Trans) => 
 };
 
 type Trans = ReturnType<typeof useLang>["t"];
+
+const SNOOZE_KEY = "sdc_tasks_snooze";
+
+// A short two-note "attention" chime, synthesised via Web Audio so there's no
+// audio asset to ship. Best-effort — silently no-ops if audio is unavailable
+// or blocked before the first user gesture.
+function playChime() {
+  try {
+    const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const now = ctx.currentTime;
+    [880, 1174.7].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      const start = now + i * 0.19;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.22, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.17);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.19);
+    });
+    setTimeout(() => ctx.close().catch(() => {}), 900);
+  } catch {
+    /* ignore */
+  }
+}
 
 export default function Tasks() {
   const app = useApp();
@@ -101,6 +132,29 @@ export default function Tasks() {
   const needsAttention = (tk: TaskDTO) =>
     tk.status !== "completed" && (isOverdue(tk) || (tk.priority === "high" && tk.status === "open"));
   const attentionCount = filtered.filter(needsAttention).length;
+  const overdueCount = filtered.filter(isOverdue).length;
+
+  // Snooze mutes the reminder + chime for an hour (persisted across reloads).
+  const [snoozeUntil, setSnoozeUntil] = useState(0);
+  useEffect(() => {
+    try { setSnoozeUntil(Number(localStorage.getItem(SNOOZE_KEY) || 0)); } catch { /* ignore */ }
+  }, []);
+  const snoozed = snoozeUntil > Date.now();
+  const snooze = () => {
+    const until = Date.now() + 60 * 60 * 1000;
+    setSnoozeUntil(until);
+    try { localStorage.setItem(SNOOZE_KEY, String(until)); } catch { /* ignore */ }
+  };
+
+  // Chime once when overdue work appears (and isn't snoozed). Reset when clear.
+  const chimedRef = useRef(false);
+  useEffect(() => {
+    if (overdueCount > 0 && !snoozed && !chimedRef.current) {
+      chimedRef.current = true;
+      playChime();
+    }
+    if (overdueCount === 0) chimedRef.current = false;
+  }, [overdueCount, snoozed]);
 
   const submit = async () => {
     if (!effTitle) return;
@@ -289,11 +343,18 @@ export default function Tasks() {
             <span style={s("font-size:11px;color:#a3abb8")}>{t.kanbanHint}</span>
           </div>
 
-          {/* Needs-attention reminder */}
-          {attentionCount > 0 && (
-            <div style={s("display:flex;align-items:center;gap:10px;background:#fff4f2;border:1px solid #f6cdc4;border-radius:14px;padding:11px 16px;margin-bottom:14px")}>
+          {/* Needs-attention reminder (with chime + snooze) */}
+          {attentionCount > 0 && !snoozed && (
+            <div style={s("display:flex;align-items:center;gap:10px;background:#fff4f2;border:1px solid #f6cdc4;border-radius:14px;padding:11px 14px 11px 16px;margin-bottom:14px")}>
               <span style={s("font-size:18px;flex:none")}>🔔</span>
-              <span style={s("font-size:13px;font-weight:700;color:#c0432b")}>{t.attentionBanner(attentionCount)}</span>
+              <span style={s("font-size:13px;font-weight:700;color:#c0432b;flex:1;min-width:0")}>{t.attentionBanner(attentionCount)}</span>
+              <Hov tag="button" onClick={snooze} css="border:1px solid #f0b3a6;cursor:pointer;background:#fff;color:#c0432b;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;font-family:inherit;flex:none;display:inline-flex;align-items:center;gap:5px" hover="background:#fdeee9">😴 {t.snoozeBtn}</Hov>
+            </div>
+          )}
+          {attentionCount > 0 && snoozed && (
+            <div style={s("display:flex;align-items:center;gap:8px;margin-bottom:14px")}>
+              <span style={s("font-size:12px;color:#a3abb8;font-weight:600")}>😴 {t.snoozedNote}</span>
+              <button onClick={() => { setSnoozeUntil(0); try { localStorage.removeItem(SNOOZE_KEY); } catch { /* ignore */ } }} style={s("border:none;background:transparent;cursor:pointer;color:#2563eb;font-weight:700;font-size:12px;font-family:inherit")}>↺</button>
             </div>
           )}
 
