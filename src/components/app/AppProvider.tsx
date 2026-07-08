@@ -287,6 +287,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     reload();
   }, [reload]);
 
+  // Remember the open tab across reloads so a refresh doesn't kick you back to
+  // the dashboard. Restored on mount; persisted on every change (skipping the
+  // initial default write so it can't clobber the restored value).
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("sdc_tab") as Tab | null;
+      const TABS: Tab[] = ["dashboard", "compose", "calendar", "library", "analytics", "tasks", "team", "admin"];
+      if (saved && TABS.includes(saved)) setUi((p) => ({ ...p, tab: saved }));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const skipTabPersist = useRef(true);
+  useEffect(() => {
+    if (skipTabPersist.current) { skipTabPersist.current = false; return; }
+    try { localStorage.setItem("sdc_tab", ui.tab); } catch { /* ignore */ }
+  }, [ui.tab]);
+
   // ---- derived ----
   const events = data?.events ?? [];
   const ev = useCallback(
