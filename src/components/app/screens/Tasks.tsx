@@ -250,7 +250,7 @@ export default function Tasks() {
 
               <div style={s("display:flex;align-items:center;gap:10px")}>
                 {!notesOpen && (
-                  <button onClick={() => setNotesOpen(true)} style={s("border:1px dashed #c8d0dc;cursor:pointer;background:#fff;color:#5c6675;font-weight:700;font-size:12px;padding:8px 14px;border-radius:999px;font-family:inherit")}>+ {t.taskNotesLabel}</button>
+                  <button onClick={() => setNotesOpen(true)} style={s("border:1px dashed #c8d0dc;cursor:pointer;background:#fff;color:#5c6675;font-weight:700;font-size:12px;padding:8px 14px;border-radius:999px;font-family:inherit")}>+ {t.taskAddDetails}</button>
                 )}
                 <span style={s("font-size:11px;color:#a3abb8;flex:1;min-width:0")}>{t.taskSmartHint}</span>
                 <Hov tag="button" onClick={submit} css={`border:none;cursor:pointer;background:linear-gradient(135deg,#2563eb,#7c5cf0);color:#fff;font-weight:700;font-size:14px;padding:11px 22px;border-radius:999px;font-family:inherit;flex:none;opacity:${effTitle ? 1 : 0.5};box-shadow:0 8px 20px rgba(37,99,235,.28)`} hover={effTitle ? "filter:brightness(1.08)" : ""}>{t.taskCreate}</Hov>
