@@ -230,13 +230,6 @@ export default function Compose() {
                 );
               })}
             </div>
-            <div style={s("margin-bottom:12px")}>
-              <label style={s("font-size:11px;font-weight:700;color:#8b93a1")}>{t.taskAssignee}</label>
-              <select value={ui.composeAssignee} onChange={(e) => patch({ composeAssignee: e.target.value })} style={s("display:block;width:100%;box-sizing:border-box;margin-top:5px;border:1px solid #e3e8ef;border-radius:12px;padding:11px 12px;font-family:inherit;font-size:14px;color:#0f172a;background:#fbfcfe")}>
-                <option value="">{t.taskUnassigned}</option>
-                {app.data.users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
-              </select>
-            </div>
             <Hov tag="button" onClick={app.schedule} disabled={!canSched} css={`width:100%;border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:15px;padding:14px;border-radius:999px;font-family:inherit;opacity:${canSched ? 1 : 0.45}`} hover={canSched ? "background:#1d4ed8" : ""}>{t.schedulePost}</Hov>
           </div>
         </div>

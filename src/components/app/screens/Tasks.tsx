@@ -36,7 +36,7 @@ export default function Tasks() {
   const [fAssignee, setFAssignee] = useState("");
   const [fEvent, setFEvent] = useState("");
   const [fDue, setFDue] = useState("");
-  const [fPrio, setFPrio] = useState<"low" | "normal" | "high">("normal");
+  const [fPrio, setFPrio] = useState<"" | "low" | "normal" | "high">("");
 
   const role = currentUser?.role ?? "Viewer";
   const isManager = MANAGER_ROLES.includes(role);
@@ -71,10 +71,12 @@ export default function Tasks() {
 
   const effAssignee = fAssignee || parsed.assigneeId || null;
   const effDue = fDue || parsed.dueDate || null;
+  const effPrio = fPrio || parsed.priority || "normal";
   const effTitle = parsed.cleanTitle || fTitle.trim();
   const detAssigneeName = parsed.assigneeName;
   const detDueLabel = parsed.dueLabel;
   const detDueDate = parsed.dueDate;
+  const detPrio = !fPrio ? parsed.priority : null; // priority inferred from words
 
   const tasks = data.tasks;
   const filtered = tasks.filter((tk) => (filter === "mine" ? tk.assigneeId === meId : true));
@@ -92,6 +94,14 @@ export default function Tasks() {
     app.updateTask(id, { status });
   };
 
+  // A task "needs attention" when it's not done and either past its due date or
+  // flagged high priority and still untouched.
+  const todayISO = isoDate(app.today);
+  const isOverdue = (tk: TaskDTO) => tk.status !== "completed" && !!tk.dueDate && tk.dueDate < todayISO;
+  const needsAttention = (tk: TaskDTO) =>
+    tk.status !== "completed" && (isOverdue(tk) || (tk.priority === "high" && tk.status === "open"));
+  const attentionCount = filtered.filter(needsAttention).length;
+
   const submit = async () => {
     if (!effTitle) return;
     const ok = await app.createTask({
@@ -99,10 +109,10 @@ export default function Tasks() {
       assigneeId: effAssignee,
       eventId: fEvent || null,
       dueDate: effDue,
-      priority: fPrio,
+      priority: effPrio,
     });
     if (ok) {
-      setFTitle(""); setFAssignee(""); setFEvent(""); setFDue(""); setFPrio("normal");
+      setFTitle(""); setFAssignee(""); setFEvent(""); setFDue(""); setFPrio("");
     }
   };
 
@@ -208,6 +218,7 @@ export default function Tasks() {
                 <div style={s("display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px")}>
                   {detAssigneeName && <span style={s("display:inline-flex;align-items:center;gap:5px;background:#eef2f8;color:#2563eb;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px")}>@ {detAssigneeName}</span>}
                   {detDueLabel && <span style={s("display:inline-flex;align-items:center;gap:5px;background:#f0f9f6;color:#128d81;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px")}>📅 {detDueLabel}{detDueDate ? ` · ${detDueDate}` : ""}</span>}
+                  {detPrio && <span style={s(`display:inline-flex;align-items:center;gap:5px;background:${PRIO[detPrio].tint};color:${PRIO[detPrio].accent};font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px`)}>⚡ {PRIO[detPrio].label(t)}</span>}
                 </div>
               )}
 
@@ -248,7 +259,7 @@ export default function Tasks() {
               <div style={s("display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px")}>
                 <span style={s("font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;flex:none")}>{t.taskPriority}</span>
                 {(["low", "normal", "high"] as const).map((p) => {
-                  const on = fPrio === p;
+                  const on = effPrio === p;
                   return (
                     <button key={p} onClick={() => setFPrio(p)} style={s(`display:inline-flex;align-items:center;gap:6px;border:1px solid ${on ? PRIO[p].accent : "#e3e8ef"};cursor:pointer;background:${on ? PRIO[p].tint : "#fff"};color:${on ? PRIO[p].accent : "#8b93a1"};font-weight:700;font-size:12px;padding:7px 13px;border-radius:999px;font-family:inherit`)}><span style={s(`width:8px;height:8px;border-radius:50%;background:${PRIO[p].accent}`)} />{PRIO[p].label(t)}</button>
                   );
@@ -277,6 +288,14 @@ export default function Tasks() {
             </div>
             <span style={s("font-size:11px;color:#a3abb8")}>{t.kanbanHint}</span>
           </div>
+
+          {/* Needs-attention reminder */}
+          {attentionCount > 0 && (
+            <div style={s("display:flex;align-items:center;gap:10px;background:#fff4f2;border:1px solid #f6cdc4;border-radius:14px;padding:11px 16px;margin-bottom:14px")}>
+              <span style={s("font-size:18px;flex:none")}>🔔</span>
+              <span style={s("font-size:13px;font-weight:700;color:#c0432b")}>{t.attentionBanner(attentionCount)}</span>
+            </div>
+          )}
 
           {/* Kanban board */}
           <div style={s("display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;align-items:flex-start")}>
@@ -353,16 +372,23 @@ export default function Tasks() {
     const evName = eventName(tk.eventId);
     const pr = PRIO[tk.priority] ?? PRIO.normal;
     const dragging = dragId === tk.id;
+    const overdue = isOverdue(tk);
+    // Card tint reflects priority so urgent work stands out at a glance.
+    const cardBg = done ? "#fff" : tk.priority === "high" ? "#fff5f8" : tk.priority === "low" ? "#fbfcfd" : "#fff";
+    const cardBorder = done ? "#e7ebf2" : overdue ? "#f0a898" : tk.priority === "high" ? "#f4c9d8" : "#e7ebf2";
     return (
       <div
         draggable={canToggle}
         onDragStart={() => setDragId(tk.id)}
         onDragEnd={() => { setDragId(null); setOverCol(null); }}
-        style={s(`position:relative;background:#fff;border:1px solid #e7ebf2;border-radius:16px;padding:14px 14px 12px;box-shadow:0 4px 14px rgba(15,23,42,.05);overflow:hidden;${canToggle ? "cursor:grab;" : ""}${done ? "opacity:.72;" : ""}${dragging ? "opacity:.4;" : ""}`)}
+        style={s(`position:relative;background:${cardBg};border:1px solid ${cardBorder};border-radius:16px;padding:14px 14px 12px;box-shadow:0 4px 14px rgba(15,23,42,.05);overflow:hidden;${canToggle ? "cursor:grab;" : ""}${done ? "opacity:.72;" : ""}${dragging ? "opacity:.4;" : ""}`)}
       >
         <span style={s(`position:absolute;inset-inline-start:0;top:0;bottom:0;width:5px;background:${done ? "#17a99b" : status === "in_progress" ? "#f59e0b" : pr.accent}`)} />
         <div style={s("display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;padding-inline-start:6px")}>
-          <span style={s(`display:inline-flex;align-items:center;gap:5px;background:${pr.tint};color:${pr.accent};font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em`)}><span style={s(`width:6px;height:6px;border-radius:50%;background:${pr.accent}`)} />{pr.label(t)}</span>
+          <div style={s("display:flex;align-items:center;gap:6px;flex-wrap:wrap")}>
+            <span style={s(`display:inline-flex;align-items:center;gap:5px;background:${pr.tint};color:${pr.accent};font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em`)}><span style={s(`width:6px;height:6px;border-radius:50%;background:${pr.accent}`)} />{pr.label(t)}</span>
+            {overdue && <span style={s("display:inline-flex;align-items:center;gap:4px;background:#fde7e2;color:#c0432b;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.04em")}>⚠ {t.overdueTag}</span>}
+          </div>
           {canDelete && (
             <Hov tag="button" onClick={() => { if (confirm(t.taskDeleteConfirm)) app.deleteTask(tk.id); }} title={t.taskDelete} css="border:none;cursor:pointer;background:transparent;color:#c0c7d2;font-weight:700;font-size:14px;width:24px;height:24px;border-radius:50%;font-family:inherit;flex:none" hover="background:#fdf2f2;color:#d64545">✕</Hov>
           )}

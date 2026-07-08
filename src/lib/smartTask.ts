@@ -16,7 +16,20 @@ export interface SmartParse {
   assigneeName: string | null;
   dueDate: string | null; // YYYY-MM-DD
   dueLabel: string | null; // the word that matched (e.g. "tomorrow")
+  priority: "low" | "normal" | "high" | null; // inferred from words like "urgent"
   cleanTitle: string; // title with the recognised @mention + date word removed
+}
+
+// Words that imply a priority. EN + common AR.
+const HIGH_WORDS = /\b(urgent|urgently|asap|important|critical|high priority|emergency)\b/i;
+const HIGH_AR = /(عاجل|مهم|هام|طارئ|ضروري)/;
+const LOW_WORDS = /\b(low priority|whenever|someday|no rush|minor|low)\b/i;
+const LOW_AR = /(لاحقًا|لاحقا|غير عاجل|بسيط)/;
+
+function detectPriority(text: string): "low" | "normal" | "high" | null {
+  if (HIGH_WORDS.test(text) || HIGH_AR.test(text)) return "high";
+  if (LOW_WORDS.test(text) || LOW_AR.test(text)) return "low";
+  return null;
 }
 
 // Weekday names → 0..6 (Sun..Sat), EN + common AR.
@@ -116,6 +129,8 @@ export function parseSmartTask(
     }
   }
 
+  const priority = detectPriority(text);
+
   clean = clean.replace(/\s{2,}/g, " ").trim();
-  return { assigneeId, assigneeName, dueDate, dueLabel, cleanTitle: clean };
+  return { assigneeId, assigneeName, dueDate, dueLabel, priority, cleanTitle: clean };
 }

@@ -376,10 +376,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ? { mediaId: ui.composeAsset.mediaId, format: ui.composeAsset.type }
           : {}),
       });
-      // Assign the new post to a team member if one was picked in Compose.
-      if (ui.composeAssignee) {
-        await api.patch(`/api/posts/${post.id}`, { assigneeId: ui.composeAssignee }).catch(() => {});
-      }
       await reload();
       patch({
         tab: "calendar",
