@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useApp } from "../AppProvider";
 import { useLang } from "../../LangProvider";
 import { Hov } from "../../ui";
 import { s } from "@/lib/style";
+import { parseSmartTask, trailingMention, mentionCandidates, type SmartUser } from "@/lib/smartTask";
 import type { TaskDTO, UserDTO } from "@/lib/types";
 
 const MANAGER_ROLES = ["Admin", "Manager", "AsstManager"];
@@ -46,6 +47,21 @@ export default function Tasks() {
   };
   const eventColor = (id: string | null) => events.find((ev) => ev.id === id)?.color ?? "#c8d0dc";
 
+  // Smart quick-add: parse @mentions + date words out of the title as you type.
+  const smartUsers: SmartUser[] = data.users.map((u) => ({ id: u.id, name: u.name, init: u.init }));
+  const parsed = useMemo(() => parseSmartTask(fTitle, smartUsers, app.today), [fTitle, smartUsers, app.today]);
+  const mentionFrag = trailingMention(fTitle);
+  const candidates = mentionFrag !== null ? mentionCandidates(mentionFrag, smartUsers) : [];
+  const titleRef = useRef<HTMLInputElement>(null);
+  const pickMention = (u: SmartUser) => {
+    setFTitle((prev) => prev.replace(/@([^\s@]*)$/, `@${u.init} `));
+    setTimeout(() => titleRef.current?.focus(), 0);
+  };
+  // Effective values: an explicit dropdown choice wins over the parsed one.
+  const effAssignee = fAssignee || parsed.assigneeId || null;
+  const effDue = fDue || parsed.dueDate || null;
+  const effTitle = parsed.cleanTitle || fTitle.trim();
+
   const tasks = data.tasks;
   const filtered = tasks.filter((tk) => {
     if (filter === "open") return tk.status === "open";
@@ -55,13 +71,13 @@ export default function Tasks() {
   });
 
   const submit = async () => {
-    if (!fTitle.trim()) return;
+    if (!effTitle) return;
     const ok = await app.createTask({
-      title: fTitle.trim(),
+      title: effTitle,
       notes: fNotes.trim() || undefined,
-      assigneeId: fAssignee || null,
+      assigneeId: effAssignee,
       eventId: fEvent || null,
-      dueDate: fDue || null,
+      dueDate: effDue,
       priority: fPrio,
     });
     if (ok) {
@@ -158,11 +174,45 @@ export default function Tasks() {
 
           {showForm && canCreate && (
             <div style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:18px;margin-bottom:16px;display:flex;flex-direction:column;gap:12px")}>
-              <input value={fTitle} onChange={(e) => setFTitle(e.target.value)} placeholder={t.taskTitlePh} style={s("box-sizing:border-box;border:1px solid #e3e8ef;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:15px;font-weight:600;color:#0f172a;background:#fbfcfe")} />
+              <div style={s("position:relative")}>
+                <input
+                  ref={titleRef}
+                  value={fTitle}
+                  onChange={(e) => setFTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && candidates.length && mentionFrag !== null) {
+                      e.preventDefault();
+                      pickMention(candidates[0]);
+                    }
+                  }}
+                  placeholder={t.taskTitlePh}
+                  style={s("box-sizing:border-box;width:100%;border:1px solid #e3e8ef;border-radius:10px;padding:11px 13px;font-family:inherit;font-size:15px;font-weight:600;color:#0f172a;background:#fbfcfe")}
+                />
+                {mentionFrag !== null && candidates.length > 0 && (
+                  <div style={s("position:absolute;top:calc(100% + 4px);inset-inline-start:0;z-index:30;min-width:220px;background:#fff;border:1px solid #e3e8ef;border-radius:12px;box-shadow:0 14px 36px rgba(15,23,42,.16);padding:6px")}>
+                    {candidates.map((u) => (
+                      <Hov key={u.id} tag="button" onClick={() => pickMention(u)} css="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:9px;border:none;cursor:pointer;background:transparent;padding:8px;border-radius:9px;font-family:inherit;text-align:start" hover="background:#f4f6f9">
+                        <span style={s(`width:26px;height:26px;border-radius:50%;background:${data.users.find((x) => x.id === u.id)?.avColor || "#94a3b8"};display:grid;place-items:center;color:#fff;font-weight:700;font-size:11px;flex:none`)}>{u.init}</span>
+                        <span style={s("flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{u.name}</span>
+                        <span dir="ltr" style={s("font-size:11px;color:#8b93a1;font-family:ui-monospace,Menlo,monospace")}>@{u.init}</span>
+                      </Hov>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div style={s("display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:-4px")}>
+                <span style={s("font-size:11px;color:#a3abb8")}>{t.taskSmartHint}</span>
+                {parsed.assigneeName && (
+                  <span style={s("display:inline-flex;align-items:center;gap:5px;background:#eef2f8;color:#2563eb;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px")}>@ {parsed.assigneeName}</span>
+                )}
+                {parsed.dueLabel && (
+                  <span style={s("display:inline-flex;align-items:center;gap:5px;background:#f0f9f6;color:#128d81;font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px")}>📅 {parsed.dueLabel}{parsed.dueDate ? ` · ${parsed.dueDate}` : ""}</span>
+                )}
+              </div>
               <textarea value={fNotes} onChange={(e) => setFNotes(e.target.value)} placeholder={t.taskNotesPh} style={s("box-sizing:border-box;height:64px;resize:none;border:1px solid #e3e8ef;border-radius:10px;padding:10px 13px;font-family:inherit;font-size:13px;color:#0f172a;background:#fbfcfe")} />
               <div style={s("display:flex;gap:10px;flex-wrap:wrap")}>
                 <label style={s("flex:1;min-width:150px;font-size:11px;font-weight:700;color:#8b93a1")}>{t.taskAssignee}
-                  <select value={fAssignee} onChange={(e) => setFAssignee(e.target.value)} style={s("display:block;width:100%;box-sizing:border-box;margin-top:4px;border:1px solid #e3e8ef;border-radius:10px;padding:9px 11px;font-family:inherit;font-size:13px;color:#0f172a;background:#fbfcfe")}>
+                  <select value={fAssignee || parsed.assigneeId || ""} onChange={(e) => setFAssignee(e.target.value)} style={s("display:block;width:100%;box-sizing:border-box;margin-top:4px;border:1px solid #e3e8ef;border-radius:10px;padding:9px 11px;font-family:inherit;font-size:13px;color:#0f172a;background:#fbfcfe")}>
                     <option value="">{t.taskUnassigned}</option>
                     {data.users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
                   </select>
@@ -174,7 +224,7 @@ export default function Tasks() {
                   </select>
                 </label>
                 <label style={s("min-width:130px;font-size:11px;font-weight:700;color:#8b93a1")}>{t.taskDue}
-                  <input type="date" value={fDue} onChange={(e) => setFDue(e.target.value)} style={s("display:block;width:100%;box-sizing:border-box;margin-top:4px;border:1px solid #e3e8ef;border-radius:10px;padding:8px 11px;font-family:inherit;font-size:13px;color:#0f172a;background:#fbfcfe")} />
+                  <input type="date" value={fDue || parsed.dueDate || ""} onChange={(e) => setFDue(e.target.value)} style={s("display:block;width:100%;box-sizing:border-box;margin-top:4px;border:1px solid #e3e8ef;border-radius:10px;padding:8px 11px;font-family:inherit;font-size:13px;color:#0f172a;background:#fbfcfe")} />
                 </label>
                 <label style={s("min-width:120px;font-size:11px;font-weight:700;color:#8b93a1")}>{t.taskPriority}
                   <select value={fPrio} onChange={(e) => setFPrio(e.target.value as "low" | "normal" | "high")} style={s("display:block;width:100%;box-sizing:border-box;margin-top:4px;border:1px solid #e3e8ef;border-radius:10px;padding:9px 11px;font-family:inherit;font-size:13px;color:#0f172a;background:#fbfcfe")}>
@@ -186,7 +236,7 @@ export default function Tasks() {
               </div>
               <div style={s("display:flex;gap:8px;justify-content:flex-end")}>
                 <Hov tag="button" onClick={() => setShowForm(false)} css="border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#5c6675;font-weight:700;font-size:13px;padding:9px 16px;border-radius:999px;font-family:inherit" hover="border-color:#c8d0dc">{t.taskCancel}</Hov>
-                <Hov tag="button" onClick={submit} css={`border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:13px;padding:9px 18px;border-radius:999px;font-family:inherit;opacity:${fTitle.trim() ? 1 : 0.5}`} hover={fTitle.trim() ? "background:#1d4ed8" : ""}>{t.taskCreate}</Hov>
+                <Hov tag="button" onClick={submit} css={`border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:13px;padding:9px 18px;border-radius:999px;font-family:inherit;opacity:${effTitle ? 1 : 0.5}`} hover={effTitle ? "background:#1d4ed8" : ""}>{t.taskCreate}</Hov>
               </div>
             </div>
           )}
