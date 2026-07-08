@@ -66,9 +66,23 @@ export default function Tasks() {
     setTimeout(() => titleRef.current?.focus(), 0);
   };
 
-  const effAssignee = fAssignee || parsed.assigneeId || null;
-  const effDue = fDue || parsed.dueDate || null;
+  // The details field also supports @mentions — same picker, and it feeds the
+  // assignee/due detection so typing "@AH tomorrow" works there too.
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+  const parsedNotes = useMemo(() => parseSmartTask(fNotes, smartUsers, app.today), [fNotes, smartUsers, app.today]);
+  const notesFrag = trailingMention(fNotes);
+  const notesCandidates = notesFrag !== null ? mentionCandidates(notesFrag, smartUsers) : [];
+  const pickNotesMention = (u: SmartUser) => {
+    setFNotes((prev) => prev.replace(/@([^\s@]*)$/, `@${u.init} `));
+    setTimeout(() => notesRef.current?.focus(), 0);
+  };
+
+  const effAssignee = fAssignee || parsed.assigneeId || parsedNotes.assigneeId || null;
+  const effDue = fDue || parsed.dueDate || parsedNotes.dueDate || null;
   const effTitle = parsed.cleanTitle || fTitle.trim();
+  const detAssigneeName = parsed.assigneeName || parsedNotes.assigneeName;
+  const detDueLabel = parsed.dueLabel || parsedNotes.dueLabel;
+  const detDueDate = parsed.dueDate || parsedNotes.dueDate;
 
   const tasks = data.tasks;
   const filtered = tasks.filter((tk) => {
@@ -193,22 +207,25 @@ export default function Tasks() {
               </div>
 
               {/* live detected chips */}
-              {(parsed.assigneeName || parsed.dueLabel) && (
+              {(detAssigneeName || detDueLabel) && (
                 <div style={s("display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px")}>
-                  {parsed.assigneeName && <span style={s("display:inline-flex;align-items:center;gap:5px;background:#eef2f8;color:#2563eb;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px")}>@ {parsed.assigneeName}</span>}
-                  {parsed.dueLabel && <span style={s("display:inline-flex;align-items:center;gap:5px;background:#f0f9f6;color:#128d81;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px")}>📅 {parsed.dueLabel}{parsed.dueDate ? ` · ${parsed.dueDate}` : ""}</span>}
+                  {detAssigneeName && <span style={s("display:inline-flex;align-items:center;gap:5px;background:#eef2f8;color:#2563eb;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px")}>@ {detAssigneeName}</span>}
+                  {detDueLabel && <span style={s("display:inline-flex;align-items:center;gap:5px;background:#f0f9f6;color:#128d81;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px")}>📅 {detDueLabel}{detDueDate ? ` · ${detDueDate}` : ""}</span>}
                 </div>
               )}
 
-              {/* Assign-to avatar chips */}
-              <div style={s("display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px")}>
-                <span style={s("font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;flex:none")}>{t.assignToLabel}</span>
-                <div style={s("display:flex;gap:6px;flex-wrap:wrap")}>
+              {/* Assign-to name chips (avatar + first name) */}
+              <div style={s("display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:12px")}>
+                <span style={s("font-size:11px;font-weight:700;color:#8b93a1;text-transform:uppercase;letter-spacing:.05em;flex:none;padding-top:7px")}>{t.assignToLabel}</span>
+                <div style={s("display:flex;gap:7px;flex-wrap:wrap")}>
                   {data.users.map((u) => {
-                    const on = (fAssignee || parsed.assigneeId) === u.id;
+                    const on = effAssignee === u.id;
+                    const first = u.name.split(/\s+/)[0];
                     return (
-                      <button key={u.id} onClick={() => setFAssignee(on ? "" : u.id)} title={u.name} style={s(`border:none;cursor:pointer;background:transparent;padding:0;border-radius:50%;font-family:inherit;flex:none;opacity:${on ? 1 : 0.55};transition:opacity .15s`)}>
-                        <Avatar u={u} size={30} ring={on} />
+                      <button key={u.id} onClick={() => setFAssignee(on ? "" : u.id)} title={u.name} style={s(`display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-family:inherit;font-weight:700;font-size:12.5px;padding:5px 12px 5px 5px;border-radius:999px;border:1.5px solid ${on ? u.avColor : "#e6eaf0"};background:${on ? u.avColor : "#fff"};color:${on ? "#fff" : "#3d4757"}`)}>
+                        <span style={s(`width:24px;height:24px;border-radius:50%;background:${on ? "rgba(255,255,255,.25)" : u.avColor};display:grid;place-items:center;color:#fff;font-weight:700;font-size:10px;flex:none`)}>{u.init}</span>
+                        {first}
+                        {on && <span style={s("font-size:11px;padding-inline-end:2px")}>✓</span>}
                       </button>
                     );
                   })}
@@ -245,7 +262,33 @@ export default function Tasks() {
               </div>
 
               {notesOpen ? (
-                <textarea value={fNotes} onChange={(e) => setFNotes(e.target.value)} placeholder={t.taskNotesPh} autoFocus style={s("box-sizing:border-box;width:100%;height:60px;resize:none;border:1px solid #e3e8ef;border-radius:12px;padding:10px 13px;font-family:inherit;font-size:13px;color:#0f172a;background:#fbfcfe;margin-bottom:12px")} />
+                <div style={s("position:relative;margin-bottom:12px")}>
+                  <textarea
+                    ref={notesRef}
+                    value={fNotes}
+                    onChange={(e) => setFNotes(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && notesFrag !== null && notesCandidates.length) {
+                        e.preventDefault();
+                        pickNotesMention(notesCandidates[0]);
+                      }
+                    }}
+                    placeholder={t.taskNotesPh}
+                    autoFocus
+                    style={s("box-sizing:border-box;width:100%;height:60px;resize:none;border:1px solid #e3e8ef;border-radius:12px;padding:10px 13px;font-family:inherit;font-size:13px;color:#0f172a;background:#fbfcfe")}
+                  />
+                  {notesFrag !== null && notesCandidates.length > 0 && (
+                    <div style={s("position:absolute;top:calc(100% + 4px);inset-inline-start:0;z-index:30;min-width:230px;background:#fff;border:1px solid #e3e8ef;border-radius:14px;box-shadow:0 16px 40px rgba(15,23,42,.18);padding:6px")}>
+                      {notesCandidates.map((u) => (
+                        <Hov key={u.id} tag="button" onClick={() => pickNotesMention(u)} css="width:100%;box-sizing:border-box;display:flex;align-items:center;gap:9px;border:none;cursor:pointer;background:transparent;padding:8px;border-radius:10px;font-family:inherit;text-align:start" hover="background:#f4f6f9">
+                          <Avatar u={userById[u.id]} />
+                          <span style={s("flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap")}>{u.name}</span>
+                          <span dir="ltr" style={s("font-size:11px;color:#8b93a1;font-family:ui-monospace,Menlo,monospace")}>@{u.init}</span>
+                        </Hov>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ) : null}
 
               <div style={s("display:flex;align-items:center;gap:10px")}>
