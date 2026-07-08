@@ -20,7 +20,43 @@ model Event {
   accounts  SocialAccount[]
   posts     Post[]
   approvals Approval[]
+  members   EventMember[]
+  tasks     Task[]
   createdAt DateTime        @default(now())
+}
+
+// Per-event access grant. A user whose role is event-scoped (Assistant
+// Manager / Editor / Viewer) can only see and work on the events they're a
+// member of. Admins and Managers are global and don't need rows here.
+model EventMember {
+  id      String @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+}
+
+// Standalone to-do assigned to a team member, optionally tied to an event.
+// (Posts carry their own assignee/completion; this is for non-post work.)
+model Task {
+  id            String    @id @default(cuid())
+  eventId       String?
+  event         Event?    @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  title         String
+  notes         String?
+  assigneeId    String? // user id (resolved to a name client-side)
+  dueDate       String? // YYYY-MM-DD
+  priority      String    @default("normal") // low | normal | high
+  status        String    @default("open") // open | completed
+  completedAt   DateTime?
+  completedById String?
+  createdById   String?
+  createdAt     DateTime  @default(now())
+
+  @@index([status])
 }
 
 model SocialAccount {
@@ -53,6 +89,10 @@ model Post {
   format       String? // Image | Video | Reel (content type of the attached media)
   mediaId      String?
   media        Media?   @relation(fields: [mediaId], references: [id], onDelete: SetNull)
+  assigneeId    String? // team member responsible for producing this post
+  completed     Boolean   @default(false) // production done (separate from publishing)
+  completedAt   DateTime?
+  completedById String?
   createdAt    DateTime @default(now())
 }
 
@@ -103,11 +143,12 @@ model User {
   email        String   @unique
   init         String
   avColor      String
-  role         String // Admin | Manager | Editor | Viewer
+  role         String // Admin | Manager | AsstManager | Editor | Viewer
   status       String   @default("active") // active | invited
   mfaEnabled   Boolean  @default(false)
   totpSecret   String?
   passwordHash String
+  eventAccess  EventMember[]
   createdAt    DateTime @default(now())
 }
 

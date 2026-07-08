@@ -10,7 +10,10 @@ export default function Calendar() {
   const app = useApp();
   const { t, lang, locale } = useLang();
   const { ui, patch, data, activeEvent, today } = app;
-  const canApprove = app.currentUser?.role === "Admin" || app.currentUser?.role === "Manager";
+  const canApprove = app.canApprove;
+  const isMgr = ["Admin", "Manager", "AsstManager"].includes(app.currentUser?.role ?? "");
+  const meId = app.currentUser?.id;
+  const userById = (id: string | null) => (id ? data.users.find((u) => u.id === id) : undefined);
   const apStyle: Record<string, [string, string]> = {
     approved: ["#e7f6f3", "#128d81"],
     pending: ["#fdf6e7", "#b17a09"],
@@ -117,6 +120,30 @@ export default function Calendar() {
             {sel.platforms.map((k) => (
               <span key={k} style={s("display:inline-flex;align-items:center;gap:6px;background:#f4f6f9;border-radius:999px;padding:5px 11px;font-size:12px;font-weight:600")}><span style={s(`width:7px;height:7px;border-radius:50%;background:${app.pcolor(k)}`)} />{app.pname(k)}</span>
             ))}
+          </div>
+
+          {/* Assignment + production status */}
+          <div style={s("background:#f8fafc;border:1px solid #eef1f5;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px")}>
+            <div style={s("display:flex;align-items:center;gap:10px")}>
+              <span style={s("font-size:12px;font-weight:700;color:#8b93a1;flex:none")}>{t.assignThisPost}</span>
+              {isMgr ? (
+                <select value={sel.assigneeId || ""} onChange={(e) => app.setPostAssignee(sel.id, e.target.value || null)} style={s("flex:1;min-width:0;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:9px;padding:7px 10px;font-family:inherit;font-size:13px;color:#0f172a;background:#fff")}>
+                  <option value="">{t.taskUnassigned}</option>
+                  {data.users.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              ) : (
+                <span style={s("flex:1;font-size:13px;font-weight:600;color:#0f172a")}>{userById(sel.assigneeId)?.name || t.taskUnassigned}</span>
+              )}
+              {userById(sel.assigneeId) && (
+                <span style={s(`width:26px;height:26px;border-radius:50%;background:${userById(sel.assigneeId)!.avColor};display:grid;place-items:center;color:#fff;font-weight:700;font-size:11px;flex:none`)}>{userById(sel.assigneeId)!.init}</span>
+              )}
+            </div>
+            {sel.status !== "posted" && (isMgr || sel.assigneeId === meId) && (
+              <Hov tag="button" onClick={() => app.setPostComplete(sel.id, !sel.completed)} css={`border:1px solid ${sel.completed ? "#e3e8ef" : "#b7e3d8"};cursor:pointer;background:${sel.completed ? "#fff" : "#e7f6f3"};color:${sel.completed ? "#5c6675" : "#128d81"};font-weight:700;font-size:12px;padding:8px 14px;border-radius:999px;font-family:inherit`} hover={sel.completed ? "border-color:#c8d0dc" : "background:#d9efe9"}>{sel.completed ? t.postReopen : t.postMarkProduced}</Hov>
+            )}
+            {sel.completed && sel.completedAt && (
+              <span style={s("font-size:11px;color:#128d81;font-weight:600")}>{t.postProduced} · {new Date(sel.completedAt).toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" })}{userById(sel.completedById) ? ` · ${userById(sel.completedById)!.name}` : ""}</span>
+            )}
           </div>
           {sel.status === "posted" && (
             <Hov tag="button" onClick={() => patch({ stat: { kind: "post", id: sel.id } })} css="width:100%;border:none;cursor:pointer;background:#0f172a;color:#fff;font-weight:700;font-size:13px;padding:10px;border-radius:999px;font-family:inherit;margin-bottom:8px" hover="background:#2563eb">{t.viewAnalytics}</Hov>

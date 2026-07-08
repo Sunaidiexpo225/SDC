@@ -13,6 +13,7 @@ import Compose from "./screens/Compose";
 import Calendar from "./screens/Calendar";
 import Library from "./screens/Library";
 import Analytics from "./screens/Analytics";
+import Tasks from "./screens/Tasks";
 import Approvals from "./screens/Approvals";
 import Admin from "./screens/Admin";
 
@@ -42,6 +43,7 @@ export default function AppShell() {
     ["calendar", t.tabCalendar],
     ["library", t.tabLibrary],
     ["analytics", t.tabAnalytics],
+    ["tasks", t.tabTasks],
     ["team", t.tabTeam],
   ];
 
@@ -189,6 +191,7 @@ export default function AppShell() {
           {ui.tab === "calendar" && <Calendar />}
           {ui.tab === "library" && <Library />}
           {ui.tab === "analytics" && <Analytics />}
+          {ui.tab === "tasks" && <Tasks />}
           {ui.tab === "team" && <Approvals />}
           {ui.tab === "admin" && (currentUser?.role === "Admin" ? <Admin /> : <Dashboard />)}
         </div>

@@ -33,6 +33,7 @@ export type Tab =
   | "calendar"
   | "library"
   | "analytics"
+  | "tasks"
   | "team"
   | "admin";
 
@@ -50,6 +51,7 @@ interface UiState {
   newColor: string;
   caption: string;
   hashtags: string[];
+  composeAssignee: string; // user id to assign the composed post to ("" = none)
   generating: boolean;
   genIdx: number;
   composeAsset: {
@@ -114,6 +116,30 @@ interface AppCtx {
   deletePost: (id: string) => Promise<void>;
   publishPost: (id: string) => Promise<void>;
   setPostApproval: (id: string, approval: "approved" | "declined") => Promise<void>;
+  setPostAssignee: (id: string, assigneeId: string | null) => Promise<void>;
+  setPostComplete: (id: string, completed: boolean) => Promise<void>;
+  createTask: (input: {
+    title: string;
+    notes?: string;
+    eventId?: string | null;
+    assigneeId?: string | null;
+    dueDate?: string | null;
+    priority?: "low" | "normal" | "high";
+  }) => Promise<boolean>;
+  updateTask: (
+    id: string,
+    patch: Partial<{
+      title: string;
+      notes: string | null;
+      eventId: string | null;
+      assigneeId: string | null;
+      dueDate: string | null;
+      priority: "low" | "normal" | "high";
+      status: "open" | "completed";
+    }>,
+  ) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+  setUserEvents: (userId: string, eventIds: string[]) => Promise<void>;
   createEvent: () => Promise<void>;
   renameEvent: (id: string, name: string) => Promise<void>;
   setEventColor: (id: string, color: string) => Promise<void>;
@@ -185,6 +211,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     newColor: "#7c5cf0",
     caption: "",
     hashtags: [],
+    composeAssignee: "",
     generating: false,
     genIdx: 0,
     composeAsset: null,
@@ -275,7 +302,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [data],
   );
   const canApprove =
-    !!currentUser && (currentUser.role === "Admin" || currentUser.role === "Manager");
+    !!currentUser &&
+    (currentUser.role === "Admin" ||
+      currentUser.role === "Manager" ||
+      currentUser.role === "AsstManager");
   const canDiscard = !!currentUser && currentUser.role === "Editor";
 
   const pname = useCallback((k: string) => platformName(k, lang), [lang]);
@@ -346,6 +376,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ? { mediaId: ui.composeAsset.mediaId, format: ui.composeAsset.type }
           : {}),
       });
+      // Assign the new post to a team member if one was picked in Compose.
+      if (ui.composeAssignee) {
+        await api.patch(`/api/posts/${post.id}`, { assigneeId: ui.composeAssignee }).catch(() => {});
+      }
       await reload();
       patch({
         tab: "calendar",
@@ -353,6 +387,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         caption: "",
         hashtags: [],
         composeAsset: null,
+        composeAssignee: "",
         selectedPostId: post.id,
       });
       const { tr } = await import("@/lib/i18n");
@@ -540,6 +575,106 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         await api.patch(`/api/accounts/${accountId}`, { action: "disconnect" });
         await reload();
         toast(tr(lang).toastDisconnected);
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Failed");
+      }
+    },
+    [reload, toast, lang],
+  );
+
+  const setPostAssignee = useCallback(
+    async (id: string, assigneeId: string | null) => {
+      const { tr } = await import("@/lib/i18n");
+      try {
+        await api.patch(`/api/posts/${id}`, { assigneeId });
+        await reload();
+        toast(tr(lang).assigneeSaved);
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Failed");
+      }
+    },
+    [reload, toast, lang],
+  );
+
+  const setPostComplete = useCallback(
+    async (id: string, completed: boolean) => {
+      try {
+        await api.patch(`/api/posts/${id}`, { completed });
+        await reload();
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Failed");
+      }
+    },
+    [reload, toast],
+  );
+
+  const createTask = useCallback(
+    async (input: {
+      title: string;
+      notes?: string;
+      eventId?: string | null;
+      assigneeId?: string | null;
+      dueDate?: string | null;
+      priority?: "low" | "normal" | "high";
+    }) => {
+      const { tr } = await import("@/lib/i18n");
+      try {
+        await api.post("/api/tasks", input);
+        await reload();
+        toast(tr(lang).taskCreated);
+        return true;
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Failed");
+        return false;
+      }
+    },
+    [reload, toast, lang],
+  );
+
+  const updateTask = useCallback(
+    async (
+      id: string,
+      p: Partial<{
+        title: string;
+        notes: string | null;
+        eventId: string | null;
+        assigneeId: string | null;
+        dueDate: string | null;
+        priority: "low" | "normal" | "high";
+        status: "open" | "completed";
+      }>,
+    ) => {
+      try {
+        await api.patch(`/api/tasks/${id}`, p);
+        await reload();
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Failed");
+      }
+    },
+    [reload, toast],
+  );
+
+  const deleteTask = useCallback(
+    async (id: string) => {
+      const { tr } = await import("@/lib/i18n");
+      try {
+        await api.del(`/api/tasks/${id}`);
+        await reload();
+        toast(tr(lang).taskDeleted);
+      } catch (e) {
+        toast(e instanceof Error ? e.message : "Failed");
+      }
+    },
+    [reload, toast, lang],
+  );
+
+  const setUserEvents = useCallback(
+    async (userId: string, eventIds: string[]) => {
+      const { tr } = await import("@/lib/i18n");
+      try {
+        await api.put(`/api/users/${userId}/events`, { eventIds });
+        await reload();
+        toast(tr(lang).eventAccessSaved);
       } catch (e) {
         toast(e instanceof Error ? e.message : "Failed");
       }
@@ -746,6 +881,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     deletePost,
     publishPost,
     setPostApproval,
+    setPostAssignee,
+    setPostComplete,
+    createTask,
+    updateTask,
+    deleteTask,
+    setUserEvents,
     createEvent,
     renameEvent,
     setEventColor,

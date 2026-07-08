@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { requireAuth, json, error, roleCan } from "@/lib/api";
+import { requireAuth, json, error, forbidden, roleCan, canAccessEvent } from "@/lib/api";
 import { toApprovalDTO } from "@/lib/serialize";
 import type { Role } from "@/lib/types";
 
@@ -24,13 +24,16 @@ export async function PATCH(
 
   const approval = await prisma.approval.findUnique({ where: { id: params.id } });
   if (!approval) return error("Approval not found", 404);
+  if (!(await canAccessEvent(ctx, approval.eventId))) {
+    return forbidden("You don't have access to this event");
+  }
 
-  // Role gating mirrors the design: Managers/Admins approve or decline;
-  // Editors may discard their own; anyone may save an edited caption.
-  if ((action === "approve" || action === "decline") && !roleCan(role, ["Admin", "Manager"])) {
+  // Role gating mirrors the design: Managers/Assistant Managers/Admins approve
+  // or decline; Editors may discard their own; anyone may save an edited caption.
+  if ((action === "approve" || action === "decline") && !roleCan(role, ["Admin", "Manager", "AsstManager"])) {
     return error("Only Managers and Admins can approve", 403);
   }
-  if (action === "discard" && !roleCan(role, ["Editor", "Admin", "Manager"])) {
+  if (action === "discard" && !roleCan(role, ["Editor", "AsstManager", "Admin", "Manager"])) {
     return error("Not permitted", 403);
   }
 

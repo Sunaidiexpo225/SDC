@@ -10,9 +10,10 @@ import { PLATFORMS } from "@/lib/platforms";
 import type { Role } from "@/lib/types";
 import AuditLog from "./AuditLog";
 import LinkedInTarget from "./LinkedInTarget";
+import UserEventAccess from "./UserEventAccess";
 
 const ADMIN_PALETTE = ["#e0457b", "#17a99b", "#7c5cf0", "#2563eb", "#f59e0b", "#0ea5a3"];
-const ROLES: Role[] = ["Admin", "Manager", "Editor", "Viewer"];
+const ROLES: Role[] = ["Admin", "Manager", "AsstManager", "Editor", "Viewer"];
 
 export default function Admin() {
   const app = useApp();
@@ -76,7 +77,7 @@ export default function Admin() {
                 : settings.requireMfa
                   ? { l: t.mfaRequired, bg: "#fdf2f2", c: "#d64545" }
                   : { l: t.mfaOff, bg: "#f0f3f7", c: "#8b93a1" };
-              const canApprove = u.role === "Admin" || u.role === "Manager";
+              const canApprove = u.role === "Admin" || u.role === "Manager" || u.role === "AsstManager";
               return (
                 <div key={u.id} style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:16px 18px")}>
                   <div style={s("display:flex;align-items:center;gap:14px;margin-bottom:14px")}>
@@ -107,6 +108,9 @@ export default function Admin() {
                       <span style={s(`background:${badge.bg};color:${badge.c};font-size:11px;font-weight:700;padding:5px 12px;border-radius:999px`)}>{badge.l}</span>
                       <Hov tag="button" onClick={() => (on ? app.resetMfa(u.id) : app.enableMfaOpen(u.id))} css="border:1px solid #dbe1ea;cursor:pointer;background:#fff;color:#0f172a;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;font-family:inherit" hover="border-color:#2563eb;color:#2563eb">{on ? t.resetMfa : t.enableMfa}</Hov>
                     </div>
+                  </div>
+                  <div style={s("margin-top:12px")}>
+                    <UserEventAccess user={u} events={events} />
                   </div>
                 </div>
               );

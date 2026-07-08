@@ -118,6 +118,21 @@ export async function seedCore(db: Db) {
     slugToId[e.slug] = created.id;
   }
 
+  // Give the event-scoped demo users (Assistant Manager / Editor / Viewer)
+  // access to every seeded event, so the demo isn't empty when acting as them.
+  // Admins/Managers are global and need no rows.
+  const allEventIds = Object.values(slugToId);
+  const scopedUsers = await db.user.findMany({
+    where: { role: { notIn: ["Admin", "Manager"] } },
+    select: { id: true },
+  });
+  for (const u of scopedUsers) {
+    await db.eventMember.createMany({
+      data: allEventIds.map((eventId) => ({ userId: u.id, eventId })),
+      skipDuplicates: true,
+    });
+  }
+
   for (const e of EVENTS) {
     for (const [off, time, key, plats, status] of POST_PLAN[e.slug] || []) {
       const sfx = SUFFIX[key];

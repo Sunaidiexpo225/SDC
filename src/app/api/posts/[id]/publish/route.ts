@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth, json, error, forbidden, effectiveRole, roleCan } from "@/lib/api";
+import { requireAuth, json, error, forbidden, effectiveRole, roleCan, canAccessEvent } from "@/lib/api";
 import { publishToInstagram } from "@/lib/publishers/instagram";
 import { publishToX } from "@/lib/publishers/x";
 import { publishToFacebook } from "@/lib/publishers/facebook";
@@ -27,7 +27,7 @@ export async function POST(
 ) {
   const ctx = await requireAuth();
   if (!ctx) return error("Not authenticated", 401);
-  if (!roleCan(effectiveRole(ctx), ["Admin", "Manager", "Editor"])) {
+  if (!roleCan(effectiveRole(ctx), ["Admin", "Manager", "AsstManager", "Editor"])) {
     return forbidden("Viewers can't publish");
   }
 
@@ -36,6 +36,9 @@ export async function POST(
     include: { media: true, event: { include: { accounts: true } } },
   });
   if (!post) return error("Post not found", 404);
+  if (!(await canAccessEvent(ctx, post.eventId))) {
+    return forbidden("You don't have access to this event");
+  }
 
   // Approval gate: a post must be approved by a Manager/Admin before it can be
   // published to any platform.

@@ -12,7 +12,7 @@ const PALETTE = ["#e0457b", "#17a99b", "#7c5cf0", "#2563eb", "#f59e0b", "#0ea5a3
 const Body = z.object({
   name: z.string().optional(),
   email: z.string().email("A valid email is required"),
-  role: z.enum(["Admin", "Manager", "Editor", "Viewer"]).default("Editor"),
+  role: z.enum(["Admin", "Manager", "AsstManager", "Editor", "Viewer"]).default("Editor"),
   password: z.string().optional(),
 });
 

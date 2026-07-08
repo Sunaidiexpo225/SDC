@@ -5,10 +5,11 @@ import {
   toEventDTO,
   toPostDTO,
   toApprovalDTO,
+  toTaskDTO,
   toUserDTO,
   toSettingDTO,
 } from "./serialize";
-import type { AppData, Role } from "./types";
+import { GLOBAL_ROLES, type AppData, type Role } from "./types";
 
 export function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -28,20 +29,31 @@ export async function loadAppData(): Promise<AppData> {
   const { ensureSeeded } = await import("./seedData");
   await ensureSeeded();
   const { session, actingUser } = await currentUsers();
-  const [events, posts, approvals, users, setting] = await Promise.all([
+  const [events, posts, approvals, tasks, users, setting] = await Promise.all([
     prisma.event.findMany({
       orderBy: { order: "asc" },
       include: { accounts: { orderBy: { id: "asc" } } },
     }),
     prisma.post.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.approval.findMany({ orderBy: { id: "asc" } }),
-    prisma.user.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.task.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.user.findMany({ orderBy: { createdAt: "asc" }, include: { eventAccess: true } }),
     getSetting(),
   ]);
+
+  // Event-scoped users (Assistant Manager / Editor / Viewer) only receive the
+  // events they're a member of, and the posts/approvals/tasks under them.
+  const allowed = await accessibleEventIds(actingUser);
+  const canSee = (eventId: string | null | undefined) =>
+    allowed === null || (!!eventId && allowed.includes(eventId));
+  const visEvents = allowed === null ? events : events.filter((e) => canSee(e.id));
+
   return {
-    events: events.map(toEventDTO),
-    posts: posts.map(toPostDTO),
-    approvals: approvals.map(toApprovalDTO),
+    events: visEvents.map(toEventDTO),
+    posts: posts.filter((p) => canSee(p.eventId)).map(toPostDTO),
+    approvals: approvals.filter((a) => canSee(a.eventId)).map(toApprovalDTO),
+    // Tasks with no event are visible to everyone; event-tied tasks follow access.
+    tasks: tasks.filter((tk) => tk.eventId === null || canSee(tk.eventId)).map(toTaskDTO),
     users: users.map(toUserDTO),
     settings: toSettingDTO(setting),
     session: {
@@ -63,6 +75,26 @@ export async function requireAuth() {
 
 export function roleCan(role: Role | undefined, allowed: Role[]): boolean {
   return !!role && allowed.includes(role);
+}
+
+// The set of event ids a user may access, or null for "all" (global roles:
+// Admin / Manager). Event-scoped roles resolve to their EventMember rows.
+export async function accessibleEventIds(
+  user: { id: string; role: string } | null | undefined,
+): Promise<string[] | null> {
+  if (!user) return [];
+  if (GLOBAL_ROLES.includes(user.role as Role)) return null;
+  const rows = await prisma.eventMember.findMany({
+    where: { userId: user.id },
+    select: { eventId: true },
+  });
+  return rows.map((r) => r.eventId);
+}
+
+// True when the effective (acting) user may act on the given event.
+export async function canAccessEvent(ctx: Ctx, eventId: string): Promise<boolean> {
+  const allowed = await accessibleEventIds(ctx.actingUser ?? ctx.authUser);
+  return allowed === null || allowed.includes(eventId);
 }
 
 // The role permission checks run against: the "acting as" user in demo mode,

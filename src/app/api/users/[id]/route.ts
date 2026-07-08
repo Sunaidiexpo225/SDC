@@ -7,7 +7,7 @@ import { verifyTotp } from "@/lib/auth";
 import { audit, actorOf, clientIp } from "@/lib/audit";
 
 const Body = z.object({
-  role: z.enum(["Admin", "Manager", "Editor", "Viewer"]).optional(),
+  role: z.enum(["Admin", "Manager", "AsstManager", "Editor", "Viewer"]).optional(),
   action: z.enum(["resetMfa", "enableMfa"]).optional(),
   code: z.string().optional(),
 });

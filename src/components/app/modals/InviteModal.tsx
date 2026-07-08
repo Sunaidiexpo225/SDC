@@ -7,7 +7,7 @@ import { s } from "@/lib/style";
 import { segStyle, roleLabelOf } from "../helpers";
 import type { Role } from "@/lib/types";
 
-const ROLES: Role[] = ["Admin", "Manager", "Editor", "Viewer"];
+const ROLES: Role[] = ["Admin", "Manager", "AsstManager", "Editor", "Viewer"];
 
 export default function InviteModal() {
   const app = useApp();

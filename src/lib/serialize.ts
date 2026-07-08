@@ -3,7 +3,9 @@ import type {
   SocialAccount,
   Post,
   Approval,
+  Task,
   User,
+  EventMember,
   Setting,
 } from "@prisma/client";
 import type {
@@ -11,6 +13,7 @@ import type {
   EventDTO,
   PostDTO,
   ApprovalDTO,
+  TaskDTO,
   UserDTO,
   SettingDTO,
   Role,
@@ -62,6 +65,27 @@ export function toPostDTO(p: Post): PostDTO {
     format: p.format ?? null,
     mediaId: p.mediaId ?? null,
     mediaUrl: p.mediaId ? `/api/media/${p.mediaId}` : null,
+    assigneeId: p.assigneeId ?? null,
+    completed: p.completed ?? false,
+    completedAt: p.completedAt ? p.completedAt.toISOString() : null,
+    completedById: p.completedById ?? null,
+  };
+}
+
+export function toTaskDTO(tk: Task): TaskDTO {
+  return {
+    id: tk.id,
+    eventId: tk.eventId ?? null,
+    title: tk.title,
+    notes: tk.notes ?? null,
+    assigneeId: tk.assigneeId ?? null,
+    dueDate: tk.dueDate ?? null,
+    priority: tk.priority as TaskDTO["priority"],
+    status: tk.status as TaskDTO["status"],
+    completedAt: tk.completedAt ? tk.completedAt.toISOString() : null,
+    completedById: tk.completedById ?? null,
+    createdById: tk.createdById ?? null,
+    createdAt: tk.createdAt.toISOString(),
   };
 }
 
@@ -84,7 +108,7 @@ export function toApprovalDTO(a: Approval): ApprovalDTO {
   };
 }
 
-export function toUserDTO(u: User): UserDTO {
+export function toUserDTO(u: User & { eventAccess?: EventMember[] }): UserDTO {
   return {
     id: u.id,
     name: u.name,
@@ -94,6 +118,7 @@ export function toUserDTO(u: User): UserDTO {
     role: u.role as Role,
     status: u.status as UserDTO["status"],
     mfaEnabled: u.mfaEnabled,
+    eventIds: (u.eventAccess ?? []).map((m) => m.eventId),
   };
 }
 
