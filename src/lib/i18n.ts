@@ -343,6 +343,8 @@ const en = {
   by: "by",
   // Roles + tasks + event access
   roleAsstManager: "Assistant Manager",
+  noEventsTitle: "No events assigned yet",
+  noEventsBody: "You don't have access to any events. Ask an Admin or Manager to grant you access in Admin → Users → Event access. You can still use the Tasks tab.",
   tabTasks: "Tasks",
   tasksH2: "Tasks",
   tasksSub: "Assign work to the team, track it to done, and report on what shipped.",
@@ -763,6 +765,8 @@ const ar: Translation = {
   by: "من",
   // Roles + tasks + event access
   roleAsstManager: "مساعد مدير",
+  noEventsTitle: "لا فعاليات مُسندة بعد",
+  noEventsBody: "ليس لديك صلاحية لأي فعالية. اطلب من مدير منحك الصلاحية من الإدارة ← المستخدمون ← صلاحية الفعاليات. لا يزال بإمكانك استخدام تبويب المهام.",
   tabTasks: "المهام",
   tasksH2: "المهام",
   tasksSub: "وزّع العمل على الفريق، وتابعه حتى الإنجاز، وأصدر تقريرًا بما تم.",

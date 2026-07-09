@@ -23,6 +23,11 @@ import AddEventModal from "./modals/AddEventModal";
 import ReviewModal from "./modals/ReviewModal";
 import PostStatModal from "./modals/PostStatModal";
 
+// Tabs whose screens assume at least one accessible event; when a user has none
+// (an event-scoped member not yet granted access) we show an empty state
+// instead of letting those screens crash on a missing activeEvent.
+const NEEDS_EVENT = new Set(["dashboard", "compose", "calendar", "library", "analytics", "team"]);
+
 export default function AppShell() {
   const app = useApp();
   const { t, lang, dir, setLang } = useLang();
@@ -186,14 +191,26 @@ export default function AppShell() {
 
         {/* content */}
         <div style={s("flex:1;min-width:0;overflow:auto")}>
-          {ui.tab === "dashboard" && <Dashboard />}
-          {ui.tab === "compose" && <Compose />}
-          {ui.tab === "calendar" && <Calendar />}
-          {ui.tab === "library" && <Library />}
-          {ui.tab === "analytics" && <Analytics />}
-          {ui.tab === "tasks" && <Tasks />}
-          {ui.tab === "team" && <Approvals />}
-          {ui.tab === "admin" && (currentUser?.role === "Admin" ? <Admin /> : <Dashboard />)}
+          {events.length === 0 && NEEDS_EVENT.has(ui.tab) ? (
+            <div style={s("padding:48px 32px;display:flex;justify-content:center")}>
+              <div style={s("max-width:460px;text-align:center;background:#fff;border:1px solid #e3e8ef;border-radius:18px;padding:40px 28px")}>
+                <div style={s("font-size:40px;margin-bottom:12px")}>🗂️</div>
+                <div style={s("font-family:var(--grotesk);font-weight:700;font-size:20px;margin-bottom:8px")}>{t.noEventsTitle}</div>
+                <p style={s("font-size:14px;color:#5c6675;line-height:1.6;margin:0")}>{t.noEventsBody}</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {ui.tab === "dashboard" && <Dashboard />}
+              {ui.tab === "compose" && <Compose />}
+              {ui.tab === "calendar" && <Calendar />}
+              {ui.tab === "library" && <Library />}
+              {ui.tab === "analytics" && <Analytics />}
+              {ui.tab === "tasks" && <Tasks />}
+              {ui.tab === "team" && <Approvals />}
+              {ui.tab === "admin" && (currentUser?.role === "Admin" ? <Admin /> : null)}
+            </>
+          )}
         </div>
       </div>
 
