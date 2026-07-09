@@ -120,4 +120,5 @@ export interface AppData {
   users: UserDTO[];
   settings: SettingDTO;
   session: SessionDTO;
+  autoPublishConfigured: boolean; // CRON_SECRET is set ⇒ the auto-publish cron can run
 }

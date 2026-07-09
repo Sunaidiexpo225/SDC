@@ -65,7 +65,18 @@ export default function Calendar() {
       <div style={s("display:flex;align-items:center;justify-content:space-between;margin-bottom:20px")}>
         <div>
           <h2 style={s("font-family:var(--grotesk);font-weight:700;font-size:28px;letter-spacing:-1px;margin:0 0 4px")}>{t.calendarH2}</h2>
-          <p style={s("font-size:14px;color:#5c6675;margin:0")}><span style={s(`color:${activeEvent.color};font-weight:700`)}>{activeName}</span> · {schedLine}</p>
+          <div style={s("display:flex;align-items:center;gap:10px;flex-wrap:wrap")}>
+            <p style={s("font-size:14px;color:#5c6675;margin:0")}><span style={s(`color:${activeEvent.color};font-weight:700`)}>{activeName}</span> · {schedLine}</p>
+            {(() => {
+              const on = data.autoPublishConfigured && data.settings.autoPublish;
+              return (
+                <span title={on ? t.autoPubTip : t.autoPubOffTip} style={s(`display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px;cursor:default;background:${on ? "#e7f6f3" : "#f0f3f7"};color:${on ? "#128d81" : "#8b93a1"}`)}>
+                  <span style={s(`width:7px;height:7px;border-radius:50%;background:${on ? "#17a99b" : "#c0c7d2"}`)} />
+                  {on ? `⚡ ${t.autoPubOn}` : t.autoPubOff}
+                </span>
+              );
+            })()}
+          </div>
         </div>
         <div style={s("display:flex;align-items:center;gap:10px")}>
           <Hov tag="button" onClick={() => patch({ monthOffset: ui.monthOffset - 1, selectedPostId: null })} css="border:1px solid #e3e8ef;cursor:pointer;background:#fff;width:36px;height:36px;border-radius:50%;font-family:inherit;font-size:15px;color:#0f172a" hover="border-color:#2563eb">{t.arrPrev}</Hov>

@@ -61,6 +61,7 @@ export async function loadAppData(): Promise<AppData> {
       userId: session?.uid ?? null,
       actingUserId: actingUser?.id ?? session?.uid ?? null,
     },
+    autoPublishConfigured: !!process.env.CRON_SECRET,
   };
 }
 

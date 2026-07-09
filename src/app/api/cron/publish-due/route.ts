@@ -27,6 +27,13 @@ export async function GET(req: NextRequest) {
     return error("Unauthorized", 401);
   }
 
+  // Respect the workspace auto-publish setting — an admin can pause it without
+  // touching the cron.
+  const setting = await prisma.setting.findUnique({ where: { id: 1 } });
+  if (setting && setting.autoPublish === false) {
+    return json({ due: 0, attempted: 0, published: 0, skipped: "auto-publish disabled in settings" });
+  }
+
   const now = Date.now();
   const candidates = await prisma.post.findMany({
     where: { status: { not: "posted" }, approval: "approved" },
