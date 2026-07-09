@@ -230,6 +230,20 @@ export default function Compose() {
                 );
               })}
             </div>
+            {(() => {
+              const autoOn = app.data.autoPublishConfigured && app.data.settings.autoPublish;
+              if (!autoOn) {
+                return <div style={s("display:flex;align-items:center;gap:7px;margin-bottom:10px;font-size:12px;font-weight:600;color:#8b93a1")}><span style={s("width:7px;height:7px;border-radius:50%;background:#c0c7d2;flex:none")} />{t.autoPubOff}</div>;
+              }
+              const d = new Date(ui.schedDay + "T00:00:00");
+              const when = `${d.toLocaleDateString(lang === "ar" ? "ar" : "en", { weekday: "short", day: "numeric" })} · ${fmt12(ui.schedTime, lang)}`;
+              return (
+                <div style={s("display:flex;align-items:center;gap:7px;margin-bottom:10px;background:#e7f6f3;border-radius:10px;padding:8px 12px")}>
+                  <span style={s("font-size:13px;flex:none")}>⚡</span>
+                  <span style={s("font-size:12px;font-weight:700;color:#128d81")}>{app.canApprove ? t.autoPubAt(when) : t.autoPubWhenApproved}</span>
+                </div>
+              );
+            })()}
             <div style={s("display:flex;gap:8px")}>
               <Hov tag="button" onClick={() => app.schedule(false)} disabled={!canSched} css={`flex:1;border:none;cursor:pointer;background:#2563eb;color:#fff;font-weight:700;font-size:15px;padding:14px;border-radius:999px;font-family:inherit;opacity:${canSched ? 1 : 0.45}`} hover={canSched ? "background:#1d4ed8" : ""}>{t.schedulePost}</Hov>
               {app.canApprove && (
