@@ -143,6 +143,7 @@ interface AppCtx {
   createEvent: () => Promise<void>;
   renameEvent: (id: string, name: string) => Promise<void>;
   setEventColor: (id: string, color: string) => Promise<void>;
+  setEventAliases: (id: string, aliases: string) => Promise<void>;
   addSocial: (eventId: string, platform: string) => Promise<void>;
   removeSocial: (accountId: string) => Promise<void>;
   connectApi: (accountId: string, key: string, externalId?: string) => Promise<void>;
@@ -496,6 +497,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     async (id: string, color: string) => {
       try {
         await api.patch(`/api/events/${id}`, { color });
+        await reload();
+      } catch {
+        /* ignore */
+      }
+    },
+    [reload],
+  );
+
+  const setEventAliases = useCallback(
+    async (id: string, aliases: string) => {
+      try {
+        await api.patch(`/api/events/${id}`, { aliases });
         await reload();
       } catch {
         /* ignore */
@@ -915,6 +928,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     createEvent,
     renameEvent,
     setEventColor,
+    setEventAliases,
     addSocial,
     removeSocial,
     connectApi,

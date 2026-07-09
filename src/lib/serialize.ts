@@ -43,6 +43,7 @@ export function toEventDTO(e: PEvent & { accounts: SocialAccount[] }): EventDTO 
     nameEn: e.nameEn,
     nameAr: e.nameAr,
     color: e.color,
+    aliases: e.aliases ? e.aliases.split(",").map((a) => a.trim()).filter(Boolean) : [],
     barIx: e.barIx,
     order: e.order,
     accounts: e.accounts.map(toAccountDTO),

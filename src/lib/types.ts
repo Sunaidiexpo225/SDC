@@ -28,6 +28,7 @@ export interface EventDTO {
   nameEn: string;
   nameAr: string;
   color: string;
+  aliases: string[]; // nicknames used to auto-detect the event in task text
   barIx: number;
   order: number;
   accounts: AccountDTO[];

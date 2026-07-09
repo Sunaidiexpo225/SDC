@@ -7,6 +7,7 @@ import { toEventDTO } from "@/lib/serialize";
 const Body = z.object({
   name: z.string().optional(),
   color: z.string().optional(),
+  aliases: z.string().max(300).optional(),
 });
 
 export async function PATCH(
@@ -22,7 +23,7 @@ export async function PATCH(
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return error("Invalid body", 400);
 
-  const data: { nameEn?: string; nameAr?: string; color?: string } = {};
+  const data: { nameEn?: string; nameAr?: string; color?: string; aliases?: string | null } = {};
   if (parsed.data.name != null) {
     const name = parsed.data.name.trim();
     if (!name) return error("Event name can't be empty", 400);
@@ -30,6 +31,14 @@ export async function PATCH(
     data.nameAr = name;
   }
   if (parsed.data.color != null) data.color = parsed.data.color;
+  if (parsed.data.aliases != null) {
+    const cleaned = parsed.data.aliases
+      .split(",")
+      .map((a) => a.trim())
+      .filter(Boolean)
+      .join(", ");
+    data.aliases = cleaned || null;
+  }
 
   try {
     const event = await prisma.event.update({

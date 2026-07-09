@@ -103,17 +103,20 @@ export default function Tasks() {
     setTimeout(() => boxRef.current?.focus(), 0);
   };
 
-  // Detect an event by name typed anywhere in the task text, so writing the
-  // event's name assigns the task to it.
+  // Detect an event by its name, a nickname, or its acronym typed anywhere in
+  // the task text, so writing "Saudi Franchise Expo" / "SFE" / a nickname
+  // auto-assigns the task to it.
   const detEvent = useMemo(() => {
     const txt = fTitle.toLowerCase();
     if (!txt.trim()) return null;
+    const words = new Set(txt.split(/[^a-z0-9؀-ۿ]+/).filter(Boolean));
     return (
-      events.find(
-        (e) =>
-          (e.nameEn && txt.includes(e.nameEn.toLowerCase())) ||
-          (e.nameAr && txt.includes(e.nameAr.toLowerCase())),
-      ) || null
+      events.find((e) => {
+        const names = [e.nameEn, e.nameAr, ...e.aliases].filter(Boolean).map((x) => x.toLowerCase());
+        if (names.some((n) => n && txt.includes(n))) return true;
+        const acr = e.nameEn.split(/\s+/).filter(Boolean).map((w) => w[0]).join("").toLowerCase();
+        return acr.length >= 2 && words.has(acr);
+      }) || null
     );
   }, [fTitle, events]);
 

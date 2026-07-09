@@ -15,6 +15,7 @@ model Event {
   nameEn    String
   nameAr    String
   color     String
+  aliases   String? // comma-separated nicknames used to auto-detect the event in task text
   barIx     Int             @default(0)
   order     Int             @default(0)
   accounts  SocialAccount[]

@@ -131,6 +131,7 @@ export default function Admin() {
               <div key={e.id} style={s("background:#fff;border:1px solid #e3e8ef;border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap")}>
                 <span style={s(`width:14px;height:14px;border-radius:50%;background:${e.color};flex:none`)} />
                 <input value={e.nameEn} onChange={(ev) => app.renameEvent(e.id, ev.target.value)} style={s("flex:1;min-width:160px;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:10px;padding:10px 12px;font-family:inherit;font-size:14px;font-weight:600;color:#0f172a;background:#fbfcfe")} />
+                <input defaultValue={e.aliases.join(", ")} onBlur={(ev) => app.setEventAliases(e.id, ev.target.value)} placeholder={t.aliasesPh} title={t.aliasesTip} style={s("flex:1;min-width:150px;box-sizing:border-box;border:1px solid #e3e8ef;border-radius:10px;padding:10px 12px;font-family:inherit;font-size:13px;color:#5c6675;background:#fbfcfe")} />
                 <span style={s("font-size:12px;color:#8b93a1;flex:none")}>{t.accountsCount(e.accounts.length)}</span>
                 <div style={s("display:flex;gap:7px;flex:none")}>
                   {ADMIN_PALETTE.map((c) => (
