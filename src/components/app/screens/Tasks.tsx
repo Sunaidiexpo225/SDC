@@ -96,13 +96,31 @@ export default function Tasks() {
   const candidates = mentionFrag !== null ? mentionCandidates(mentionFrag, smartUsers) : [];
   const boxRef = useRef<HTMLTextAreaElement>(null);
   const pickMention = (u: SmartUser) => {
-    setFTitle((prev) => prev.replace(/@([^\s@]*)$/, `@${u.init} `));
+    // Insert the person's name (first whitespace-free token) so the tag reads
+    // as a name, not an initial — e.g. "@AlHussain" instead of "@A".
+    const nameToken = u.name.split(/\s+/)[0];
+    setFTitle((prev) => prev.replace(/@([^\s@]*)$/, `@${nameToken} `));
     setTimeout(() => boxRef.current?.focus(), 0);
   };
+
+  // Detect an event by name typed anywhere in the task text, so writing the
+  // event's name assigns the task to it.
+  const detEvent = useMemo(() => {
+    const txt = fTitle.toLowerCase();
+    if (!txt.trim()) return null;
+    return (
+      events.find(
+        (e) =>
+          (e.nameEn && txt.includes(e.nameEn.toLowerCase())) ||
+          (e.nameAr && txt.includes(e.nameAr.toLowerCase())),
+      ) || null
+    );
+  }, [fTitle, events]);
 
   const effAssignee = fAssignee || parsed.assigneeId || null;
   const effDue = fDue || parsed.dueDate || null;
   const effPrio = fPrio || parsed.priority || "normal";
+  const effEvent = fEvent || detEvent?.id || "";
   const effTitle = parsed.cleanTitle || fTitle.trim();
   const detAssigneeName = parsed.assigneeName;
   const detDueLabel = parsed.dueLabel;
@@ -161,7 +179,7 @@ export default function Tasks() {
     const ok = await app.createTask({
       title: effTitle,
       assigneeId: effAssignee,
-      eventId: fEvent || null,
+      eventId: effEvent || null,
       dueDate: effDue,
       priority: effPrio,
     });
@@ -268,11 +286,12 @@ export default function Tasks() {
               </div>
 
               {/* live detected chips */}
-              {(detAssigneeName || detDueLabel) && (
+              {(detAssigneeName || detDueLabel || detPrio || (detEvent && !fEvent)) && (
                 <div style={s("display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px")}>
                   {detAssigneeName && <span style={s("display:inline-flex;align-items:center;gap:5px;background:#eef2f8;color:#2563eb;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px")}>@ {detAssigneeName}</span>}
                   {detDueLabel && <span style={s("display:inline-flex;align-items:center;gap:5px;background:#f0f9f6;color:#128d81;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px")}>📅 {detDueLabel}{detDueDate ? ` · ${detDueDate}` : ""}</span>}
                   {detPrio && <span style={s(`display:inline-flex;align-items:center;gap:5px;background:${PRIO[detPrio].tint};color:${PRIO[detPrio].accent};font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px`)}>⚡ {PRIO[detPrio].label(t)}</span>}
+                  {detEvent && !fEvent && <span style={s(`display:inline-flex;align-items:center;gap:5px;background:#f4f6f9;color:#5c6675;font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px`)}><span style={s(`width:7px;height:7px;border-radius:50%;background:${detEvent.color}`)} />{lang === "ar" ? detEvent.nameAr : detEvent.nameEn}</span>}
                 </div>
               )}
 
@@ -319,7 +338,7 @@ export default function Tasks() {
                   );
                 })}
                 {events.length > 0 && (
-                  <select value={fEvent} onChange={(e) => setFEvent(e.target.value)} style={s("margin-inline-start:auto;border:1px solid #e3e8ef;border-radius:999px;padding:7px 12px;font-family:inherit;font-size:12px;color:#0f172a;background:#fbfcfe")}>
+                  <select value={effEvent} onChange={(e) => setFEvent(e.target.value)} style={s("margin-inline-start:auto;border:1px solid #e3e8ef;border-radius:999px;padding:7px 12px;font-family:inherit;font-size:12px;color:#0f172a;background:#fbfcfe")}>
                     <option value="">{t.taskNoEvent}</option>
                     {events.map((e) => <option key={e.id} value={e.id}>{lang === "ar" ? e.nameAr : e.nameEn}</option>)}
                   </select>
