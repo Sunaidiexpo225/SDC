@@ -61,7 +61,8 @@ export function toPostDTO(p: Post): PostDTO {
     captionEn: p.captionEn,
     captionAr: p.captionAr,
     platforms: p.platformsCsv ? p.platformsCsv.split(",") : [],
-    status: p.status as PostDTO["status"],
+    // "publishing" is a transient in-flight lock — present it as scheduled.
+    status: (p.status === "posted" ? "posted" : "scheduled") as PostDTO["status"],
     approval: (p.approval ?? "pending") as PostDTO["approval"],
     format: p.format ?? null,
     mediaId: p.mediaId ?? null,

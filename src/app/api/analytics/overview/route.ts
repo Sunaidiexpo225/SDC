@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth, json, error } from "@/lib/api";
+import { requireAuth, json, error, accessibleEventIds } from "@/lib/api";
 import { getAccountData } from "@/lib/insightsStore";
 
 export const maxDuration = 60;
@@ -12,7 +12,10 @@ export async function GET(_req: NextRequest) {
   const ctx = await requireAuth();
   if (!ctx) return error("Not authenticated", 401);
 
+  // Event-scoped users only see the events they're a member of.
+  const allowed = await accessibleEventIds(ctx.actingUser ?? ctx.authUser);
   const events = await prisma.event.findMany({
+    where: allowed === null ? undefined : { id: { in: allowed } },
     orderBy: { order: "asc" },
     include: { accounts: true },
   });

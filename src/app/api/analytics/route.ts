@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAuth, json, error } from "@/lib/api";
+import { requireAuth, json, error, forbidden, canAccessEvent } from "@/lib/api";
 import { getAccountData } from "@/lib/insightsStore";
 import { computeLiveAnalytics, type LiveAccount } from "@/lib/analytics";
 import type { RangeKey } from "@/lib/types";
@@ -25,6 +25,8 @@ export async function GET(req: NextRequest) {
   const rangeRaw = searchParams.get("range") || "7d";
   const range = (RANGES.includes(rangeRaw) ? rangeRaw : "7d") as RangeKey;
   if (!eventId) return error("eventId is required", 400);
+  // Event-scoped users may only read analytics for events they're a member of.
+  if (!(await canAccessEvent(ctx, eventId))) return forbidden("You don't have access to this event");
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },

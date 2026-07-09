@@ -56,6 +56,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   if (eventId && !(await canAccessEvent(ctx, eventId))) {
     return forbidden("You don't have access to that event");
   }
+  if (assigneeId && !(await prisma.user.findUnique({ where: { id: assigneeId }, select: { id: true } }))) {
+    return error("Assignee not found", 400);
+  }
 
   const data: Record<string, unknown> = {};
   if (title !== undefined) data.title = title.trim();

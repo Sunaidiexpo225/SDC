@@ -85,7 +85,9 @@ model Post {
   captionEn    String
   captionAr    String
   platformsCsv String // comma-separated platform keys
-  status       String   @default("scheduled") // scheduled | posted
+  status       String   @default("scheduled") // scheduled | publishing | posted
+  publishingAt  DateTime? // set while a publish is in flight (claim lock for the cron)
+  publishedCsv  String? // platforms already published (so retries don't duplicate)
   approval     String   @default("pending") // pending | approved | declined
   format       String? // Image | Video | Reel (content type of the attached media)
   mediaId      String?

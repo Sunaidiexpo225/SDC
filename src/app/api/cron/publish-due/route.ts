@@ -46,6 +46,8 @@ export async function GET(req: NextRequest) {
     if (Number.isNaN(at)) return false;
     if (at > now) return false; // not time yet
     if (now - at > MAX_LATE_MS) return false; // too stale to auto-fire
+    // Wait for attached media to finish processing before publishing.
+    if (p.media && p.media.status !== "ready") return false;
     // Only attempt when at least one target platform has a connected account,
     // so we don't retry impossible posts every run.
     const platforms = p.platformsCsv ? p.platformsCsv.split(",") : [];

@@ -31,7 +31,30 @@ export async function publishPostToPlatforms(
   const platforms = post.platformsCsv ? post.platformsCsv.split(",") : [];
   const results: PublishResult[] = [];
 
-  const hasCloudMedia = !!(post.media && post.media.driver === "cloudinary" && post.media.storageKey);
+  // Atomic claim so overlapping cron runs (or cron + manual) can't publish the
+  // same post twice. Only one caller wins the transition to "publishing"; a
+  // "publishing" row older than 10 min is treated as stale (a crashed/timed-out
+  // run) and can be re-claimed.
+  const staleBefore = new Date(Date.now() - 10 * 60 * 1000);
+  const claim = await prisma.post.updateMany({
+    where: {
+      id: post.id,
+      OR: [
+        { status: { notIn: ["posted", "publishing"] } },
+        { status: "publishing", publishingAt: { lt: staleBefore } },
+      ],
+    },
+    data: { status: "publishing", publishingAt: new Date() },
+  });
+  if (claim.count === 0) {
+    return { ok: false, results: [{ platform: "—", ok: false, detail: "Already publishing or posted" }] };
+  }
+
+  // Platforms already published on a prior (partial) attempt — never re-post them.
+  const already = new Set((post.publishedCsv || "").split(",").map((s) => s.trim()).filter(Boolean));
+
+  // Only treat media as usable when Cloudinary has finished processing it.
+  const hasCloudMedia = !!(post.media && post.media.driver === "cloudinary" && post.media.storageKey && post.media.status === "ready");
   const isVideo = post.media?.mimeType.startsWith("video/") ?? false;
   const mediaFor = (platform: string) =>
     hasCloudMedia
@@ -44,6 +67,10 @@ export async function publishPostToPlatforms(
     audit({ action: "post.publish_failed", actor, target: `${platform} · ${post.event.nameEn}`, detail: msg, level: "error", ip });
 
   for (const platform of platforms) {
+    if (already.has(platform)) {
+      results.push({ platform, ok: true, detail: "Already published" });
+      continue;
+    }
     const account = post.event.accounts.find((a) => a.platform === platform && a.connected);
 
     if (platform === "instagram") {
@@ -144,9 +171,22 @@ export async function publishPostToPlatforms(
     results.push({ platform, ok: false, detail: "Publisher not available yet" });
   }
 
-  const ok = results.some((r) => r.ok);
-  if (ok) {
-    await prisma.post.update({ where: { id: post.id }, data: { status: "posted" } });
-  }
-  return { ok, results };
+  // A post is fully posted only when every *publishable* platform (targeted AND
+  // with a connected account) has succeeded — either now or on a prior attempt.
+  // Otherwise release it back to "scheduled" so the cron retries the platforms
+  // that haven't gone out yet (skipping the ones that already did).
+  const newlyOk = results.filter((r) => r.ok && !already.has(r.platform)).map((r) => r.platform);
+  const publishedSet = new Set<string>([...already, ...newlyOk]);
+  const publishable = platforms.filter((p) => post.event.accounts.some((a) => a.connected && a.platform === p));
+  const fullyDone = publishable.length > 0 && publishable.every((p) => publishedSet.has(p));
+
+  await prisma.post.update({
+    where: { id: post.id },
+    data: {
+      status: fullyDone ? "posted" : "scheduled",
+      publishedCsv: publishedSet.size ? [...publishedSet].join(",") : null,
+      publishingAt: null,
+    },
+  });
+  return { ok: results.some((r) => r.ok), results };
 }

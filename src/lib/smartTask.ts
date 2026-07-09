@@ -23,8 +23,10 @@ export interface SmartParse {
 // Words that imply a priority. EN + common AR.
 const HIGH_WORDS = /\b(urgent|urgently|asap|important|critical|high priority|emergency)\b/i;
 const HIGH_AR = /(عاجل|مهم|هام|طارئ|ضروري)/;
-const LOW_WORDS = /\b(low priority|whenever|someday|no rush|minor|low)\b/i;
-const LOW_AR = /(لاحقًا|لاحقا|غير عاجل|بسيط)/;
+// Only high-signal phrases for "low" — bare "low"/"minor" fire on normal titles
+// ("low stock", "minor tweak").
+const LOW_WORDS = /\b(low priority|whenever|someday|no rush)\b/i;
+const LOW_AR = /(غير عاجل|أولوية منخفضة)/;
 
 function detectPriority(text: string): "low" | "normal" | "high" | null {
   if (HIGH_WORDS.test(text) || HIGH_AR.test(text)) return "high";
@@ -32,15 +34,16 @@ function detectPriority(text: string): "low" | "normal" | "high" | null {
   return null;
 }
 
-// Weekday names → 0..6 (Sun..Sat), EN + common AR.
+// Weekday names → 0..6 (Sun..Sat), EN + common AR. Full names only — 3-letter
+// abbreviations ("sat", "sun", "wed") match too many ordinary words.
 const WEEKDAYS: Record<string, number> = {
-  sunday: 0, sun: 0, "الأحد": 0, "الاحد": 0,
-  monday: 1, mon: 1, "الإثنين": 1, "الاثنين": 1, "الاتنين": 1,
-  tuesday: 2, tue: 2, tues: 2, "الثلاثاء": 2,
-  wednesday: 3, wed: 3, "الأربعاء": 3, "الاربعاء": 3,
-  thursday: 4, thu: 4, thur: 4, thurs: 4, "الخميس": 4,
-  friday: 5, fri: 5, "الجمعة": 5,
-  saturday: 6, sat: 6, "السبت": 6,
+  sunday: 0, "الأحد": 0, "الاحد": 0,
+  monday: 1, "الإثنين": 1, "الاثنين": 1, "الاتنين": 1,
+  tuesday: 2, "الثلاثاء": 2,
+  wednesday: 3, "الأربعاء": 3, "الاربعاء": 3,
+  thursday: 4, "الخميس": 4,
+  friday: 5, "الجمعة": 5,
+  saturday: 6, "السبت": 6,
 };
 
 // Resolve a matched user for an `@token` by initials (exact) or name prefix.

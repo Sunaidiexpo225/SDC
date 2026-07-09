@@ -96,24 +96,29 @@ export default function Tasks() {
   const candidates = mentionFrag !== null ? mentionCandidates(mentionFrag, smartUsers) : [];
   const boxRef = useRef<HTMLTextAreaElement>(null);
   const pickMention = (u: SmartUser) => {
-    // Insert the person's name (first whitespace-free token) so the tag reads
-    // as a name, not an initial — e.g. "@AlHussain" instead of "@A".
+    // Commit the assignee explicitly (so two people sharing a first name can't
+    // be confused by re-parsing), and insert the name so the tag reads as a
+    // name. A function replacement avoids `$` in a name being treated specially.
     const nameToken = u.name.split(/\s+/)[0];
-    setFTitle((prev) => prev.replace(/@([^\s@]*)$/, `@${nameToken} `));
+    setFAssignee(u.id);
+    setFTitle((prev) => prev.replace(/@([^\s@]*)$/, () => `@${nameToken} `));
     setTimeout(() => boxRef.current?.focus(), 0);
   };
 
   // Detect an event by its name, a nickname, or its acronym typed anywhere in
   // the task text, so writing "Saudi Franchise Expo" / "SFE" / a nickname
-  // auto-assigns the task to it.
+  // auto-assigns the task to it. Names/aliases match on word boundaries so a
+  // short alias like "art" doesn't fire inside "start".
   const detEvent = useMemo(() => {
     const txt = fTitle.toLowerCase();
     if (!txt.trim()) return null;
     const words = new Set(txt.split(/[^a-z0-9؀-ۿ]+/).filter(Boolean));
+    const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const hasPhrase = (n: string) => new RegExp(`(^|[^\\p{L}\\p{N}])${esc(n)}([^\\p{L}\\p{N}]|$)`, "iu").test(txt);
     return (
       events.find((e) => {
         const names = [e.nameEn, e.nameAr, ...e.aliases].filter(Boolean).map((x) => x.toLowerCase());
-        if (names.some((n) => n && txt.includes(n))) return true;
+        if (names.some((n) => n && hasPhrase(n))) return true;
         const acr = e.nameEn.split(/\s+/).filter(Boolean).map((w) => w[0]).join("").toLowerCase();
         return acr.length >= 2 && words.has(acr);
       }) || null
@@ -153,7 +158,9 @@ export default function Tasks() {
   const needsAttention = (tk: TaskDTO) =>
     tk.status !== "completed" && (isOverdue(tk) || (tk.priority === "high" && tk.status === "open"));
   const attentionCount = filtered.filter(needsAttention).length;
-  const overdueCount = filtered.filter(isOverdue).length;
+  // Chime off ALL overdue tasks, not the filtered view, so toggling All/Mine
+  // doesn't reset the "already chimed" flag and replay the sound.
+  const overdueCount = tasks.filter(isOverdue).length;
 
   // Snooze mutes the reminder + chime for an hour (persisted across reloads).
   const [snoozeUntil, setSnoozeUntil] = useState(0);
@@ -216,7 +223,14 @@ export default function Tasks() {
   const exportCsv = () => {
     const head = [t.repColKind, t.repColTask, t.repColAssignee, t.repColEvent, t.repColBy, t.repColWhen];
     const rows = reportRows.map((r) => [r.kind, r.title, (r.assigneeId && userById[r.assigneeId]?.name) || "", eventName(r.eventId) || "", (r.byId && userById[r.byId]?.name) || "", fmtWhen(r.at)]);
-    const csv = [head, ...rows].map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    // Neutralise spreadsheet formula injection: a cell starting with =,+,-,@
+    // is prefixed with a quote so Excel/Sheets don't execute it.
+    const cell = (c: unknown) => {
+      let v = String(c);
+      if (/^[=+\-@]/.test(v)) v = "'" + v;
+      return `"${v.replace(/"/g, '""')}"`;
+    };
+    const csv = [head, ...rows].map((row) => row.map(cell).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -462,7 +476,7 @@ export default function Tasks() {
     return (
       <div
         draggable={canToggle}
-        onDragStart={() => setDragId(tk.id)}
+        onDragStart={(e) => { setDragId(tk.id); e.dataTransfer.setData("text/plain", tk.id); e.dataTransfer.effectAllowed = "move"; }}
         onDragEnd={() => { setDragId(null); setOverCol(null); }}
         style={s(`position:relative;background:${cardBg};border:1px solid ${cardBorder};border-radius:16px;padding:14px 14px 12px;box-shadow:0 4px 14px rgba(15,23,42,.05);overflow:hidden;${canToggle ? "cursor:grab;" : ""}${done ? "opacity:.72;" : ""}${dragging ? "opacity:.4;" : ""}`)}
       >

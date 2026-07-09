@@ -51,6 +51,9 @@ export async function POST(req: NextRequest) {
   if (eventId && !(await canAccessEvent(ctx, eventId))) {
     return forbidden("You don't have access to that event");
   }
+  if (assigneeId && !(await prisma.user.findUnique({ where: { id: assigneeId }, select: { id: true } }))) {
+    return error("Assignee not found", 400);
+  }
 
   const task = await prisma.task.create({
     data: {
