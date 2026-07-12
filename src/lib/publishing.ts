@@ -6,7 +6,6 @@ import { publishToFacebook } from "./publishers/facebook";
 import { publishToLinkedIn } from "./publishers/linkedin";
 import { platformPublishUrl, cldRawUrl } from "./cloudinaryUrl";
 import { CLOUDINARY_CLOUD } from "./cloudinary";
-import { TRANSFORM_SAFE_VIDEO_BYTES } from "./media";
 import { audit, type AuditActor } from "./audit";
 
 // A post with the relations the publisher needs.
@@ -60,13 +59,11 @@ export async function publishPostToPlatforms(
   const mediaFor = (platform: string) => {
     if (!hasCloudMedia) return null;
     const key = post.media!.storageKey as string;
-    // Videos too large for Cloudinary to transform are published as the
-    // original (uncropped) so they still go out; smaller ones are cropped
-    // per platform as before.
-    if (isVideo && (post.media!.size ?? 0) > TRANSFORM_SAFE_VIDEO_BYTES) {
-      return cldRawUrl(CLOUDINARY_CLOUD, "video", key);
-    }
-    return platformPublishUrl(CLOUDINARY_CLOUD, isVideo ? "video" : "image", key, platform, post.format);
+    // Video is never cropped, so skip Cloudinary's transform entirely and
+    // publish the original file — this also sidesteps the video transform-size
+    // cap. Images get a light, no-crop re-encode to jpg for reliable ingestion.
+    if (isVideo) return cldRawUrl(CLOUDINARY_CLOUD, "video", key);
+    return platformPublishUrl(CLOUDINARY_CLOUD, "image", key, platform, post.format);
   };
 
   const logOk = (platform: string, id: string) =>
