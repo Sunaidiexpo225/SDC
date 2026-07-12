@@ -150,6 +150,7 @@ export default function Compose() {
                 <>
                   <span style={s("font-family:ui-monospace,Menlo,monospace;font-size:12px;color:#8b93a1")}>{t.dropHint}</span>
                   <span style={s("font-size:12px;font-weight:600;color:#2563eb")}>{t.orBrowse}</span>
+                  <span style={s("font-size:11px;color:#a3abb8;margin-top:2px")}>{t.uploadLimit(app.data.mediaLimits.imageMb, app.data.mediaLimits.videoMb)}</span>
                 </>
               )}
             </div>

@@ -122,4 +122,5 @@ export interface AppData {
   settings: SettingDTO;
   session: SessionDTO;
   autoPublishConfigured: boolean; // CRON_SECRET is set ⇒ the auto-publish cron can run
+  mediaLimits: { imageMb: number; videoMb: number }; // upload caps for the current storage driver
 }

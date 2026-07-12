@@ -9,6 +9,7 @@ import {
   toUserDTO,
   toSettingDTO,
 } from "./serialize";
+import { maxUploadMb } from "./media";
 import { GLOBAL_ROLES, type AppData, type Role } from "./types";
 
 export function json(data: unknown, status = 200) {
@@ -62,6 +63,7 @@ export async function loadAppData(): Promise<AppData> {
       actingUserId: actingUser?.id ?? session?.uid ?? null,
     },
     autoPublishConfigured: !!process.env.CRON_SECRET,
+    mediaLimits: { imageMb: maxUploadMb("image/jpeg"), videoMb: maxUploadMb("video/mp4") },
   };
 }
 
