@@ -157,8 +157,16 @@ export default function Compose() {
           )}
           <input ref={fileRef} type="file" accept="image/*,video/*" onChange={(e) => handleFile(e.target.files?.[0])} style={s("display:none")} />
 
-          {/* Per-platform crops — one master, auto-fit to each platform's aspect */}
-          {ui.composeAsset?.publicId && ui.composeAsset.cloudName && (
+          {/* Video keeps its natural aspect on every platform — no per-platform crop. */}
+          {ui.composeAsset?.resourceType === "video" && ui.composeAsset.publicId && (
+            <div style={s("display:flex;align-items:center;gap:7px;margin-bottom:18px;background:#f4f6f9;border-radius:10px;padding:9px 12px")}>
+              <span style={s("font-size:13px;flex:none")}>🎬</span>
+              <span style={s("font-size:12px;color:#5c6675;font-weight:600")}>{t.videoNaturalNote}</span>
+            </div>
+          )}
+
+          {/* Per-platform crops — images only; one master, auto-fit to each aspect */}
+          {ui.composeAsset?.publicId && ui.composeAsset.cloudName && ui.composeAsset.resourceType !== "video" && (
             <div style={s("margin-bottom:18px")}>
               <div style={s("font-size:12px;font-weight:700;color:#5c6675;margin-bottom:8px")}>{t.perPlatform}</div>
               <div style={s("display:flex;gap:10px;overflow-x:auto;padding-bottom:4px")}>

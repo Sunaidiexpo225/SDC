@@ -62,11 +62,11 @@ export function aspectMatches(
   return Math.abs(srcW / srcH - aspectValue(aspect)) < 0.02;
 }
 
-// A delivery URL suitable for a platform to *ingest* (publish). Always
-// fill-crops to the platform aspect and forces a safe container — mp4/h264 for
-// video, jpg for image — so the target platform reliably accepts it. Unlike the
-// preview URL, this doesn't skip the transform, because publishing needs a
-// guaranteed format/aspect.
+// A delivery URL suitable for a platform to *ingest* (publish). Images are
+// fill-cropped to the platform aspect and forced to jpg. VIDEO is delivered at
+// its own aspect (never cropped) — just re-containered to mp4/h264 — so a
+// landscape 16:9 clip stays 16:9 instead of being cropped to a portrait feed
+// ratio (all platforms accept landscape video).
 export function platformPublishUrl(
   cloudName: string,
   resourceType: string,
@@ -74,15 +74,17 @@ export function platformPublishUrl(
   platform: string,
   format?: string | null,
 ): string {
+  if (resourceType === "video") {
+    return `https://res.cloudinary.com/${cloudName}/video/upload/q_auto,f_mp4/${publicId}`;
+  }
   const aspect = platformAspect(platform, format);
-  const fmt = resourceType === "video" ? "mp4" : "jpg";
-  const tx = ["c_fill", "g_auto", `ar_${aspect}`, "q_auto", `f_${fmt}`].join(",");
-  return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${tx}/${publicId}`;
+  const tx = ["c_fill", "g_auto", `ar_${aspect}`, "q_auto", "f_jpg"].join(",");
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${tx}/${publicId}`;
 }
 
-// The per-platform delivery URL for an asset + post format. If the source is
-// already the right aspect, the original is served untouched (no transform);
-// otherwise it's fill-cropped to the platform's ratio.
+// The per-platform delivery URL for an asset + post format. Video keeps its
+// natural aspect (no crop). Images serve the original when they already match
+// the platform ratio, otherwise fill-crop to it.
 export function platformMediaUrl(
   cloudName: string,
   resourceType: string,
@@ -92,6 +94,9 @@ export function platformMediaUrl(
   srcW?: number | null,
   srcH?: number | null,
 ): string {
+  if (resourceType === "video") {
+    return cldRawUrl(cloudName, resourceType, publicId);
+  }
   const aspect = platformAspect(platform, format);
   if (aspectMatches(aspect, srcW, srcH)) {
     return cldRawUrl(cloudName, resourceType, publicId);
