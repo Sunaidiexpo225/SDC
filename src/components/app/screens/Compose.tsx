@@ -7,7 +7,11 @@ import { Hov } from "../../ui";
 import { s } from "@/lib/style";
 import { addDays, isoDate, fmt12 } from "@/lib/format";
 import { uploadMedia } from "@/lib/client";
-import { platformMediaUrl, platformAspect, aspectMatches } from "@/lib/cloudinaryUrl";
+import { platformMediaUrl, platformAspect, aspectMatches, cldRawUrl } from "@/lib/cloudinaryUrl";
+
+// Videos above ~40 MB can't be transformed by Cloudinary on the current plan,
+// so preview (and publish) fall back to the original, uncropped file.
+const VIDEO_TRANSFORM_MAX = 40 * 1024 * 1024;
 import type { AssetType } from "@/lib/content";
 
 const TIME_OPTS = ["09:00", "12:00", "15:00", "18:00", "20:30"];
@@ -44,6 +48,7 @@ export default function Compose() {
           resourceType: data.resourceType,
           width: data.width,
           height: data.height,
+          size: data.size,
         },
       });
     } catch (e) {
@@ -159,7 +164,10 @@ export default function Compose() {
                 {platformList.filter((p) => p.on).map((p) => {
                   const a = ui.composeAsset!;
                   const ar = platformAspect(p.key, a.type);
-                  const url = platformMediaUrl(a.cloudName!, a.resourceType || "image", a.publicId!, p.key, a.type, a.width, a.height);
+                  const bigVideo = a.resourceType === "video" && (a.size ?? 0) > VIDEO_TRANSFORM_MAX;
+                  const url = bigVideo
+                    ? cldRawUrl(a.cloudName!, "video", a.publicId!)
+                    : platformMediaUrl(a.cloudName!, a.resourceType || "image", a.publicId!, p.key, a.type, a.width, a.height);
                   const matched = aspectMatches(ar, a.width, a.height);
                   return (
                     <div key={p.key} style={s("flex:none;text-align:center")}>

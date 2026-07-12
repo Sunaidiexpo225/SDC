@@ -4,8 +4,9 @@ import { publishToInstagram } from "./publishers/instagram";
 import { publishToX } from "./publishers/x";
 import { publishToFacebook } from "./publishers/facebook";
 import { publishToLinkedIn } from "./publishers/linkedin";
-import { platformPublishUrl } from "./cloudinaryUrl";
+import { platformPublishUrl, cldRawUrl } from "./cloudinaryUrl";
 import { CLOUDINARY_CLOUD } from "./cloudinary";
+import { TRANSFORM_SAFE_VIDEO_BYTES } from "./media";
 import { audit, type AuditActor } from "./audit";
 
 // A post with the relations the publisher needs.
@@ -56,10 +57,17 @@ export async function publishPostToPlatforms(
   // Only treat media as usable when Cloudinary has finished processing it.
   const hasCloudMedia = !!(post.media && post.media.driver === "cloudinary" && post.media.storageKey && post.media.status === "ready");
   const isVideo = post.media?.mimeType.startsWith("video/") ?? false;
-  const mediaFor = (platform: string) =>
-    hasCloudMedia
-      ? platformPublishUrl(CLOUDINARY_CLOUD, isVideo ? "video" : "image", post.media!.storageKey as string, platform, post.format)
-      : null;
+  const mediaFor = (platform: string) => {
+    if (!hasCloudMedia) return null;
+    const key = post.media!.storageKey as string;
+    // Videos too large for Cloudinary to transform are published as the
+    // original (uncropped) so they still go out; smaller ones are cropped
+    // per platform as before.
+    if (isVideo && (post.media!.size ?? 0) > TRANSFORM_SAFE_VIDEO_BYTES) {
+      return cldRawUrl(CLOUDINARY_CLOUD, "video", key);
+    }
+    return platformPublishUrl(CLOUDINARY_CLOUD, isVideo ? "video" : "image", key, platform, post.format);
+  };
 
   const logOk = (platform: string, id: string) =>
     audit({ action: "post.publish", actor, target: `${platform} · ${post.event.nameEn}`, detail: `post ${post.id} → id ${id}`, ip });

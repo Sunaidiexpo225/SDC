@@ -66,6 +66,7 @@ interface UiState {
     resourceType?: string | null;
     width?: number | null;
     height?: number | null;
+    size?: number | null;
   } | null;
   platforms: Record<string, boolean>;
   schedDay: string;

@@ -41,11 +41,18 @@ export const MEDIA_DRIVER: "cloudinary" | "s3" | "db" = cloudinaryEnabled()
 const OVERALL_MAX_MB =
   Number(process.env.MEDIA_MAX_MB) || (MEDIA_DRIVER === "db" ? 4 : 100);
 
-// Cloudinary plan caps: image files ~10 MB, and video *transformations* ~40 MB.
-// Because we resize every video, keep video uploads within the transform cap so
-// the per-platform crops always render. Bump these via env if you upgrade.
+// Cloudinary plan caps. Free tier allows video *uploads* up to ~100 MB, but
+// on-the-fly video *transformations* are capped much lower (~40 MB). We upload
+// up to the full size; videos above the transform cap are published as the
+// original (uncropped) — see TRANSFORM_SAFE_VIDEO_BYTES. Bump via env if you
+// upgrade the plan.
 const CLD_IMAGE_MB = Number(process.env.MEDIA_IMAGE_MAX_MB) || 10;
-const CLD_VIDEO_MB = Number(process.env.MEDIA_VIDEO_MAX_MB) || 40;
+const CLD_VIDEO_MB = Number(process.env.MEDIA_VIDEO_MAX_MB) || 100;
+
+// Videos larger than this are delivered/published untransformed (Cloudinary
+// won't crop them per platform on the current plan).
+const TRANSFORM_SAFE_VIDEO_MB = Number(process.env.MEDIA_VIDEO_TRANSFORM_MAX_MB) || 40;
+export const TRANSFORM_SAFE_VIDEO_BYTES = TRANSFORM_SAFE_VIDEO_MB * 1024 * 1024;
 
 export function maxUploadMb(contentType: string): number {
   if (MEDIA_DRIVER === "cloudinary") {
