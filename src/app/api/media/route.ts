@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 export async function POST(req: NextRequest) {
   const ctx = await requireAuth();
   if (!ctx) return error("Not authenticated", 401);
-  if (!roleCan(effectiveRole(ctx), ["Admin", "Manager", "Editor"])) {
+  if (!roleCan(effectiveRole(ctx), ["Admin", "Manager", "AsstManager", "Editor"])) {
     return forbidden("Viewers can't upload media");
   }
 

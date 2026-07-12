@@ -22,7 +22,7 @@ export async function POST(
   const ctx = await requireAuth();
   if (!ctx) return error("Not authenticated", 401);
   // Same gate as presign — Viewers can't upload, and this finalizes an upload.
-  if (!roleCan(effectiveRole(ctx), ["Admin", "Manager", "Editor"])) {
+  if (!roleCan(effectiveRole(ctx), ["Admin", "Manager", "AsstManager", "Editor"])) {
     return forbidden("Viewers can't upload media");
   }
 
