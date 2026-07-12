@@ -28,13 +28,14 @@ export default function Analytics() {
   // "estimated" } when no Instagram account is connected.
   const [live, setLive] = useState<AnalyticsModel | null>(null);
   const [loading, setLoading] = useState(false);
+  const [refreshTick, setRefreshTick] = useState(0);
   useEffect(() => {
     let cancelled = false;
     setLive(null);
     setLoading(true);
     api
       .get<AnalyticsModel | { source: "estimated" }>(
-        `/api/analytics?eventId=${encodeURIComponent(activeEvent.id)}&range=${ui.range}`,
+        `/api/analytics?eventId=${encodeURIComponent(activeEvent.id)}&range=${ui.range}${refreshTick > 0 ? "&refresh=1" : ""}`,
       )
       .then((res) => {
         if (!cancelled && res && res.source === "live") setLive(res as AnalyticsModel);
@@ -48,7 +49,7 @@ export default function Analytics() {
     return () => {
       cancelled = true;
     };
-  }, [activeEvent.id, ui.range]);
+  }, [activeEvent.id, ui.range, refreshTick]);
 
   const model = live ?? estimate;
   const isLive = model.source === "live";
@@ -186,6 +187,7 @@ export default function Analytics() {
           </div>
           {view === "event" && (
             <>
+              <Hov tag="button" onClick={() => setRefreshTick((n) => n + 1)} title={t.refreshTip} css={`border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:9px 14px;border-radius:999px;font-family:inherit;font-weight:700;font-size:13px;color:#0f172a;${loading ? "opacity:.6" : ""}`} hover="border-color:#c8d0dc">↻ {t.refreshBtn}</Hov>
               <Hov tag="button" onClick={exportCsv} css="border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:9px 14px;border-radius:999px;font-family:inherit;font-weight:700;font-size:13px;color:#0f172a" hover="border-color:#c8d0dc">{t.exportReport}</Hov>
               <div style={s("position:relative")}>
                 <Hov tag="button" onClick={() => patch({ rangeMenuOpen: !ui.rangeMenuOpen })} css="display:flex;align-items:center;gap:10px;border:1px solid #e3e8ef;cursor:pointer;background:#fff;padding:9px 16px;border-radius:999px;font-family:inherit;font-weight:700;font-size:13px;color:#0f172a" hover="border-color:#c8d0dc">

@@ -24,6 +24,9 @@ export async function GET(req: NextRequest) {
   const eventId = searchParams.get("eventId") || "";
   const rangeRaw = searchParams.get("range") || "7d";
   const range = (RANGES.includes(rangeRaw) ? rangeRaw : "7d") as RangeKey;
+  // `refresh=1` bypasses the ~20-min snapshot cache and pulls live from the
+  // platform (e.g. right after publishing a post).
+  const forceFresh = searchParams.get("refresh") === "1";
   if (!eventId) return error("eventId is required", 400);
   // Event-scoped users may only read analytics for events they're a member of.
   if (!(await canAccessEvent(ctx, eventId))) return forbidden("You don't have access to this event");
@@ -46,7 +49,7 @@ export async function GET(req: NextRequest) {
   const live: LiveAccount[] = [];
   await Promise.all(
     conn.map(async (a) => {
-      const data = await getAccountData(a.externalId as string, a.apiKey as string, a.platform);
+      const data = await getAccountData(a.externalId as string, a.apiKey as string, a.platform, forceFresh ? 0 : undefined);
       if (data) {
         live.push({
           platform: a.platform,
