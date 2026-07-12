@@ -7,11 +7,6 @@ import { Hov } from "../../ui";
 import { s } from "@/lib/style";
 import { addDays, isoDate, fmt12 } from "@/lib/format";
 import { uploadMedia } from "@/lib/client";
-import { platformMediaUrl, platformAspect, aspectMatches, cldRawUrl } from "@/lib/cloudinaryUrl";
-
-// Videos above ~40 MB can't be transformed by Cloudinary on the current plan,
-// so preview (and publish) fall back to the original, uncropped file.
-const VIDEO_TRANSFORM_MAX = 40 * 1024 * 1024;
 import type { AssetType } from "@/lib/content";
 
 const TIME_OPTS = ["09:00", "12:00", "15:00", "18:00", "20:30"];
@@ -157,42 +152,11 @@ export default function Compose() {
           )}
           <input ref={fileRef} type="file" accept="image/*,video/*" onChange={(e) => handleFile(e.target.files?.[0])} style={s("display:none")} />
 
-          {/* Video keeps its natural aspect on every platform — no per-platform crop. */}
-          {ui.composeAsset?.resourceType === "video" && ui.composeAsset.publicId && (
+          {/* Media (image or video) is sent at its original size — no per-platform crop. */}
+          {ui.composeAsset?.publicId && (
             <div style={s("display:flex;align-items:center;gap:7px;margin-bottom:18px;background:#f4f6f9;border-radius:10px;padding:9px 12px")}>
-              <span style={s("font-size:13px;flex:none")}>🎬</span>
-              <span style={s("font-size:12px;color:#5c6675;font-weight:600")}>{t.videoNaturalNote}</span>
-            </div>
-          )}
-
-          {/* Per-platform crops — images only; one master, auto-fit to each aspect */}
-          {ui.composeAsset?.publicId && ui.composeAsset.cloudName && ui.composeAsset.resourceType !== "video" && (
-            <div style={s("margin-bottom:18px")}>
-              <div style={s("font-size:12px;font-weight:700;color:#5c6675;margin-bottom:8px")}>{t.perPlatform}</div>
-              <div style={s("display:flex;gap:10px;overflow-x:auto;padding-bottom:4px")}>
-                {platformList.filter((p) => p.on).map((p) => {
-                  const a = ui.composeAsset!;
-                  const ar = platformAspect(p.key, a.type);
-                  const bigVideo = a.resourceType === "video" && (a.size ?? 0) > VIDEO_TRANSFORM_MAX;
-                  const url = bigVideo
-                    ? cldRawUrl(a.cloudName!, "video", a.publicId!)
-                    : platformMediaUrl(a.cloudName!, a.resourceType || "image", a.publicId!, p.key, a.type, a.width, a.height);
-                  const matched = aspectMatches(ar, a.width, a.height);
-                  return (
-                    <div key={p.key} style={s("flex:none;text-align:center")}>
-                      <div style={s(`width:92px;aspect-ratio:${ar.replace(":", " / ")};border-radius:10px;overflow:hidden;background:#0f172a;border:1px solid #e3e8ef`)}>
-                        {a.resourceType === "video" ? (
-                          <video src={url} muted preload="metadata" style={s("width:100%;height:100%;object-fit:cover")} />
-                        ) : (
-                          <img src={url} alt="" style={s("width:100%;height:100%;object-fit:cover")} />
-                        )}
-                      </div>
-                      <div style={s("font-size:10px;font-weight:700;color:#5c6675;margin-top:4px")}>{p.name}</div>
-                      <div style={s(`font-size:9px;color:${matched ? "#17a99b" : "#a3abb8"}`)}>{matched ? `${ar} ✓` : ar}</div>
-                    </div>
-                  );
-                })}
-              </div>
+              <span style={s("font-size:13px;flex:none")}>{ui.composeAsset.resourceType === "video" ? "🎬" : "🖼️"}</span>
+              <span style={s("font-size:12px;color:#5c6675;font-weight:600")}>{t.mediaNaturalNote}</span>
             </div>
           )}
           <div style={s("display:flex;align-items:center;justify-content:space-between;margin-bottom:8px")}>

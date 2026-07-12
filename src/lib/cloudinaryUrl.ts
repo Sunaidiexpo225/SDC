@@ -77,9 +77,10 @@ export function platformPublishUrl(
   if (resourceType === "video") {
     return `https://res.cloudinary.com/${cloudName}/video/upload/q_auto,f_mp4/${publicId}`;
   }
-  const aspect = platformAspect(platform, format);
-  const tx = ["c_fill", "g_auto", `ar_${aspect}`, "q_auto", "f_jpg"].join(",");
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${tx}/${publicId}`;
+  // Image: no per-platform crop — deliver the original design as-is, just
+  // size-capped and re-encoded to jpg for reliable ingestion. (Cropping a
+  // designed graphic to each platform's aspect chopped off text/edges.)
+  return `https://res.cloudinary.com/${cloudName}/image/upload/c_limit,w_2048,q_auto,f_jpg/${publicId}`;
 }
 
 // The per-platform delivery URL for an asset + post format. Video keeps its
@@ -94,12 +95,8 @@ export function platformMediaUrl(
   srcW?: number | null,
   srcH?: number | null,
 ): string {
-  if (resourceType === "video") {
-    return cldRawUrl(cloudName, resourceType, publicId);
-  }
-  const aspect = platformAspect(platform, format);
-  if (aspectMatches(aspect, srcW, srcH)) {
-    return cldRawUrl(cloudName, resourceType, publicId);
-  }
-  return cldUrl(cloudName, resourceType, publicId, aspect);
+  // Media is delivered at its original aspect (no per-platform crop), so the
+  // preview matches exactly what publishes.
+  void platform; void format; void srcW; void srcH;
+  return cldRawUrl(cloudName, resourceType, publicId);
 }
