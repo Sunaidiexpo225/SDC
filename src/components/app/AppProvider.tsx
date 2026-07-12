@@ -264,9 +264,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setData(d);
       setUi((prev) => {
         const next = { ...prev };
-        // default active event to the first if unset / stale
+        // Pick the active event when the current one is unset / stale. Prefer
+        // the event the user last selected (persisted in localStorage) so a
+        // refresh reloads the same event; fall back to the first event.
         if (!prev.activeEventId || !d.events.some((e) => e.id === prev.activeEventId)) {
-          next.activeEventId = d.events[0]?.id ?? "";
+          let saved: string | null = null;
+          try { saved = localStorage.getItem("sdc_event"); } catch { /* ignore */ }
+          next.activeEventId =
+            (saved && d.events.some((e) => e.id === saved) ? saved : d.events[0]?.id) ?? "";
         }
         return next;
       });
@@ -306,6 +311,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (skipTabPersist.current) { skipTabPersist.current = false; return; }
     try { localStorage.setItem("sdc_tab", ui.tab); } catch { /* ignore */ }
   }, [ui.tab]);
+
+  // Remember the selected event across reloads so a refresh reloads the same
+  // event instead of snapping back to the first one. Persisted on every change
+  // (skipping the initial default write so it can't clobber a restored value).
+  const skipEventPersist = useRef(true);
+  useEffect(() => {
+    if (skipEventPersist.current) { skipEventPersist.current = false; return; }
+    try {
+      if (ui.activeEventId) localStorage.setItem("sdc_event", ui.activeEventId);
+    } catch { /* ignore */ }
+  }, [ui.activeEventId]);
 
   // ---- derived ----
   const events = data?.events ?? [];
