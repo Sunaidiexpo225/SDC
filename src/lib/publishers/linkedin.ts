@@ -12,7 +12,7 @@
 // versions after ~1 year, so it's overridable via LINKEDIN_VERSION.
 
 const REST = "https://api.linkedin.com/rest";
-const VERSION = process.env.LINKEDIN_VERSION || "202506";
+const VERSION = process.env.LINKEDIN_VERSION || "202608";
 
 function headers(token: string, extra?: Record<string, string>): Record<string, string> {
   return {
