@@ -73,8 +73,12 @@ export default function Dashboard() {
   const reachBars = REACH_BARS.map((h, i) => ({ h, color: i >= 10 ? "#2563eb" : "#c7d7f8" }));
   const totalReachMonth = fmt(Math.round(totalFollowers * 4.2));
 
+  // "Upcoming" means still to come. A post can sit in "scheduled" long after
+  // its slot (e.g. one platform kept failing, so it never flipped to "posted"),
+  // and those belong in the calendar, not here — so filter by date too.
+  const todayIso = new Date().toLocaleDateString("en-CA");
   const upcoming = data.posts
-    .filter((p) => p.status === "scheduled")
+    .filter((p) => p.status === "scheduled" && p.date >= todayIso)
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
     .slice(0, 5)
     .map((p) => {
