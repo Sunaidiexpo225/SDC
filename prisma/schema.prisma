@@ -6,7 +6,13 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Runtime goes through Supabase's transaction pooler (port 6543), which
+  // returns the connection after each transaction — serverless spins up many
+  // instances, and session mode (5432) runs out of its small pool. Migrations
+  // and `db push` can't run over the transaction pooler, so they use
+  // DIRECT_URL (port 5432) instead.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Event {
