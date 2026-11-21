@@ -47,10 +47,9 @@ export async function POST(req: NextRequest) {
 
   const titleTxt =
     caption.split(/[.!؟?—]/)[0].slice(0, 40) || mediaFormat || "New post";
-  // Only Admin/Manager publish without review. Everyone else (Assistant
-  // Manager, Editor) creates posts that wait for approval, so nothing goes
-  // out on its schedule until someone else has signed it off.
-  const approval = roleCan(effectiveRole(ctx), ["Admin", "Manager"]) ? "approved" : "pending";
+  // Approvers' own posts are pre-approved; Editor-created posts start pending
+  // and need a Manager/Assistant Manager/Admin to approve.
+  const approval = roleCan(effectiveRole(ctx), ["Admin", "Manager", "AsstManager"]) ? "approved" : "pending";
   const post = await prisma.post.create({
     data: {
       eventId,

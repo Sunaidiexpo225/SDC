@@ -339,7 +339,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
   const canApprove =
     !!currentUser &&
-    (currentUser.role === "Admin" || currentUser.role === "Manager");
+    (currentUser.role === "Admin" ||
+      currentUser.role === "Manager" ||
+      currentUser.role === "AsstManager");
   const canDiscard = !!currentUser && currentUser.role === "Editor";
 
   const pname = useCallback((k: string) => platformName(k, lang), [lang]);
