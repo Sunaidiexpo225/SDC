@@ -30,7 +30,7 @@ export async function PATCH(
 
   // Role gating mirrors the design: Managers/Assistant Managers/Admins approve
   // or decline; Editors may discard their own; anyone may save an edited caption.
-  if ((action === "approve" || action === "decline") && !roleCan(role, ["Admin", "Manager", "AsstManager"])) {
+  if ((action === "approve" || action === "decline") && !roleCan(role, ["Admin", "Manager"])) {
     return error("Only Managers and Admins can approve", 403);
   }
   if (action === "discard" && !roleCan(role, ["Editor", "AsstManager", "Admin", "Manager"])) {
