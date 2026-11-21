@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/api";
 import { readMedia, presignDownload } from "@/lib/media";
 import { CLOUDINARY_CLOUD } from "@/lib/cloudinary";
-import { cldUrl } from "@/lib/cloudinaryUrl";
+import { cldUrl, cldRawUrl } from "@/lib/cloudinaryUrl";
 
 export const runtime = "nodejs";
 
@@ -21,12 +21,16 @@ export async function GET(
   if (!media) return new NextResponse("Not found", { status: 404 });
 
   if (media.driver === "cloudinary" && media.storageKey) {
-    const resourceType = media.mimeType.startsWith("video/") ? "video" : "image";
-    // Base (uncropped) optimized delivery; per-platform crops are separate URLs.
-    return NextResponse.redirect(
-      cldUrl(CLOUDINARY_CLOUD, resourceType, media.storageKey),
-      302,
-    );
+    const isVideo = media.mimeType.startsWith("video/");
+    // Video is served as the stored original. Asking Cloudinary to transform a
+    // clip on demand makes the browser wait on a transcode that may still be
+    // processing (and is subject to the video transform size cap), so the
+    // player ends up with nothing to show. Images are cheap to transform, so
+    // they keep the optimized delivery.
+    const url = isVideo
+      ? cldRawUrl(CLOUDINARY_CLOUD, "video", media.storageKey)
+      : cldUrl(CLOUDINARY_CLOUD, "image", media.storageKey);
+    return NextResponse.redirect(url, 302);
   }
 
   if (media.driver === "s3" && media.storageKey) {
