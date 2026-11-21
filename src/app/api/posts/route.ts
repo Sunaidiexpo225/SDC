@@ -12,6 +12,7 @@ const Body = z.object({
   platforms: z.array(z.string()).min(1),
   mediaId: z.string().optional(),
   format: z.enum(["Image", "Video", "Reel"]).optional(),
+  coverOffsetMs: z.number().int().min(0).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return error("At least one account is required", 400);
-  const { eventId, date, time, platforms, mediaId, format } = parsed.data;
+  const { eventId, date, time, platforms, mediaId, format, coverOffsetMs } = parsed.data;
   const caption = (parsed.data.caption ?? "").trim();
 
   // A post must carry some content: a caption, media, or both.
@@ -64,6 +65,7 @@ export async function POST(req: NextRequest) {
       approval,
       mediaId: mediaId ?? null,
       format: mediaFormat,
+      coverOffsetMs: coverOffsetMs ?? null,
     },
   });
   return json(toPostDTO(post), 201);

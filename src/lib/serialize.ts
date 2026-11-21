@@ -65,6 +65,7 @@ export function toPostDTO(p: Post): PostDTO {
     status: (p.status === "posted" ? "posted" : "scheduled") as PostDTO["status"],
     approval: (p.approval ?? "pending") as PostDTO["approval"],
     format: p.format ?? null,
+    coverOffsetMs: p.coverOffsetMs ?? null,
     mediaId: p.mediaId ?? null,
     mediaUrl: p.mediaId ? `/api/media/${p.mediaId}` : null,
     assigneeId: p.assigneeId ?? null,

@@ -17,6 +17,7 @@ export default function Compose() {
   const { ui, patch, activeEvent, today } = app;
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
@@ -108,7 +109,35 @@ export default function Compose() {
               {ui.composeAsset.type === "Image" ? (
                 <img src={ui.composeAsset.url} alt={ui.composeAsset.name} style={s("width:100%;max-height:340px;object-fit:contain;border-radius:14px;display:block;background:#0f172a")} />
               ) : (
-                <video src={ui.composeAsset.url} controls style={s("width:100%;max-height:340px;border-radius:14px;display:block;background:#000")} />
+                <video ref={videoRef} src={ui.composeAsset.url} controls style={s("width:100%;max-height:340px;border-radius:14px;display:block;background:#000")} />
+              )}
+              {ui.composeAsset.type !== "Image" && (
+                <div style={s("margin-top:10px;padding:12px;border:1px solid #e3e8ef;border-radius:12px;background:#f8fafc")}>
+                  <div style={s("font-size:12px;font-weight:700;margin-bottom:4px")}>{t.coverLabel}</div>
+                  <div style={s("font-size:12px;color:#8b93a1;margin-bottom:10px")}>{t.coverHint}</div>
+                  <div style={s("display:flex;align-items:center;gap:8px;flex-wrap:wrap")}>
+                    <Hov
+                      tag="button"
+                      onClick={() => {
+                        const v = videoRef.current;
+                        if (!v) return;
+                        patch({ coverOffsetMs: Math.max(0, Math.round(v.currentTime * 1000)) });
+                      }}
+                      css="border:none;cursor:pointer;background:#0f172a;color:#fff;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;font-family:inherit"
+                      hover="background:#1e293b"
+                    >
+                      {t.coverSet}
+                    </Hov>
+                    {ui.coverOffsetMs !== null && (
+                      <>
+                        <span dir="ltr" style={s("font-size:12px;color:#5c6675;font-family:ui-monospace,Menlo,monospace")}>
+                          {t.coverChosen} {Math.floor(ui.coverOffsetMs / 60000)}:{String(Math.floor((ui.coverOffsetMs % 60000) / 1000)).padStart(2, "0")}
+                        </span>
+                        <Hov tag="button" onClick={() => patch({ coverOffsetMs: null })} css="border:1px solid #e3e8ef;cursor:pointer;background:#fff;color:#5c6675;font-weight:700;font-size:12px;padding:7px 14px;border-radius:999px;font-family:inherit" hover="border-color:#0f172a;color:#0f172a">{t.coverClear}</Hov>
+                      </>
+                    )}
+                  </div>
+                </div>
               )}
               <div style={s("display:flex;align-items:center;gap:8px;margin-top:10px")}>
                 <span dir="ltr" style={s("flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:#8b93a1;text-align:start")}>{ui.composeAsset.name}</span>

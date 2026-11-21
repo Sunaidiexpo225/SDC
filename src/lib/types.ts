@@ -47,6 +47,7 @@ export interface PostDTO {
   status: PostStatus;
   approval: "pending" | "approved" | "declined";
   format: string | null; // Image | Video | Reel
+  coverOffsetMs: number | null; // video cover frame, in ms from the start
   mediaId: string | null; // media row id when the post has an upload
   mediaUrl: string | null; // /api/media/<id> when the post has an upload
   assigneeId: string | null; // team member responsible for this post

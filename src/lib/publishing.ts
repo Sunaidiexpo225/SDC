@@ -88,7 +88,7 @@ export async function publishPostToPlatforms(
         continue;
       }
       try {
-        const res = await publishToInstagram({ igUserId: account.externalId, accessToken: account.apiKey, caption: post.captionEn || "", mediaUrl: mediaFor("instagram") as string, isVideo });
+        const res = await publishToInstagram({ igUserId: account.externalId, accessToken: account.apiKey, caption: post.captionEn || "", mediaUrl: mediaFor("instagram") as string, isVideo, thumbOffsetMs: post.coverOffsetMs });
         results.push({ platform, ok: true, detail: `Published (id ${res.id})` });
         await logOk(platform, res.id);
       } catch (e) {

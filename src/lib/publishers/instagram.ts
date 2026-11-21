@@ -32,6 +32,9 @@ export interface IgPublishInput {
   caption: string;
   mediaUrl: string;
   isVideo: boolean;
+  // Video cover: milliseconds into the clip to use as the thumbnail. Instagram
+  // picks the first frame when this is omitted.
+  thumbOffsetMs?: number | null;
 }
 
 async function graphPost(path: string, params: Record<string, string>) {
@@ -49,7 +52,7 @@ async function graphPost(path: string, params: Record<string, string>) {
 export async function publishToInstagram(
   input: IgPublishInput,
 ): Promise<{ id: string }> {
-  const { igUserId, accessToken, caption, mediaUrl, isVideo } = input;
+  const { igUserId, accessToken, caption, mediaUrl, isVideo, thumbOffsetMs } = input;
   if (!igUserId || !accessToken) {
     throw new Error("Instagram account is missing its token or account ID");
   }
@@ -62,6 +65,10 @@ export async function publishToInstagram(
   if (isVideo) {
     createParams.media_type = "REELS";
     createParams.video_url = mediaUrl;
+    // Cover frame, when the author picked one in Compose.
+    if (typeof thumbOffsetMs === "number" && thumbOffsetMs >= 0) {
+      createParams.thumb_offset = String(Math.round(thumbOffsetMs));
+    }
   } else {
     createParams.image_url = mediaUrl;
   }

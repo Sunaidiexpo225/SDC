@@ -52,6 +52,7 @@ interface UiState {
   caption: string;
   hashtags: string[];
   composeAssignee: string; // user id to assign the composed post to ("" = none)
+  coverOffsetMs: number | null; // chosen video cover frame, ms from start
   generating: boolean;
   genIdx: number;
   composeAsset: {
@@ -214,6 +215,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     caption: "",
     hashtags: [],
     composeAssignee: "",
+    coverOffsetMs: null,
     generating: false,
     genIdx: 0,
     composeAsset: null,
@@ -411,6 +413,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ...(ui.composeAsset?.mediaId
           ? { mediaId: ui.composeAsset.mediaId, format: ui.composeAsset.type }
           : {}),
+        ...(ui.coverOffsetMs !== null ? { coverOffsetMs: ui.coverOffsetMs } : {}),
       });
       await reload();
       patch({
@@ -418,6 +421,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         monthOffset: offset,
         caption: "",
         hashtags: [],
+        coverOffsetMs: null,
         composeAsset: null,
         composeAssignee: "",
         selectedPostId: post.id,
